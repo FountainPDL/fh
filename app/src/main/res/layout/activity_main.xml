@@ -3,16 +3,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#080808">
+    android:background="#070707">
 
-    <!-- Header -->
+    <!-- Top bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="56dp"
         android:gravity="center_vertical"
         android:paddingStart="16dp"
-        android:paddingEnd="8dp"
-        android:background="#0D0D0D">
+        android:paddingEnd="4dp"
+        android:background="#0E0E0E">
 
         <TextView
             android:layout_width="0dp"
@@ -20,44 +20,34 @@
             android:layout_weight="1"
             android:text="FOUNTAIN HOME"
             android:textColor="#BB86FC"
-            android:textSize="20sp"
-            android:letterSpacing="0.1"
+            android:textSize="18sp"
+            android:letterSpacing="0.12"
             android:textStyle="bold"/>
 
-        <ImageButton
-            android:id="@+id/search_icon_btn"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+        <ImageButton android:id="@+id/search_btn"
+            android:layout_width="44dp" android:layout_height="44dp"
             android:src="@android:drawable/ic_menu_search"
             android:background="?attr/selectableItemBackground"
-            android:tint="#FFFFFF"
-            android:contentDescription="Search"/>
+            android:tint="#DDDDDD" android:contentDescription="Search"/>
 
-        <ImageButton
-            android:id="@+id/library_btn"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+        <ImageButton android:id="@+id/library_btn"
+            android:layout_width="44dp" android:layout_height="44dp"
             android:src="@android:drawable/ic_menu_agenda"
             android:background="?attr/selectableItemBackground"
-            android:tint="#FFFFFF"
-            android:contentDescription="Library"/>
+            android:tint="#DDDDDD" android:contentDescription="Library"/>
 
-        <ImageButton
-            android:id="@+id/settings_btn"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+        <ImageButton android:id="@+id/settings_btn"
+            android:layout_width="44dp" android:layout_height="44dp"
             android:src="@android:drawable/ic_menu_preferences"
             android:background="?attr/selectableItemBackground"
-            android:tint="#FFFFFF"
-            android:contentDescription="Settings"/>
+            android:tint="#DDDDDD" android:contentDescription="Settings"/>
     </LinearLayout>
 
-    <!-- Search Bar (hidden by default, toggled) -->
-    <SearchView
-        android:id="@+id/search_view"
+    <!-- Search bar (hidden by default) -->
+    <SearchView android:id="@+id/search_bar"
         android:layout_width="match_parent"
         android:layout_height="52dp"
-        android:queryHint="Search movies and TV shows..."
+        android:queryHint="Search movies, TV shows..."
         android:iconifiedByDefault="false"
         android:background="#1A1A1A"
         android:visibility="gone"/>
@@ -65,134 +55,136 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:overScrollMode="never">
+        android:overScrollMode="never"
+        android:scrollbars="none">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="16dp">
+            android:orientation="vertical">
 
-            <!-- Featured Banner -->
-            <ImageView
-                android:id="@+id/featured_banner"
+            <!-- HERO BANNER -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:scaleType="centerCrop"
-                android:background="#1A1A1A"/>
+                android:layout_height="240dp">
 
-            <!-- Section: Popular Movies -->
+                <ImageView android:id="@+id/featured_banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="#1A1A1A"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/gradient_hero"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView android:id="@+id/featured_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#000"
+                        android:shadowRadius="6"/>
+
+                    <TextView android:id="@+id/featured_meta"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#CCCCCC"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp"/>
+
+                    <Button android:id="@+id/featured_play_btn"
+                        android:layout_width="140dp"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="10dp"
+                        android:text="▶  PLAY NOW"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:backgroundTint="#BB86FC"/>
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- Popular Movies -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                android:paddingTop="16dp"
-                android:paddingBottom="8dp"
+                android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingTop="20dp" android:paddingBottom="8dp"
                 android:gravity="center_vertical">
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="18dp"
-                    android:background="#BB86FC"
-                    android:layout_marginEnd="8dp"/>
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Popular Movies"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:textStyle="bold"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="See all"
-                    android:textColor="#BB86FC"
-                    android:textSize="12sp"/>
+                <View android:layout_width="4dp" android:layout_height="16dp"
+                    android:background="#BB86FC" android:layout_marginEnd="8dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Popular Movies"
+                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
             </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/popular_movies_rv"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp" android:nestedScrollingEnabled="false"/>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/popular_movies_rv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:paddingHorizontal="8dp"/>
-
-            <!-- Section: Popular TV -->
+            <!-- Popular TV -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                android:paddingTop="20dp"
-                android:paddingBottom="8dp"
+                android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingTop="20dp" android:paddingBottom="8dp"
                 android:gravity="center_vertical">
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="18dp"
-                    android:background="#03DAC6"
-                    android:layout_marginEnd="8dp"/>
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Popular TV Shows"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:textStyle="bold"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="See all"
-                    android:textColor="#03DAC6"
-                    android:textSize="12sp"/>
+                <View android:layout_width="4dp" android:layout_height="16dp"
+                    android:background="#03DAC6" android:layout_marginEnd="8dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Popular TV Shows"
+                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
             </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/popular_tv_rv"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp" android:nestedScrollingEnabled="false"/>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/popular_tv_rv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:paddingHorizontal="8dp"/>
-
-            <!-- Section: Top Rated -->
+            <!-- Top Rated -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                android:paddingTop="20dp"
-                android:paddingBottom="8dp"
+                android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingTop="20dp" android:paddingBottom="8dp"
                 android:gravity="center_vertical">
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="18dp"
-                    android:background="#FFD600"
-                    android:layout_marginEnd="8dp"/>
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Top Rated"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:textStyle="bold"/>
+                <View android:layout_width="4dp" android:layout_height="16dp"
+                    android:background="#FFD600" android:layout_marginEnd="8dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Top Rated"
+                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
             </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/top_rated_rv"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp" android:nestedScrollingEnabled="false"/>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/top_rated_rv"
+            <!-- Now Playing -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:paddingHorizontal="8dp"/>
+                android:orientation="horizontal"
+                android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingTop="20dp" android:paddingBottom="8dp"
+                android:gravity="center_vertical">
+                <View android:layout_width="4dp" android:layout_height="16dp"
+                    android:background="#CF6679" android:layout_marginEnd="8dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="Now Playing"
+                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+            </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/now_playing_rv"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp" android:paddingBottom="24dp"
+                android:nestedScrollingEnabled="false"/>
 
         </LinearLayout>
     </ScrollView>

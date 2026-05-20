@@ -1,24 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="120dp"
+    android:layout_width="115dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="5dp">
+    android:padding="4dp">
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="170dp">
+        android:layout_height="165dp">
 
-        <ImageView
-            android:id="@+id/poster_image"
+        <ImageView android:id="@+id/poster_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:background="#1E1E1E"/>
+            android:background="#1A1A1A"/>
 
-        <!-- Rating badge -->
-        <TextView
-            android:id="@+id/rating_text"
+        <TextView android:id="@+id/rating_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
@@ -27,17 +24,17 @@
             android:textColor="#FFD600"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:paddingHorizontal="4dp"
+            android:paddingHorizontal="5dp"
             android:paddingVertical="2dp"/>
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/title_text"
+    <TextView android:id="@+id/title_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#EEEEEE"
+        android:textColor="#DDDDDD"
         android:textSize="11sp"
         android:maxLines="2"
         android:ellipsize="end"
-        android:paddingTop="4dp"/>
+        android:paddingTop="4dp"
+        android:paddingHorizontal="2dp"/>
 </LinearLayout>

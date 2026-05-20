@@ -17,8 +17,7 @@
         android:theme="@style/Theme.FountainHome"
         android:usesCleartextTraffic="true">
 
-        <activity
-            android:name=".ui.MainActivity"
+        <activity android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -26,28 +25,18 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ui.player.PlayerActivity"
+        <activity android:name=".ui.WatchActivity" android:exported="false"/>
+        <activity android:name=".ui.SearchActivity" android:exported="false"/>
+        <activity android:name=".ui.LibraryActivity" android:exported="false"/>
+        <activity android:name=".ui.SettingsActivity" android:exported="false"/>
+
+        <activity android:name=".ui.player.PlayerActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
 
-        <activity
-            android:name=".ui.SearchActivity"
-            android:exported="false"/>
-
-        <activity
-            android:name=".ui.LibraryActivity"
-            android:exported="false"/>
-
-        <activity
-            android:name=".ui.SettingsActivity"
-            android:exported="false"/>
-
-        <service
-            android:name=".service.DownloadService"
+        <service android:name=".service.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync"/>
-
     </application>
 </manifest>

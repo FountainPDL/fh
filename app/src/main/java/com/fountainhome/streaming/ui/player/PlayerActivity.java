@@ -8,15 +8,11 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.fountainhome.streaming.databinding.ActivityPlayerBinding;
 import com.fountainhome.streaming.service.SourceGenerator;
-import com.fountainhome.streaming.ui.viewmodel.PlayerViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +20,13 @@ import java.util.List;
 public class PlayerActivity extends AppCompatActivity {
 
     private ActivityPlayerBinding binding;
-    private PlayerViewModel vm;
     private List<SourceGenerator.Source> sources = new ArrayList<>();
     private String imdbId = "";
-    private int tmdbId;
+    private int    tmdbId;
     private String type;
-    private int season  = 1;
-    private int episode = 1;
+    private int    season  = 1;
+    private int    episode = 1;
+    private String startSource;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -39,19 +35,31 @@ public class PlayerActivity extends AppCompatActivity {
         binding = ActivityPlayerBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        type   = getIntent().getStringExtra("type");
-        tmdbId = getIntent().getIntExtra("id", 0);
+        type        = getIntent().getStringExtra("type");
+        tmdbId      = getIntent().getIntExtra("id", 0);
+        imdbId      = getIntent().getStringExtra("imdbId");
         String title = getIntent().getStringExtra("title");
-        binding.titleText.setText(title);
+        season      = getIntent().getIntExtra("season",  1);
+        episode     = getIntent().getIntExtra("episode", 1);
+        startSource = getIntent().getStringExtra("source");
+        if (imdbId == null) imdbId = "";
 
-        // Configure WebView
+        binding.titleText.setText(title != null ? title : "");
+        updateEpLabel();
+
+        // WebView config
         WebSettings ws = binding.playerWebView.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
-        ws.setAllowFileAccess(true);
         ws.setMediaPlaybackRequiresUserGesture(false);
         ws.setLoadWithOverviewMode(true);
         ws.setUseWideViewPort(true);
+        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        ws.setUserAgentString(
+            "Mozilla/5.0 (Linux; Android 13; Pixel 7) " +
+            "AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/120.0.0.0 Mobile Safari/537.36");
+
         binding.playerWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int progress) {
@@ -60,24 +68,20 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
-        vm = new ViewModelProvider(this).get(PlayerViewModel.class);
-        vm.getContent().observe(this, item -> {
-            imdbId = item.imdbId != null ? item.imdbId : "";
-            buildSources();
-        });
+        buildSources();
 
-        if ("movie".equals(type)) {
-            vm.loadMovie(tmdbId);
-            binding.tvControls.setVisibility(View.GONE);
-        } else {
-            vm.loadTV(tmdbId);
+        // TV controls
+        if ("tv".equals(type)) {
             binding.tvControls.setVisibility(View.VISIBLE);
-            binding.nextBtn.setOnClickListener(v -> { episode++; buildSources(); });
             binding.prevBtn.setOnClickListener(v -> {
-                if (episode > 1) episode--; else if (season > 1) { season--; episode = 1; }
-                buildSources();
+                if (episode > 1) { episode--; updateAndPlay(); }
             });
-            binding.seasonBtn.setOnClickListener(v -> { season++; episode = 1; buildSources(); });
+            binding.nextBtn.setOnClickListener(v -> {
+                episode++;
+                updateAndPlay();
+            });
+        } else {
+            binding.tvControls.setVisibility(View.GONE);
         }
 
         binding.backBtn.setOnClickListener(v -> finish());
@@ -96,26 +100,53 @@ public class PlayerActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.sourceSpinner.setAdapter(adapter);
 
+        // Select preferred source
+        int defaultIdx = 0;
+        if (startSource != null) {
+            for (int i = 0; i < sources.size(); i++) {
+                if (sources.get(i).label.startsWith(startSource)) { defaultIdx = i; break; }
+            }
+        }
+        final int startIdx = defaultIdx;
+        binding.sourceSpinner.setSelection(startIdx);
         binding.sourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            boolean first = true;
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (first && pos == startIdx) { first = false; loadSource(pos); return; }
+                first = false;
                 loadSource(pos);
             }
             public void onNothingSelected(AdapterView<?> p) {}
         });
 
-        if (!sources.isEmpty()) loadSource(0);
+        loadSource(defaultIdx);
+    }
+
+    private void updateAndPlay() {
+        updateEpLabel();
+        buildSources();
+    }
+
+    private void updateEpLabel() {
+        if ("tv".equals(type)) {
+            binding.episodeLabel.setVisibility(View.VISIBLE);
+            binding.episodeLabel.setText("S" + season + " · E" + episode);
+        } else {
+            binding.episodeLabel.setVisibility(View.GONE);
+        }
     }
 
     private void loadSource(int index) {
         if (index < 0 || index >= sources.size()) return;
         String url = sources.get(index).url;
-        // Wrap in HTML so it fills the WebView as an iframe
-        String html = "<!DOCTYPE html><html><head>"
-            + "<style>*{margin:0;padding:0;background:#000}"
-            + "iframe{width:100vw;height:100vh;border:0}</style></head>"
-            + "<body><iframe src='" + url + "' allowfullscreen "
-            + "allow='autoplay; fullscreen; encrypted-media'></iframe></body></html>";
-        binding.playerWebView.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
+        String html = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width'>"
+            + "<style>*{margin:0;padding:0;background:#000;overflow:hidden}"
+            + "iframe{width:100vw;height:100vh;border:none;display:block}</style></head>"
+            + "<body><iframe src='" + url + "' "
+            + "allowfullscreen allow='autoplay;fullscreen;encrypted-media;picture-in-picture;xr-spatial-tracking'>"
+            + "</iframe></body></html>";
+        binding.playerWebView.loadDataWithBaseURL(
+            "https://www.google.com", html, "text/html", "utf-8", null);
     }
 
     @Override
@@ -124,13 +155,7 @@ public class PlayerActivity extends AppCompatActivity {
         else super.onBackPressed();
     }
 
-    @Override
-    protected void onPause()  { super.onPause();  binding.playerWebView.onPause(); }
-    @Override
-    protected void onResume() { super.onResume(); binding.playerWebView.onResume(); }
-    @Override
-    protected void onDestroy() {
-        binding.playerWebView.destroy();
-        super.onDestroy();
-    }
+    @Override protected void onPause()  { super.onPause();  binding.playerWebView.onPause(); }
+    @Override protected void onResume() { super.onResume(); binding.playerWebView.onResume(); }
+    @Override protected void onDestroy() { binding.playerWebView.destroy(); super.onDestroy(); }
 }
