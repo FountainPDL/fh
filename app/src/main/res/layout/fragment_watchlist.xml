@@ -11,11 +11,15 @@
         android:background="#0A0A0A"
         android:paddingStart="16dp">
 
-        <TextView android:id="@+id/page_title"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Watch List" android:textColor="#FFFFFF"
-            android:textSize="20sp" android:textStyle="bold"
-            android:layout_weight="1" android:layout_width="0dp"/>
+<TextView
+    android:id="@+id/page_title"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:text="Watch List"
+    android:textColor="#FFFFFF"
+    android:textSize="20sp"
+    android:textStyle="bold"/>
 
         <ImageButton
             android:layout_width="44dp" android:layout_height="44dp"
