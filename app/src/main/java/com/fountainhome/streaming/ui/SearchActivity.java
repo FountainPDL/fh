@@ -2,6 +2,8 @@ package com.fountainhome.streaming.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.SearchView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -14,18 +16,19 @@ import com.fountainhome.streaming.ui.viewmodel.SearchViewModel;
 
 public class SearchActivity extends AppCompatActivity {
 
+    private ActivitySearchBinding binding;
+    private SearchViewModel vm;
+    private ContentAdapter adapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ActivitySearchBinding binding = ActivitySearchBinding.inflate(getLayoutInflater());
+        binding = ActivitySearchBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        String query = getIntent().getStringExtra("query");
-        binding.queryText.setText("Results: " + query);
-        binding.backBtn.setOnClickListener(v -> finish());
+        vm = new ViewModelProvider(this).get(SearchViewModel.class);
 
-        SearchViewModel vm = new ViewModelProvider(this).get(SearchViewModel.class);
-        ContentAdapter adapter = new ContentAdapter(item -> {
+        adapter = new ContentAdapter(item -> {
             Intent i = new Intent(this, PlayerActivity.class);
             i.putExtra("type",  item.mediaType);
             i.putExtra("id",    item.id);
@@ -35,8 +38,36 @@ public class SearchActivity extends AppCompatActivity {
 
         binding.resultsRv.setLayoutManager(new GridLayoutManager(this, 3));
         binding.resultsRv.setAdapter(adapter);
-        vm.getResults().observe(this, adapter::submitList);
 
-        if (query != null) vm.search(query);
+        vm.getResults().observe(this, items -> {
+            adapter.submitList(items);
+            binding.emptyText.setVisibility(
+                (items == null || items.isEmpty()) ? View.VISIBLE : View.GONE);
+        });
+
+        binding.backBtn.setOnClickListener(v -> finish());
+
+        // Live search as user types
+        binding.searchInput.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            public boolean onQueryTextSubmit(String q) { doSearch(q); return true; }
+            public boolean onQueryTextChange(String q) {
+                if (q.length() >= 2) doSearch(q);
+                return true;
+            }
+        });
+
+        // Also run query passed from MainActivity
+        String query = getIntent().getStringExtra("query");
+        if (query != null && !query.isEmpty()) {
+            binding.searchInput.setQuery(query, false);
+            doSearch(query);
+        }
+    }
+
+    private void doSearch(String q) {
+        if (q == null || q.trim().isEmpty()) return;
+        binding.emptyText.setText("Searching...");
+        binding.emptyText.setVisibility(View.VISIBLE);
+        vm.search(q.trim());
     }
 }

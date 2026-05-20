@@ -1,10 +1,9 @@
 package com.fountainhome.streaming.api;
 
 import com.fountainhome.streaming.BuildConfig;
-
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -15,18 +14,14 @@ public class TMDBClient {
 
     public static synchronized TMDBService get() {
         if (instance == null) {
-            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
-
             OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(chain -> {
-                    Request req = chain.request().newBuilder()
-                        .addHeader("Authorization", "Bearer " + BuildConfig.TMDB_API_KEY)
-                        .addHeader("accept", "application/json")
+                    Request original = chain.request();
+                    HttpUrl url = original.url().newBuilder()
+                        .addQueryParameter("api_key", BuildConfig.TMDB_API_KEY)
                         .build();
-                    return chain.proceed(req);
+                    return chain.proceed(original.newBuilder().url(url).build());
                 })
-                .addInterceptor(logging)
                 .build();
 
             instance = new Retrofit.Builder()

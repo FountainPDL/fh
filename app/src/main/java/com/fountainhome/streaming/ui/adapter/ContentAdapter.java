@@ -16,19 +16,15 @@ import com.fountainhome.streaming.ui.viewmodel.ContentItem;
 public class ContentAdapter extends ListAdapter<ContentItem, ContentAdapter.VH> {
 
     public interface OnClick { void onClick(ContentItem item); }
-
     private final OnClick listener;
 
     public ContentAdapter(@NonNull OnClick listener) {
         super(new DiffUtil.ItemCallback<ContentItem>() {
             public boolean areItemsTheSame(@NonNull ContentItem a, @NonNull ContentItem b) {
-                return a.id == b.id && equals(a.mediaType, b.mediaType);
+                return a.id == b.id;
             }
             public boolean areContentsTheSame(@NonNull ContentItem a, @NonNull ContentItem b) {
                 return a.id == b.id;
-            }
-            private boolean equals(String a, String b) {
-                return a == null ? b == null : a.equals(b);
             }
         });
         this.listener = listener;
@@ -43,11 +39,10 @@ public class ContentAdapter extends ListAdapter<ContentItem, ContentAdapter.VH> 
     public void onBindViewHolder(@NonNull VH holder, int position) {
         ContentItem item = getItem(position);
         holder.binding.titleText.setText(item.displayTitle());
-        holder.binding.ratingText.setText(String.format("★ %.1f", item.rating));
+        holder.binding.ratingText.setText(String.format("★%.1f", item.rating));
         Glide.with(holder.itemView.getContext())
             .load(SourceGenerator.imageUrl(item.posterPath, "w342"))
             .placeholder(android.R.color.darker_gray)
-            .error(android.R.color.darker_gray)
             .centerCrop()
             .into(holder.binding.posterImage);
         holder.itemView.setOnClickListener(v -> listener.onClick(item));
