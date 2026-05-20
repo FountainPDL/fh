@@ -14,12 +14,21 @@ public class TMDBClient {
     public static synchronized TMDBService get() {
         if (instance == null) {
             OkHttpClient client = new OkHttpClient.Builder()
+                // Disable auto gzip — fixes "gzip finished without exhausting source"
+                .addNetworkInterceptor(chain -> {
+                    Request req = chain.request().newBuilder()
+                        .header("Accept-Encoding", "identity")
+                        .header("Accept", "application/json")
+                        .build();
+                    return chain.proceed(req);
+                })
                 .addInterceptor(chain -> {
                     HttpUrl url = chain.request().url().newBuilder()
                         .addQueryParameter("api_key", BuildConfig.TMDB_API_KEY)
                         .build();
                     return chain.proceed(chain.request().newBuilder().url(url).build());
-                }).build();
+                })
+                .build();
 
             instance = new Retrofit.Builder()
                 .baseUrl(BASE).client(client)

@@ -15,28 +15,35 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.FountainHome"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:hardwareAccelerated="true">
 
+        <!-- Single main activity hosts all fragments -->
         <activity android:name=".ui.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
+        <!-- Watch detail page -->
         <activity android:name=".ui.WatchActivity" android:exported="false"/>
-        <activity android:name=".ui.SearchActivity" android:exported="false"/>
-        <activity android:name=".ui.LibraryActivity" android:exported="false"/>
-        <activity android:name=".ui.SettingsActivity" android:exported="false"/>
 
+        <!-- Search -->
+        <activity android:name=".ui.SearchActivity" android:exported="false"/>
+
+        <!-- Player — landscape for video -->
         <activity android:name=".ui.player.PlayerActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
 
+        <!-- Download service -->
         <service android:name=".service.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync"/>
+
     </application>
 </manifest>
