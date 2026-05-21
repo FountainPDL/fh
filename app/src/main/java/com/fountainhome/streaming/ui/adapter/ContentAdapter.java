@@ -1,5 +1,6 @@
 package com.fountainhome.streaming.ui.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -42,7 +43,8 @@ public class ContentAdapter extends ListAdapter<ContentItem, ContentAdapter.VH> 
         holder.binding.ratingText.setText(String.format("★%.1f", item.rating));
         Glide.with(holder.itemView.getContext())
             .load(SourceGenerator.imageUrl(item.posterPath, "w342"))
-            .placeholder(android.R.color.darker_gray)
+            .placeholder(com.fountainhome.streaming.R.color.surface)
+            .error(com.fountainhome.streaming.R.color.surface)
             .centerCrop()
             .into(holder.binding.posterImage);
         holder.itemView.setOnClickListener(v -> listener.onClick(item));

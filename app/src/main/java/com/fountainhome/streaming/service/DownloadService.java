@@ -22,7 +22,7 @@ public class DownloadService extends Service {
         Notification notif = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Fountain Home")
             .setContentText("Downloading...")
-            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setSmallIcon(R.drawable.ic_nav_more)
             .build();
         startForeground(NOTIF_ID, notif);
     }

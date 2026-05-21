@@ -94,7 +94,7 @@ public class WatchActivity extends AppCompatActivity {
         // Poster
         Glide.with(this)
             .load(SourceGenerator.imageUrl(item.posterPath, "w342"))
-            .placeholder(android.R.color.darker_gray).centerCrop()
+            .placeholder(R.color.surface).centerCrop()
             .into(binding.posterImage);
 
         binding.titleText.setText(item.displayTitle());
