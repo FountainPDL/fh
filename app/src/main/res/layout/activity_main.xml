@@ -26,19 +26,19 @@
 
         <ImageButton android:id="@+id/search_btn"
             android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@android:drawable/ic_menu_search"
+            android:src="@drawable/ic_search"
             android:background="?attr/selectableItemBackground"
             android:tint="#DDDDDD" android:contentDescription="Search"/>
 
         <ImageButton android:id="@+id/library_btn"
             android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@android:drawable/ic_menu_agenda"
+            android:src="@drawable/ic_nav_bookmark"
             android:background="?attr/selectableItemBackground"
             android:tint="#DDDDDD" android:contentDescription="Library"/>
 
         <ImageButton android:id="@+id/settings_btn"
             android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@android:drawable/ic_menu_preferences"
+            android:src="@drawable/ic_nav_more"
             android:background="?attr/selectableItemBackground"
             android:tint="#DDDDDD" android:contentDescription="Settings"/>
     </LinearLayout>

@@ -58,7 +58,7 @@
 
             <ImageButton android:id="@+id/back_btn"
                 android:layout_width="40dp" android:layout_height="40dp"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:src="@drawable/ic_close"
                 android:background="?attr/selectableItemBackground"
                 android:tint="#FFFFFF" android:contentDescription="Back"/>
 
