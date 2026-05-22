@@ -232,3 +232,8 @@ public class WatchActivity extends AppCompatActivity {
         startActivity(i);
     }
 }
+// Note: downloadBtn click handler — add to populateUI method:
+// binding.downloadBtn.setOnClickListener(v -> {
+//     DownloadManager2.saveForOffline(this, currentItem);
+//     Toast.makeText(this, "Saved to library", Toast.LENGTH_SHORT).show();
+// });

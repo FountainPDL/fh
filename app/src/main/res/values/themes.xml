@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.NoActionBar">
-        <item name="android:colorBackground">#121212</item>
-        <item name="colorPrimary">#BB86FC</item>
-        <item name="colorPrimaryVariant">#3700B3</item>
-        <item name="colorOnPrimary">#000000</item>
-        <item name="colorSecondary">#03DAC6</item>
-        <item name="colorSurface">#1F1F1F</item>
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:statusBarColor">#1F1F1F</item>
-        <item name="android:navigationBarColor">#1F1F1F</item>
-        <item name="android:windowLightStatusBar">false</item>
+    <!-- Light theme -->
+    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:colorBackground">#FFF5F5F5</item>
+        <item name="colorPrimary">@color/accent_current</item>
+        <item name="colorSurface">#FFFFFFFF</item>
+        <item name="android:textColorPrimary">#FF111111</item>
+        <item name="android:textColorSecondary">#FF555555</item>
+        <item name="android:statusBarColor">#FFFFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
+    <style name="Theme.FountainHome.Amoled" parent="Theme.FountainHome"/>
 </resources>

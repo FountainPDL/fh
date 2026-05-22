@@ -32,6 +32,8 @@
         <activity android:name=".ui.WatchActivity" android:exported="false"/>
 
         <!-- Search -->
+        <activity android:name=".ui.AnimeDetailActivity" android:exported="false"/>
+
         <activity android:name=".ui.SearchActivity" android:exported="false"/>
 
         <!-- Player — landscape for video -->

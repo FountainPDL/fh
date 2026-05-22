@@ -17,30 +17,50 @@ public class SourceGenerator {
     public static List<Source> getMovieSources(String imdbId, int tmdbId) {
         List<Source> list = new ArrayList<>();
 
-        // VSEmbed — best working source, TMDB-based
+        // VidSrc (vsembed.ru) — updated URL as requested
         list.add(new Source(
             "https://vsembed.ru/embed/movie?tmdb=" + tmdbId,
-            "VSEmbed"));
+            "VidSrc"));
 
+        // 2Embed — updated URLs
         if (imdbId != null && !imdbId.isEmpty()) {
             list.add(new Source(
-                "https://vidsrc.xyz/embed/movie/" + imdbId, "VidSrc"));
+                "https://www.2embed.online/2embed.php?id=" + imdbId,
+                "2Embed"));
             list.add(new Source(
-                "https://www.2embed.cc/embed/" + imdbId, "2Embed"));
+                "https://www.2embed.online/iframe.php?id=" + imdbId,
+                "2Embed Alt"));
+        } else {
             list.add(new Source(
-                "https://autoembed.cc/movie/imdb/" + imdbId, "AutoEmbed"));
-            list.add(new Source(
-                "https://multiembed.mov/?video_id=" + imdbId, "MultiEmbed"));
+                "https://www.2embed.online/2embed.php?id=" + tmdbId,
+                "2Embed"));
         }
 
+        // AutoEmbed
+        if (imdbId != null && !imdbId.isEmpty()) {
+            list.add(new Source(
+                "https://autoembed.cc/movie/imdb/" + imdbId,
+                "AutoEmbed"));
+        }
         list.add(new Source(
-            "https://vidsrc.xyz/embed/movie/" + tmdbId, "VidSrc (T)"));
+            "https://autoembed.cc/movie/tmdb/" + tmdbId,
+            "AutoEmbed (T)"));
+
+        // SuperEmbed (multiembed VIP — best quality)
+        if (imdbId != null && !imdbId.isEmpty()) {
+            list.add(new Source(
+                "https://multiembed.mov/directstream.php?video_id=" + imdbId,
+                "SuperEmbed VIP"));
+            list.add(new Source(
+                "https://multiembed.mov/?video_id=" + imdbId,
+                "SuperEmbed"));
+        }
         list.add(new Source(
-            "https://www.2embed.cc/embed/tmdb/movie?id=" + tmdbId, "2Embed (T)"));
+            "https://multiembed.mov/directstream.php?video_id=" + tmdbId + "&tmdb=1",
+            "SuperEmbed VIP (T)"));
         list.add(new Source(
-            "https://autoembed.cc/movie/tmdb/" + tmdbId, "AutoEmbed (T)"));
-        list.add(new Source(
-            "https://multiembed.mov/?video_id=" + tmdbId + "&tmdb=1", "MultiEmbed (T)"));
+            "https://multiembed.mov/?video_id=" + tmdbId + "&tmdb=1",
+            "SuperEmbed (T)"));
 
         return list;
     }
@@ -48,39 +68,54 @@ public class SourceGenerator {
     public static List<Source> getTVSources(String imdbId, int tmdbId, int season, int episode) {
         List<Source> list = new ArrayList<>();
 
-        // VSEmbed — best working source
+        // VidSrc (vsembed.ru)
         list.add(new Source(
             "https://vsembed.ru/embed/tv?tmdb=" + tmdbId
                 + "&season=" + season + "&episode=" + episode,
-            "VSEmbed"));
+            "VidSrc"));
 
+        // 2Embed TV — updated
         if (imdbId != null && !imdbId.isEmpty()) {
             list.add(new Source(
-                "https://vidsrc.xyz/embed/tv/" + imdbId + "/" + season + "/" + episode,
-                "VidSrc"));
-            list.add(new Source(
-                "https://www.2embed.cc/embedtv/" + imdbId + "&s=" + season + "&e=" + episode,
+                "https://www.2embed.online/tv-2embed.php?id=" + imdbId
+                    + "&season=" + season + "&episode=" + episode,
                 "2Embed"));
+        } else {
+            list.add(new Source(
+                "https://www.2embed.online/tv-2embed.php?id=" + tmdbId
+                    + "&season=" + season + "&episode=" + episode,
+                "2Embed"));
+        }
+
+        // AutoEmbed TV
+        if (imdbId != null && !imdbId.isEmpty()) {
             list.add(new Source(
                 "https://autoembed.cc/tv/imdb/" + imdbId + "/" + season + "/" + episode,
                 "AutoEmbed"));
-            list.add(new Source(
-                "https://multiembed.mov/?video_id=" + imdbId + "&s=" + season + "&e=" + episode,
-                "MultiEmbed"));
         }
-
-        list.add(new Source(
-            "https://vidsrc.xyz/embed/tv/" + tmdbId + "/" + season + "/" + episode,
-            "VidSrc (T)"));
-        list.add(new Source(
-            "https://www.2embed.cc/embedtv/tmdb/tv?id=" + tmdbId + "&s=" + season + "&e=" + episode,
-            "2Embed (T)"));
         list.add(new Source(
             "https://autoembed.cc/tv/tmdb/" + tmdbId + "/" + season + "/" + episode,
             "AutoEmbed (T)"));
+
+        // SuperEmbed TV VIP
+        if (imdbId != null && !imdbId.isEmpty()) {
+            list.add(new Source(
+                "https://multiembed.mov/directstream.php?video_id=" + imdbId
+                    + "&s=" + season + "&e=" + episode,
+                "SuperEmbed VIP"));
+            list.add(new Source(
+                "https://multiembed.mov/?video_id=" + imdbId
+                    + "&s=" + season + "&e=" + episode,
+                "SuperEmbed"));
+        }
         list.add(new Source(
-            "https://multiembed.mov/?video_id=" + tmdbId + "&tmdb=1&s=" + season + "&e=" + episode,
-            "MultiEmbed (T)"));
+            "https://multiembed.mov/directstream.php?video_id=" + tmdbId
+                + "&tmdb=1&s=" + season + "&e=" + episode,
+            "SuperEmbed VIP (T)"));
+        list.add(new Source(
+            "https://multiembed.mov/?video_id=" + tmdbId
+                + "&tmdb=1&s=" + season + "&e=" + episode,
+            "SuperEmbed (T)"));
 
         return list;
     }

@@ -69,6 +69,8 @@ public class PlayerActivity extends AppCompatActivity {
             "AppleWebKit/537.36 (KHTML, like Gecko) " +
             "Chrome/120.0.0.0 Mobile Safari/537.36");
 
+        // ad client set below
+        binding.playerWebView.setWebViewClient(new com.fountainhome.streaming.service.AdBlockWebViewClient());
         binding.playerWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int progress) {

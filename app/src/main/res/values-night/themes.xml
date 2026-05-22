@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark / AMOLED theme -->
+    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:colorBackground">#FF070707</item>
+        <item name="colorPrimary">@color/accent_current</item>
+        <item name="colorSurface">#FF0E0E0E</item>
+        <item name="android:textColorPrimary">#FFFFFFFF</item>
+        <item name="android:textColorSecondary">#FFAAAAAA</item>
+        <item name="android:statusBarColor">#FF0E0E0E</item>
+        <item name="android:navigationBarColor">#FF0E0E0E</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+    <style name="Theme.FountainHome.Amoled" parent="Theme.FountainHome">
+        <item name="android:colorBackground">#FF000000</item>
+        <item name="colorSurface">#FF000000</item>
+        <item name="android:statusBarColor">#FF000000</item>
+        <item name="android:navigationBarColor">#FF000000</item>
+    </style>
+</resources>

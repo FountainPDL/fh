@@ -1,4 +1,6 @@
+// FountainHome MoreFragment
 package com.fountainhome.streaming.ui.fragment;
+import com.fountainhome.streaming.ui.MainActivity;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -161,6 +163,9 @@ public class MoreFragment extends Fragment {
                 highlightTheme(AppPreferences.getTheme(requireContext()));
 
                 Toast.makeText(getContext(), "Accent color updated", Toast.LENGTH_SHORT).show();
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).applyAccentToNav();
+                }
             });
         }
     }
