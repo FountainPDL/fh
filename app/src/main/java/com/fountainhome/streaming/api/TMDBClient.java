@@ -4,23 +4,27 @@ import com.fountainhome.streaming.BuildConfig;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class TMDBClient {
+
     private static final String BASE = "https://api.themoviedb.org/3/";
-    private static TMDBService instance;
+    private static volatile TMDBService instance;
 
     public static synchronized TMDBService get() {
         if (instance == null) {
             OkHttpClient client = new OkHttpClient.Builder()
-                // Disable auto gzip — fixes "gzip finished without exhausting source"
                 .addNetworkInterceptor(chain -> {
                     Request req = chain.request().newBuilder()
                         .header("Accept-Encoding", "identity")
                         .header("Accept", "application/json")
                         .build();
-                    return chain.proceed(req);
+                    Response response = chain.proceed(req);
+                    return response.newBuilder()
+                        .header("Cache-Control", "public, max-age=3600")
+                        .build();
                 })
                 .addInterceptor(chain -> {
                     HttpUrl url = chain.request().url().newBuilder()
@@ -31,9 +35,11 @@ public class TMDBClient {
                 .build();
 
             instance = new Retrofit.Builder()
-                .baseUrl(BASE).client(client)
+                .baseUrl(BASE)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
-                .build().create(TMDBService.class);
+                .build()
+                .create(TMDBService.class);
         }
         return instance;
     }
