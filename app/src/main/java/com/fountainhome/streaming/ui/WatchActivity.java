@@ -94,7 +94,7 @@ public class WatchActivity extends AppCompatActivity {
         // Poster
         Glide.with(this)
             .load(SourceGenerator.imageUrl(item.posterPath, "w342"))
-            .placeholder(R.color.surface).centerCrop()
+            .placeholder(com.fountainhome.streaming.R.color.surface).centerCrop()
             .into(binding.posterImage);
 
         binding.titleText.setText(item.displayTitle());
