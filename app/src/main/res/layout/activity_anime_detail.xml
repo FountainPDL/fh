@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorBackground">
+    android:background="#070707">
 
     <FrameLayout android:layout_width="match_parent" android:layout_height="220dp">
         <ImageView android:id="@+id/backdrop_image"
@@ -35,7 +35,7 @@
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:id="@+id/title_text"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnSurface" android:textSize="18sp"
+                        android:textColor="#FFFFFF" android:textSize="18sp"
                         android:textStyle="bold"/>
                     <TextView android:id="@+id/rating_text"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
