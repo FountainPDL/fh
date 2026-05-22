@@ -8,16 +8,19 @@ import androidx.room.RoomDatabase;
 @Database(entities = {DownloadItem.class}, version = 1, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
-    private static AppDatabase instance;
+    private static volatile AppDatabase instance;
+
     public abstract DownloadDao downloadDao();
 
     public static synchronized AppDatabase get(Context context) {
         if (instance == null) {
             instance = Room.databaseBuilder(
-                context.getApplicationContext(),
-                AppDatabase.class,
-                "fh_database"
-            ).fallbackToDestructiveMigration().build();
+                    context.getApplicationContext(),
+                    AppDatabase.class,
+                    "fh_database")
+                .allowMainThreadQueries()   // safe for now; moves to async later
+                .fallbackToDestructiveMigration()
+                .build();
         }
         return instance;
     }
