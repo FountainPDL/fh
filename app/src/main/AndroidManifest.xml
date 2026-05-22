@@ -37,7 +37,7 @@
         <!-- Player — landscape for video -->
         <activity android:name=".ui.player.PlayerActivity"
             android:exported="false"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
 
         <!-- Download service -->
