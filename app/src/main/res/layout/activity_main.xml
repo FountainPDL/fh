@@ -4,22 +4,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#070707">
+    android:background="#0A0A0A">
 
     <FrameLayout
         android:id="@+id/fragment_container"
-        android:background="?android:attr/colorBackground"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:background="#0A0A0A"/>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="#0E0E0E"
+        android:background="#141414"
         app:itemTextColor="#FFFFFF"
-        app:itemIconTint="@drawable/nav_item_color"
+        app:itemIconTint="#FFFFFF"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_nav"/>
+
 </LinearLayout>

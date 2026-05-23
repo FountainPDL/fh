@@ -1,10 +1,9 @@
 package com.fountainhome.streaming.ui;
 
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.fountainhome.streaming.R;
@@ -24,26 +23,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        try { AppPreferences.applyTheme(this); } catch (Exception e) { Log.e(TAG, "theme: " + e); }
-
+        AppPreferences.applyTheme(this);
         super.onCreate(savedInstanceState);
 
-        try {
-            binding = ActivityMainBinding.inflate(getLayoutInflater());
-            setContentView(binding.getRoot());
-        } catch (Exception e) {
-            Log.e(TAG, "inflate: " + e);
-            // Minimal fallback view so app doesn't black screen
-            TextView tv = new TextView(this);
-            tv.setText("Fountain Home — loading...");
-            tv.setTextColor(0xFFBB86FC);
-            tv.setGravity(android.view.Gravity.CENTER);
-            tv.setBackgroundColor(0xFF0A0A0A);
-            setContentView(tv);
-            return;
-        }
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        try { applyAccentToNav(); } catch (Exception e) { Log.e(TAG, "accent: " + e); }
+        applyAccentToNav();
 
         if (savedInstanceState == null) {
             loadFragment(new HomeFragment(), "home");
@@ -63,13 +49,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void applyAccentToNav() {
         if (binding == null) return;
-        int accent = AppPreferences.getAccentColor(this);
-        ColorStateList csl = new ColorStateList(
-            new int[][]{ new int[]{android.R.attr.state_checked}, new int[]{} },
-            new int[]{ accent, 0xFF666666 });
-        binding.bottomNav.setItemIconTintList(csl);
-        binding.bottomNav.setItemTextColor(csl);
-        binding.bottomNav.setBackgroundColor(AppPreferences.getSurfaceColor(this));
+        try {
+            int accent = AppPreferences.getAccentColor(this);
+            ColorStateList csl = new ColorStateList(
+                new int[][]{ new int[]{android.R.attr.state_checked}, new int[]{} },
+                new int[]{ accent, 0xFF666666 });
+            binding.bottomNav.setItemIconTintList(csl);
+            binding.bottomNav.setItemTextColor(csl);
+            binding.bottomNav.setBackgroundColor(AppPreferences.getSurfaceColor(this));
+        } catch (Exception e) {
+            Log.e(TAG, "applyAccentToNav: " + e);
+        }
     }
 
     private void loadFragment(Fragment fragment, String tag) {
@@ -80,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.fragment_container, fragment, tag)
                 .commitAllowingStateLoss();
         } catch (Exception e) {
-            Log.e(TAG, "loadFragment: " + e);
+            Log.e(TAG, "loadFragment " + tag + ": " + e);
         }
     }
 }
