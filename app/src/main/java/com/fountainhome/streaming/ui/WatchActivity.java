@@ -160,7 +160,7 @@ public class WatchActivity extends AppCompatActivity {
         binding.downloadBtn.setOnClickListener(v -> {
             DownloadManager2.saveForOffline(this, item);
             Toast.makeText(this, "Saved to library for offline viewing", Toast.LENGTH_SHORT).show();
-            binding.downloadBtn.setText("✓ Saved");
+            binding.downloadBtn.setImageResource(R.drawable.ic_check);
         });
 
         // Share
