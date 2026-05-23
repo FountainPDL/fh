@@ -25,8 +25,7 @@ public class WatchListFragment extends Fragment {
     private ContentAdapter adapter;
     private String currentList = LibraryManager.WATCHLIST;
 
-    @Nullable
-    @Override
+    @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentWatchlistBinding.inflate(inflater, container, false);
@@ -45,33 +44,41 @@ public class WatchListFragment extends Fragment {
         binding.contentRv.setLayoutManager(new GridLayoutManager(getContext(), 3));
         binding.contentRv.setAdapter(adapter);
 
-        binding.tabMovie.setOnClickListener(v ->   { currentList = LibraryManager.WATCHLIST;  loadList("Movie"); setTab(0); });
-        binding.tabTv.setOnClickListener(v ->      { currentList = LibraryManager.FAVORITES;  loadList("TV Series"); setTab(1); });
-        binding.tabContinue.setOnClickListener(v ->{ currentList = LibraryManager.CONTINUE;   loadList("Continue"); setTab(2); });
+        // Tab click handlers
+        binding.tabMovie.setOnClickListener(v  -> loadList(LibraryManager.WATCHLIST,  "Movie"));
+        binding.tabTv.setOnClickListener(v     -> loadList(LibraryManager.FAVORITES,  "Favorites ♥"));
+        binding.tabContinue.setOnClickListener(v -> loadList(LibraryManager.CONTINUE, "Continue"));
 
-        setTab(0);
-        loadList("Movie");
+        // Rename tabs
+        binding.tabMovie.setText("Watch List");
+        binding.tabTv.setText("♥ Favorites");
+        binding.tabContinue.setText("Continue");
+
+        loadList(LibraryManager.WATCHLIST, "Watch List");
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        loadList(binding.pageTitle.getText().toString());
+        // Refresh current list on return
+        String title = binding.pageTitle.getText().toString();
+        loadList(currentList, title);
     }
 
-    private void loadList(String title) {
-        binding.pageTitle.setText("Watch List");
-        List<ContentItem> items = LibraryManager.get(requireContext(), currentList);
+    private void loadList(String list, String title) {
+        currentList = list;
+        binding.pageTitle.setText(title);
+
+        int active = 0xFFBB86FC, grey = 0xFF888888;
+        binding.tabMovie.setTextColor(list.equals(LibraryManager.WATCHLIST)  ? active : grey);
+        binding.tabTv.setTextColor(list.equals(LibraryManager.FAVORITES)     ? active : grey);
+        binding.tabContinue.setTextColor(list.equals(LibraryManager.CONTINUE)? active : grey);
+
+        List<ContentItem> items = LibraryManager.get(requireContext(), list);
         adapter.submitList(items);
-        binding.emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-        binding.emptyText.setText("No " + title.toLowerCase() + " saved yet");
-    }
 
-    private void setTab(int a) {
-        int g = 0xFFCFFF04, gr = 0xFF888888;
-        binding.tabMovie.setTextColor(a == 0 ? g : gr);
-        binding.tabTv.setTextColor(a == 1 ? g : gr);
-        binding.tabContinue.setTextColor(a == 2 ? g : gr);
+        binding.emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+        binding.emptyText.setText(items.isEmpty() ? "Nothing in " + title + " yet" : "");
     }
 
     @Override

@@ -1,7 +1,6 @@
-// FountainHome MoreFragment
 package com.fountainhome.streaming.ui.fragment;
-import com.fountainhome.streaming.ui.MainActivity;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,16 +14,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.fountainhome.streaming.R;
 import com.fountainhome.streaming.databinding.FragmentMoreBinding;
 import com.fountainhome.streaming.service.AppPreferences;
 import com.fountainhome.streaming.service.LibraryManager;
+import com.fountainhome.streaming.ui.MainActivity;
 
 public class MoreFragment extends Fragment {
 
     private FragmentMoreBinding binding;
 
-    @Nullable
-    @Override
+    @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentMoreBinding.inflate(inflater, container, false);
@@ -34,154 +34,113 @@ public class MoreFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        applyThemeToRoot();
         setupTheme();
         setupAccent();
         setupSource();
+        setupAnimeSettings();
         setupSwitches();
         setupDownloads();
         setupPrivacy();
     }
 
+    private void applyThemeToRoot() {
+        if (binding == null || getContext() == null) return;
+        int bg = AppPreferences.getBackgroundColor(requireContext());
+        int surf = AppPreferences.getSurfaceColor(requireContext());
+        binding.getRoot().setBackgroundColor(bg);
+    }
+
     private void setupTheme() {
         String t = AppPreferences.getTheme(requireContext());
-        highlightTheme(t);
+        updateThemeBtns(t);
 
         binding.themeDark.setOnClickListener(v -> {
             AppPreferences.setTheme(requireContext(), AppPreferences.THEME_DARK);
-            highlightTheme(AppPreferences.THEME_DARK);
-            applyBackgroundFromTheme(AppPreferences.THEME_DARK);
-            // Recreate parent activity to fully apply
+            updateThemeBtns(AppPreferences.THEME_DARK);
             requireActivity().recreate();
         });
-
-        binding.themeAmoled.setOnClickListener(v -> {
-            AppPreferences.setTheme(requireContext(), AppPreferences.THEME_AMOLED);
-            highlightTheme(AppPreferences.THEME_AMOLED);
-            applyBackgroundFromTheme(AppPreferences.THEME_AMOLED);
-            requireActivity().recreate();
-        });
-
         binding.themeLight.setOnClickListener(v -> {
             AppPreferences.setTheme(requireContext(), AppPreferences.THEME_LIGHT);
-            highlightTheme(AppPreferences.THEME_LIGHT);
-            applyBackgroundFromTheme(AppPreferences.THEME_LIGHT);
+            updateThemeBtns(AppPreferences.THEME_LIGHT);
             requireActivity().recreate();
         });
     }
 
-    private void highlightTheme(String theme) {
-        binding.themeDark.setAlpha(AppPreferences.THEME_DARK.equals(theme) ? 1f : 0.4f);
-        binding.themeAmoled.setAlpha(AppPreferences.THEME_AMOLED.equals(theme) ? 1f : 0.4f);
-        binding.themeLight.setAlpha(AppPreferences.THEME_LIGHT.equals(theme) ? 1f : 0.4f);
-
-        // Show selected outline
+    private void updateThemeBtns(String theme) {
         int accent = AppPreferences.getAccentColor(requireContext());
-        binding.themeDark.setBackgroundColor(
-            AppPreferences.THEME_DARK.equals(theme) ? darken(accent) : Color.parseColor("#1A1A1A"));
-        binding.themeAmoled.setBackgroundColor(
-            AppPreferences.THEME_AMOLED.equals(theme) ? darken(accent) : Color.BLACK);
-        binding.themeLight.setBackgroundColor(
-            AppPreferences.THEME_LIGHT.equals(theme) ? lighten(accent) : Color.parseColor("#F0F0F0"));
-    }
-
-    private void applyBackgroundFromTheme(String theme) {
-        int bg = AppPreferences.getBackgroundColor(requireContext());
-        if (binding.getRoot().getRootView() != null) {
-            binding.getRoot().getRootView().setBackgroundColor(bg);
-        }
+        boolean isDark = AppPreferences.THEME_DARK.equals(theme);
+        binding.themeDark.setAlpha(isDark ? 1f : 0.5f);
+        binding.themeLight.setAlpha(!isDark ? 1f : 0.5f);
+        if (isDark) binding.themeDark.setBackgroundColor(darken(accent, 0.3f));
+        else binding.themeDark.setBackgroundColor(Color.parseColor("#1F1F1F"));
+        if (!isDark) binding.themeLight.setBackgroundColor(lighten(accent, 0.7f));
+        else binding.themeLight.setBackgroundColor(Color.parseColor("#EEEEEE"));
     }
 
     private void setupAccent() {
         String[][] colors = {
-            {AppPreferences.COLOR_GREEN,  "Green"},
-            {AppPreferences.COLOR_PURPLE, "Purple"},
-            {AppPreferences.COLOR_BLUE,   "Blue"},
-            {AppPreferences.COLOR_RED,    "Red"},
-            {AppPreferences.COLOR_ORANGE, "Orange"},
-            {AppPreferences.COLOR_PINK,   "Pink"},
-            {AppPreferences.COLOR_TEAL,   "Teal"},
+            {AppPreferences.COLOR_PURPLE, "purple"},
+            {AppPreferences.COLOR_BLUE,   "blue"},
+            {AppPreferences.COLOR_RED,    "red"},
+            {AppPreferences.COLOR_GREEN,  "green"},
+            {AppPreferences.COLOR_ORANGE, "orange"},
+            {AppPreferences.COLOR_PINK,   "pink"},
+            {AppPreferences.COLOR_TEAL,   "teal"},
         };
         View[] swatches = {
-            binding.colorPurple,  // reused for green (first slot)
-            binding.colorBlue,
-            binding.colorRed,
-            binding.colorGreen,
-            binding.colorOrange,
-            binding.colorPink,
-            binding.colorTeal
+            binding.colorPurple, binding.colorBlue, binding.colorRed,
+            binding.colorGreen, binding.colorOrange, binding.colorPink, binding.colorTeal
         };
-
         String cur = AppPreferences.getAccent(requireContext());
-
-        for (int i = 0; i < swatches.length && i < colors.length; i++) {
+        for (int i = 0; i < swatches.length; i++) {
             final String hex = colors[i][0];
-            final View swatch = swatches[i];
-            swatch.setBackgroundColor(Color.parseColor(hex));
+            int c = Color.parseColor(hex);
+            swatches[i].setBackgroundColor(c);
+            // Rounded corners
+            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            gd.setColor(c);
+            gd.setCornerRadius(8);
+            swatches[i].setBackground(gd);
+            swatches[i].setAlpha(hex.equalsIgnoreCase(cur) ? 1f : 0.45f);
+            swatches[i].setScaleX(hex.equalsIgnoreCase(cur) ? 1.2f : 1f);
+            swatches[i].setScaleY(hex.equalsIgnoreCase(cur) ? 1.2f : 1f);
 
-            // Show selected state with border effect
-            boolean isSelected = hex.equalsIgnoreCase(cur);
-            swatch.setAlpha(isSelected ? 1f : 0.45f);
-            swatch.setScaleX(isSelected ? 1.15f : 1f);
-            swatch.setScaleY(isSelected ? 1.15f : 1f);
-
-            swatch.setOnClickListener(v -> {
-                // Save
+            swatches[i].setOnClickListener(v -> {
                 AppPreferences.setAccent(requireContext(), hex);
-
-                // Instantly update all swatches
-                for (View sw : swatches) {
-                    sw.setAlpha(0.45f);
-                    sw.setScaleX(1f);
-                    sw.setScaleY(1f);
-                }
-                v.setAlpha(1f);
-                v.setScaleX(1.15f);
-                v.setScaleY(1.15f);
-
-                // Apply to bottom nav immediately
-                if (getActivity() != null) {
-                    View bnv = getActivity().findViewById(
-                        com.fountainhome.streaming.R.id.bottom_nav);
-                    if (bnv instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
-                        int newAccent = Color.parseColor(hex);
-                        android.content.res.ColorStateList csl =
-                            new android.content.res.ColorStateList(
-                                new int[][]{
-                                    new int[]{android.R.attr.state_checked},
-                                    new int[]{}
-                                },
-                                new int[]{ newAccent, 0xFF666666 }
-                            );
-                        ((com.google.android.material.bottomnavigation.BottomNavigationView) bnv)
-                            .setItemIconTintList(csl);
-                        ((com.google.android.material.bottomnavigation.BottomNavigationView) bnv)
-                            .setItemTextColor(csl);
-                    }
-                }
-
-                // Update theme highlights with new accent
-                highlightTheme(AppPreferences.getTheme(requireContext()));
-
-                Toast.makeText(getContext(), "Accent color updated", Toast.LENGTH_SHORT).show();
-                if (getActivity() instanceof MainActivity) {
+                // Update colors.xml accent at runtime via tinting
+                updateAllAccentViews(hex);
+                for (View sw : swatches) { sw.setAlpha(0.45f); sw.setScaleX(1f); sw.setScaleY(1f); }
+                v.setAlpha(1f); v.setScaleX(1.2f); v.setScaleY(1.2f);
+                if (getActivity() instanceof MainActivity)
                     ((MainActivity) getActivity()).applyAccentToNav();
-                }
+                Toast.makeText(getContext(), "Accent updated", Toast.LENGTH_SHORT).show();
             });
         }
     }
 
+    private void updateAllAccentViews(String hex) {
+        if (binding == null) return;
+        try {
+            int color = Color.parseColor(hex);
+            ColorStateList csl = ColorStateList.valueOf(color);
+            binding.autoplaySwitch.setTrackTintList(csl);
+            binding.pipSwitch.setTrackTintList(csl);
+            binding.hwAccelSwitch.setTrackTintList(csl);
+            binding.wifiOnlySwitch.setTrackTintList(csl);
+            binding.showContinueSwitch.setTrackTintList(csl);
+        } catch (Exception ignored) {}
+    }
+
     private void setupSource() {
-        String[] sources = {"VSEmbed", "VidSrc", "2Embed", "AutoEmbed", "MultiEmbed"};
+        String[] sources = {"VidSrc","2Embed","AutoEmbed","SuperEmbed VIP"};
         ArrayAdapter<String> a = new ArrayAdapter<>(requireContext(),
             android.R.layout.simple_spinner_item, sources);
         a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.sourceSpinner.setAdapter(a);
-
         String cur = AppPreferences.getSource(requireContext());
-        for (int i = 0; i < sources.length; i++) {
+        for (int i = 0; i < sources.length; i++)
             if (sources[i].equals(cur)) { binding.sourceSpinner.setSelection(i); break; }
-        }
-
         binding.sourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 AppPreferences.setSource(requireContext(), sources[pos]);
@@ -190,39 +149,63 @@ public class MoreFragment extends Fragment {
         });
     }
 
-    private void setupSwitches() {
-        // All switches apply instantly
-        binding.autoplaySwitch.setChecked(AppPreferences.getAutoplay(requireContext()));
-        binding.autoplaySwitch.setOnCheckedChangeListener((v, c) -> {
-            AppPreferences.setAutoplay(requireContext(), c);
+    private void setupAnimeSettings() {
+        String[] animeSources = {"Gogoanime","AniAPI","Crunchyroll Embed"};
+        ArrayAdapter<String> aa = new ArrayAdapter<>(requireContext(),
+            android.R.layout.simple_spinner_item, animeSources);
+        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.animeSourceSpinner.setAdapter(aa);
+        String curA = AppPreferences.getAnimeSource(requireContext());
+        for (int i = 0; i < animeSources.length; i++)
+            if (animeSources[i].equals(curA)) { binding.animeSourceSpinner.setSelection(i); break; }
+        binding.animeSourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                AppPreferences.setAnimeSource(requireContext(), animeSources[pos]);
+            }
+            public void onNothingSelected(AdapterView<?> p) {}
         });
+
+        String[] dubSub = {"Sub (default)","Dub"};
+        ArrayAdapter<String> da = new ArrayAdapter<>(requireContext(),
+            android.R.layout.simple_spinner_item, dubSub);
+        da.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.dubSubSpinner.setAdapter(da);
+        String curDS = AppPreferences.getAnimeDubSub(requireContext());
+        binding.dubSubSpinner.setSelection("dub".equals(curDS) ? 1 : 0);
+        binding.dubSubSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                AppPreferences.setAnimeDubSub(requireContext(), pos == 1 ? "dub" : "sub");
+            }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+    }
+
+    private void setupSwitches() {
+        binding.autoplaySwitch.setChecked(AppPreferences.getAutoplay(requireContext()));
+        binding.autoplaySwitch.setOnCheckedChangeListener((v, c) ->
+            AppPreferences.setAutoplay(requireContext(), c));
+
+        binding.pipSwitch.setChecked(AppPreferences.getPiP(requireContext()));
+        binding.pipSwitch.setOnCheckedChangeListener((v, c) ->
+            AppPreferences.setPiP(requireContext(), c));
 
         binding.hwAccelSwitch.setChecked(AppPreferences.getHwAccel(requireContext()));
-        binding.hwAccelSwitch.setOnCheckedChangeListener((v, c) -> {
-            AppPreferences.setHwAccel(requireContext(), c);
-        });
-
-        binding.wifiOnlySwitch.setChecked(AppPreferences.getWifiOnly(requireContext()));
-        binding.wifiOnlySwitch.setOnCheckedChangeListener((v, c) -> {
-            AppPreferences.setWifiOnly(requireContext(), c);
-        });
+        binding.hwAccelSwitch.setOnCheckedChangeListener((v, c) ->
+            AppPreferences.setHwAccel(requireContext(), c));
 
         binding.showContinueSwitch.setChecked(AppPreferences.getShowContinue(requireContext()));
-        binding.showContinueSwitch.setOnCheckedChangeListener((v, c) -> {
-            AppPreferences.setShowContinue(requireContext(), c);
-        });
+        binding.showContinueSwitch.setOnCheckedChangeListener((v, c) ->
+            AppPreferences.setShowContinue(requireContext(), c));
 
-        String[] langs = {"English","Spanish","French","German","Japanese","Korean","Arabic","Portuguese"};
-        String[] codes = {"en","es","fr","de","ja","ko","ar","pt"};
+        String[] langs = {"English","Spanish","French","German","Japanese","Korean","Arabic"};
+        String[] codes = {"en","es","fr","de","ja","ko","ar"};
         ArrayAdapter<String> la = new ArrayAdapter<>(requireContext(),
             android.R.layout.simple_spinner_item, langs);
         la.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.subLangSpinner.setAdapter(la);
-
         String curL = AppPreferences.getSubLang(requireContext());
-        for (int i = 0; i < codes.length; i++) {
+        for (int i = 0; i < codes.length; i++)
             if (codes[i].equals(curL)) { binding.subLangSpinner.setSelection(i); break; }
-        }
         binding.subLangSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 AppPreferences.setSubLang(requireContext(), codes[pos]);
@@ -232,16 +215,18 @@ public class MoreFragment extends Fragment {
     }
 
     private void setupDownloads() {
+        binding.wifiOnlySwitch.setChecked(AppPreferences.getWifiOnly(requireContext()));
+        binding.wifiOnlySwitch.setOnCheckedChangeListener((v, c) ->
+            AppPreferences.setWifiOnly(requireContext(), c));
+
         String[] quals = {"480p","720p","1080p"};
         ArrayAdapter<String> qa = new ArrayAdapter<>(requireContext(),
             android.R.layout.simple_spinner_item, quals);
         qa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.qualitySpinner.setAdapter(qa);
-
         String curQ = AppPreferences.getDlQuality(requireContext());
-        for (int i = 0; i < quals.length; i++) {
+        for (int i = 0; i < quals.length; i++)
             if (quals[i].equals(curQ)) { binding.qualitySpinner.setSelection(i); break; }
-        }
         binding.qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 AppPreferences.setDlQuality(requireContext(), quals[pos]);
@@ -270,43 +255,35 @@ public class MoreFragment extends Fragment {
             LibraryManager.clearList(requireContext(), LibraryManager.WATCHLIST);
             LibraryManager.clearList(requireContext(), LibraryManager.CONTINUE);
             AppPreferences.clearAll(requireContext());
-            Toast.makeText(getContext(), "All data cleared. Restarting...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Cleared. Restarting...", Toast.LENGTH_SHORT).show();
             requireActivity().recreate();
         });
     }
 
-    private int darken(int color) {
+    private int darken(int color, float factor) {
         float[] hsv = new float[3];
         Color.colorToHSV(color, hsv);
-        hsv[2] *= 0.3f;
+        hsv[2] *= factor;
         return Color.HSVToColor(hsv);
     }
-
-    private int lighten(int color) {
+    private int lighten(int color, float factor) {
         float[] hsv = new float[3];
         Color.colorToHSV(color, hsv);
-        hsv[1] *= 0.3f;
-        hsv[2] = Math.min(1f, hsv[2] * 1.5f);
+        hsv[1] *= factor;
+        hsv[2] = Math.min(1f, hsv[2] * 1.4f);
         return Color.HSVToColor(hsv);
     }
-
-    private void clearDir(java.io.File dir) {
-        if (dir != null && dir.isDirectory()) {
-            java.io.File[] files = dir.listFiles();
-            if (files != null) for (java.io.File f : files) clearDir(f);
-        }
-        if (dir != null) dir.delete();
+    private void clearDir(java.io.File d) {
+        if (d != null && d.isDirectory()) { java.io.File[] fs = d.listFiles();
+            if (fs != null) for (java.io.File f : fs) clearDir(f); }
+        if (d != null) d.delete();
     }
-
-    private long getDirSize(java.io.File dir) {
+    private long getDirSize(java.io.File d) {
         long s = 0;
-        if (dir != null && dir.isDirectory()) {
-            java.io.File[] fs = dir.listFiles();
-            if (fs != null) for (java.io.File f : fs) s += f.length();
-        }
+        if (d != null && d.isDirectory()) { java.io.File[] fs = d.listFiles();
+            if (fs != null) for (java.io.File f : fs) s += f.length(); }
         return s;
     }
-
     private String formatSize(long b) {
         if (b < 1024) return b + " B";
         if (b < 1048576) return (b/1024) + " KB";

@@ -3,15 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#070707">
+    android:background="?android:attr/colorBackground">
 
-    <LinearLayout
-        android:layout_width="match_parent" android:layout_height="56dp"
-        android:gravity="center_vertical"
-        android:background="#0A0A0A" android:paddingStart="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+        android:gravity="center_vertical" android:background="?attr/colorSurface"
+        android:paddingStart="16dp">
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Settings" android:textColor="#FFFFFF"
-            android:textSize="20sp" android:textStyle="bold"/>
+            android:text="Settings" android:textSize="22sp" android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"/>
     </LinearLayout>
 
     <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
@@ -19,252 +18,303 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical" android:paddingBottom="32dp">
 
-            <!-- APPEARANCE -->
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="APPEARANCE"
-                android:textColor="#CFFF04" android:textSize="11sp" android:letterSpacing="0.1"
-                android:paddingStart="16dp" android:paddingTop="20dp" android:paddingBottom="8dp"/>
-
-            <!-- Theme picker -->
+            <!-- Profile card -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:background="#0E0E0E" android:padding="16dp">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="Theme" android:textColor="#FFFFFF" android:textSize="14sp"
-                    android:paddingBottom="12dp"/>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <LinearLayout android:id="@+id/theme_dark"
-                        android:layout_width="0dp" android:layout_height="70dp"
-                        android:layout_weight="1" android:orientation="vertical"
-                        android:gravity="center" android:background="#1A1A1A"
-                        android:layout_marginEnd="6dp">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="🌑" android:textSize="22sp"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Dark" android:textColor="#FFFFFF" android:textSize="11sp"/>
+                android:orientation="horizontal" android:padding="16dp"
+                android:background="?attr/colorSurface" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="60dp" android:layout_height="60dp"
+                    android:background="@drawable/circle_bg"
+                    android:gravity="center" android:text="F"
+                    android:textColor="#000000" android:textSize="22sp"
+                    android:textStyle="bold" android:layout_marginEnd="16dp"/>
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:gravity="center_vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Fountain Home" android:textColor="@color/accent_current"
+                        android:textSize="18sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="v1.23 — Premium Streaming"
+                        android:textColor="#888888" android:textSize="12sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Settings categories -->
+            <include layout="@layout/settings_section_header" android:id="@+id/header_appearance"/>
+
+            <!-- Appearance category -->
+            <LinearLayout android:id="@+id/cat_appearance"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="?attr/colorSurface"
+                android:layout_marginBottom="1dp">
+
+                <!-- Theme -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Theme"
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView android:id="@+id/theme_dark"
+                            android:layout_width="72dp" android:layout_height="36dp"
+                            android:gravity="center" android:text="🌑 Dark"
+                            android:textSize="12sp" android:textColor="#FFFFFF"
+                            android:background="#1F1F1F" android:layout_marginEnd="6dp"/>
+                        <TextView android:id="@+id/theme_light"
+                            android:layout_width="72dp" android:layout_height="36dp"
+                            android:gravity="center" android:text="☀️ Light"
+                            android:textSize="12sp" android:textColor="#000000"
+                            android:background="#EEEEEE"/>
                     </LinearLayout>
-                    <LinearLayout android:id="@+id/theme_amoled"
-                        android:layout_width="0dp" android:layout_height="70dp"
-                        android:layout_weight="1" android:orientation="vertical"
-                        android:gravity="center" android:background="#000000"
-                        android:layout_marginEnd="6dp">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="⚫" android:textSize="22sp"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="AMOLED" android:textColor="#FFFFFF" android:textSize="11sp"/>
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/theme_light"
-                        android:layout_width="0dp" android:layout_height="70dp"
-                        android:layout_weight="1" android:orientation="vertical"
-                        android:gravity="center" android:background="#F0F0F0">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="☀️" android:textSize="22sp"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Light" android:textColor="#000000" android:textSize="11sp"/>
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="@color/divider" android:layout_marginHorizontal="16dp"/>
+
+                <!-- Accent Colors -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Accent Color"
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <View android:id="@+id/color_purple" android:layout_width="32dp"
+                            android:layout_height="32dp" android:layout_marginEnd="5dp"/>
+                        <View android:id="@+id/color_blue" android:layout_width="32dp"
+                            android:layout_height="32dp" android:layout_marginEnd="5dp"/>
+                        <View android:id="@+id/color_red" android:layout_width="32dp"
+                            android:layout_height="32dp" android:layout_marginEnd="5dp"/>
+                        <View android:id="@+id/color_green" android:layout_width="32dp"
+                            android:layout_height="32dp" android:layout_marginEnd="5dp"/>
+                        <View android:id="@+id/color_orange" android:layout_width="32dp"
+                            android:layout_height="32dp" android:layout_marginEnd="5dp"/>
+                        <View android:id="@+id/color_pink" android:layout_width="32dp"
+                            android:layout_height="32dp" android:layout_marginEnd="5dp"/>
+                        <View android:id="@+id/color_teal" android:layout_width="32dp"
+                            android:layout_height="32dp"/>
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Accent Colors -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:background="#0E0E0E"
-                android:padding="16dp" android:layout_marginTop="1dp">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="Accent Color" android:textColor="#FFFFFF"
-                    android:textSize="14sp" android:paddingBottom="12dp"/>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <View android:id="@+id/color_purple" android:layout_width="0dp"
-                        android:layout_height="40dp" android:layout_weight="1" android:layout_marginEnd="5dp"/>
-                    <View android:id="@+id/color_blue" android:layout_width="0dp"
-                        android:layout_height="40dp" android:layout_weight="1" android:layout_marginEnd="5dp"/>
-                    <View android:id="@+id/color_red" android:layout_width="0dp"
-                        android:layout_height="40dp" android:layout_weight="1" android:layout_marginEnd="5dp"/>
-                    <View android:id="@+id/color_green" android:layout_width="0dp"
-                        android:layout_height="40dp" android:layout_weight="1" android:layout_marginEnd="5dp"/>
-                    <View android:id="@+id/color_orange" android:layout_width="0dp"
-                        android:layout_height="40dp" android:layout_weight="1" android:layout_marginEnd="5dp"/>
-                    <View android:id="@+id/color_pink" android:layout_width="0dp"
-                        android:layout_height="40dp" android:layout_weight="1" android:layout_marginEnd="5dp"/>
-                    <View android:id="@+id/color_teal" android:layout_width="0dp"
-                        android:layout_height="40dp" android:layout_weight="1"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- PLAYER -->
+            <!-- Section: Player -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="PLAYER"
-                android:textColor="#CFFF04" android:textSize="11sp"
-                android:paddingStart="16dp" android:paddingTop="20dp" android:paddingBottom="8dp"/>
+                android:text="PLAYER" android:textColor="@color/accent_current"
+                android:textSize="11sp" android:letterSpacing="0.1"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:background="#0E0E0E">
+                android:orientation="vertical" android:background="?attr/colorSurface">
 
                 <!-- Default Source -->
                 <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-                    android:orientation="horizontal" android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:text="Default Source"
-                        android:textColor="#EEEEEE" android:textSize="14sp"/>
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
                     <Spinner android:id="@+id/source_spinner"
-                        android:layout_width="140dp" android:layout_height="40dp"
+                        android:layout_width="150dp" android:layout_height="40dp"
                         android:background="@drawable/spinner_bg"/>
                 </LinearLayout>
+
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="#222" android:layout_marginHorizontal="16dp"/>
+                    android:background="@color/divider" android:layout_marginHorizontal="16dp"/>
 
                 <!-- Autoplay -->
                 <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-                    android:orientation="horizontal" android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:orientation="vertical">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="Autoplay Next Episode"
-                            android:textColor="#EEEEEE" android:textSize="14sp"/>
+                            android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="Auto-advance when episode ends"
-                            android:textColor="#666666" android:textSize="11sp"/>
+                            android:textColor="#888888" android:textSize="11sp"/>
                     </LinearLayout>
                     <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay_switch"
                         android:layout_width="wrap_content" android:layout_height="wrap_content"/>
                 </LinearLayout>
+
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="#222" android:layout_marginHorizontal="16dp"/>
+                    android:background="@color/divider" android:layout_marginHorizontal="16dp"/>
+
+                <!-- PiP -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Picture in Picture"
+                            android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Float video when leaving app"
+                            android:textColor="#888888" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <androidx.appcompat.widget.SwitchCompat android:id="@+id/pip_switch"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="@color/divider" android:layout_marginHorizontal="16dp"/>
 
                 <!-- HW Accel -->
                 <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-                    android:orientation="horizontal" android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:orientation="vertical">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="Hardware Acceleration"
-                            android:textColor="#EEEEEE" android:textSize="14sp"/>
+                            android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Smoother playback, more battery"
-                            android:textColor="#666666" android:textSize="11sp"/>
+                            android:text="Better performance"
+                            android:textColor="#888888" android:textSize="11sp"/>
                     </LinearLayout>
                     <androidx.appcompat.widget.SwitchCompat android:id="@+id/hw_accel_switch"
                         android:layout_width="wrap_content" android:layout_height="wrap_content"/>
                 </LinearLayout>
+
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="#222" android:layout_marginHorizontal="16dp"/>
+                    android:background="@color/divider" android:layout_marginHorizontal="16dp"/>
 
                 <!-- Subtitle language -->
                 <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-                    android:orientation="horizontal" android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:text="Subtitle Language"
-                        android:textColor="#EEEEEE" android:textSize="14sp"/>
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
                     <Spinner android:id="@+id/sub_lang_spinner"
                         android:layout_width="160dp" android:layout_height="40dp"
                         android:background="@drawable/spinner_bg"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- DOWNLOADS -->
+            <!-- Section: Anime -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="DOWNLOADS"
-                android:textColor="#CFFF04" android:textSize="11sp"
-                android:paddingStart="16dp" android:paddingTop="20dp" android:paddingBottom="8dp"/>
+                android:text="ANIME" android:textColor="@color/accent_current"
+                android:textSize="11sp" android:letterSpacing="0.1"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:background="#0E0E0E">
+                android:orientation="vertical" android:background="?attr/colorSurface">
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-                    android:orientation="horizontal" android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Default Anime Source"
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
+                    <Spinner android:id="@+id/anime_source_spinner"
+                        android:layout_width="150dp" android:layout_height="40dp"
+                        android:background="@drawable/spinner_bg"/>
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="@color/divider" android:layout_marginHorizontal="16dp"/>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Sub/Dub Default"
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
+                    <Spinner android:id="@+id/dub_sub_spinner"
+                        android:layout_width="120dp" android:layout_height="40dp"
+                        android:background="@drawable/spinner_bg"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Section: Downloads -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="DOWNLOADS" android:textColor="@color/accent_current"
+                android:textSize="11sp" android:letterSpacing="0.1"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="?attr/colorSurface">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:orientation="vertical">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="WiFi Only" android:textColor="#EEEEEE" android:textSize="14sp"/>
+                            android:text="WiFi Only Downloads"
+                            android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Only download on WiFi"
-                            android:textColor="#666666" android:textSize="11sp"/>
+                            android:text="Only download over WiFi"
+                            android:textColor="#888888" android:textSize="11sp"/>
                     </LinearLayout>
                     <androidx.appcompat.widget.SwitchCompat android:id="@+id/wifi_only_switch"
                         android:layout_width="wrap_content" android:layout_height="wrap_content"/>
                 </LinearLayout>
+
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="#222" android:layout_marginHorizontal="16dp"/>
+                    android:background="@color/divider" android:layout_marginHorizontal="16dp"/>
+
                 <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-                    android:orientation="horizontal" android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:gravity="center_vertical" android:paddingHorizontal="16dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:text="Default Quality"
-                        android:textColor="#EEEEEE" android:textSize="14sp"/>
+                        android:layout_weight="1" android:text="Download Quality"
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
                     <Spinner android:id="@+id/quality_spinner"
                         android:layout_width="120dp" android:layout_height="40dp"
                         android:background="@drawable/spinner_bg"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- LIBRARY -->
+            <!-- Section: Library -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="LIBRARY"
-                android:textColor="#CFFF04" android:textSize="11sp"
-                android:paddingStart="16dp" android:paddingTop="20dp" android:paddingBottom="8dp"/>
+                android:text="LIBRARY" android:textColor="@color/accent_current"
+                android:textSize="11sp" android:letterSpacing="0.1"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:background="#0E0E0E" android:paddingHorizontal="16dp">
+                android:gravity="center_vertical" android:background="?attr/colorSurface"
+                android:paddingHorizontal="16dp">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Continue Watching Row"
-                        android:textColor="#EEEEEE" android:textSize="14sp"/>
+                        android:text="Continue Watching"
+                        android:textColor="?android:attr/textColorPrimary" android:textSize="15sp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Show on home screen"
-                        android:textColor="#666666" android:textSize="11sp"/>
+                        android:textColor="#888888" android:textSize="11sp"/>
                 </LinearLayout>
                 <androidx.appcompat.widget.SwitchCompat android:id="@+id/show_continue_switch"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"/>
             </LinearLayout>
 
-            <!-- PRIVACY -->
+            <!-- Section: Privacy -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="PRIVACY &amp; DATA"
-                android:textColor="#CFFF04" android:textSize="11sp"
-                android:paddingStart="16dp" android:paddingTop="20dp" android:paddingBottom="8dp"/>
+                android:text="PRIVACY &amp; STORAGE" android:textColor="@color/accent_current"
+                android:textSize="11sp" android:letterSpacing="0.1"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:background="#0E0E0E">
+                android:orientation="vertical" android:background="?attr/colorSurface">
+
                 <TextView android:id="@+id/storage_text"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="Cache: calculating..."
-                    android:textColor="#666666" android:textSize="12sp"
-                    android:paddingHorizontal="16dp" android:paddingTop="12dp"/>
+                    android:text="Cache: calculating..." android:textColor="#888888"
+                    android:textSize="12sp" android:paddingHorizontal="16dp"
+                    android:paddingTop="12dp"/>
+
                 <Button android:id="@+id/clear_cache_btn"
                     android:layout_width="match_parent" android:layout_height="48dp"
                     android:text="Clear Cache" android:textColor="#FFFFFF"
-                    android:backgroundTint="#1A1A1A"
+                    android:backgroundTint="#2A2A2A"
                     android:layout_marginHorizontal="16dp" android:layout_marginTop="8dp"/>
+
                 <Button android:id="@+id/clear_history_btn"
                     android:layout_width="match_parent" android:layout_height="48dp"
                     android:text="Clear Watch History" android:textColor="#FFFFFF"
-                    android:backgroundTint="#1A1A1A"
+                    android:backgroundTint="#2A2A2A"
                     android:layout_marginHorizontal="16dp" android:layout_marginTop="6dp"/>
+
                 <Button android:id="@+id/clear_all_btn"
                     android:layout_width="match_parent" android:layout_height="48dp"
                     android:text="Clear All Data" android:textColor="#CF6679"
-                    android:backgroundTint="#1A1A1A"
+                    android:backgroundTint="#2A2A2A"
                     android:layout_marginHorizontal="16dp" android:layout_marginTop="6dp"
                     android:layout_marginBottom="16dp"/>
-            </LinearLayout>
-
-            <!-- About -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:background="#0E0E0E"
-                android:padding="16dp" android:layout_marginTop="20dp">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="Fountain Home" android:textColor="#FFFFFF"
-                    android:textSize="16sp" android:textStyle="bold"/>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="Version 1.0.0  ·  TMDB + Open Embed Sources"
-                    android:textColor="#555555" android:textSize="12sp" android:layout_marginTop="4dp"/>
             </LinearLayout>
 
         </LinearLayout>

@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#CFFF04</item>
-        <item name="colorPrimaryVariant">#AACB00</item>
+    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/accent_current</item>
+        <item name="colorPrimaryVariant">@color/accent_current</item>
         <item name="colorOnPrimary">#000000</item>
-        <item name="colorSecondary">#BB86FC</item>
-        <item name="android:statusBarColor">#0E0E0E</item>
-        <item name="android:navigationBarColor">#0E0E0E</item>
+        <item name="colorSecondary">@color/accent_current</item>
+        <item name="android:colorBackground">#FFF5F5F5</item>
+        <item name="colorSurface">#FFFFFFFF</item>
+        <item name="colorOnSurface">#FF111111</item>
+        <item name="android:textColorPrimary">#FF111111</item>
+        <item name="android:textColorSecondary">#FF555555</item>
+        <item name="android:windowBackground">#FFF5F5F5</item>
+        <item name="android:statusBarColor">@color/accent_current</item>
+        <item name="android:navigationBarColor">#FFFFFFFF</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="switchStyle">@style/Switch.Accent</item>
+    </style>
+    <style name="Switch.Accent" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="colorControlActivated">@color/accent_current</item>
+    </style>
+    <style name="Theme.FountainHome.Player" parent="Theme.FountainHome">
+        <item name="android:windowFullscreen">false</item>
     </style>
 </resources>

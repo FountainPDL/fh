@@ -18,7 +18,9 @@ public class ContentItem {
     public int    runtime;
     public int    lastSeason  = 1;
     public int    lastEpisode = 1;
+    public long   lastPositionMs = 0;
     public List<Models.Season> seasons;
+    public boolean isAnime = false;
 
     public String displayTitle() {
         return title != null && !title.isEmpty() ? title : (name != null ? name : "");

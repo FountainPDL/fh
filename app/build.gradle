@@ -11,7 +11,7 @@ android {
         minSdk 24
         targetSdk 34
         versionCode 3
-        versionName "1.3.0"
+        versionName "1.23"
         buildConfigField "String", "TMDB_API_KEY", '"8baba8ab6b8bbe247645bcae7df63d0d"'
     }
 

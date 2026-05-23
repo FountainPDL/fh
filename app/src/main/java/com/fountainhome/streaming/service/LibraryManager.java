@@ -26,7 +26,7 @@ public class LibraryManager {
         List<ContentItem> items = get(ctx, list);
         items.removeIf(i -> i.id == item.id && eq(i.mediaType, item.mediaType));
         items.add(0, item);
-        if (list.equals(CONTINUE) && items.size() > 50) items = items.subList(0, 50);
+        if (CONTINUE.equals(list) && items.size() > 100) items = items.subList(0, 100);
         prefs(ctx).edit().putString(list, gson.toJson(items)).apply();
     }
 
@@ -45,18 +45,34 @@ public class LibraryManager {
     public static List<ContentItem> get(Context ctx, String list) {
         String json = prefs(ctx).getString(list, "[]");
         Type type = new TypeToken<List<ContentItem>>(){}.getType();
-        List<ContentItem> items = gson.fromJson(json, type);
-        return items != null ? items : new ArrayList<>();
+        try {
+            List<ContentItem> items = gson.fromJson(json, type);
+            return items != null ? items : new ArrayList<>();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     public static void clearList(Context ctx, String list) {
         prefs(ctx).edit().remove(list).apply();
     }
 
-    public static void updateProgress(Context ctx, ContentItem item, int season, int episode) {
-        item.lastSeason  = season;
+    /** Save both progress data and add to continue list */
+    public static void updateProgress(Context ctx, ContentItem item,
+                                      int season, int episode, long positionMs) {
+        item.lastSeason = season;
         item.lastEpisode = episode;
+        item.lastPositionMs = positionMs;
         add(ctx, item, CONTINUE);
+        WatchProgress.save(ctx, item.id, item.mediaType, season, episode, positionMs);
+    }
+
+    public static void toggleFavorite(Context ctx, ContentItem item) {
+        if (isIn(ctx, item.id, item.mediaType, FAVORITES)) {
+            remove(ctx, item.id, item.mediaType, FAVORITES);
+        } else {
+            add(ctx, item, FAVORITES);
+        }
     }
 
     private static boolean eq(String a, String b) {

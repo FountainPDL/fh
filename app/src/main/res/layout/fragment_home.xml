@@ -3,155 +3,131 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#070707">
+    android:background="?android:attr/colorBackground">
 
-    <!-- Top bar — OnStream style -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
+    <!-- Top bar — NO F CIRCLE -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="60dp"
         android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="4dp"
-        android:background="#0A0A0A">
+        android:paddingStart="16dp" android:paddingEnd="8dp"
+        android:background="?attr/colorSurface">
 
-        <TextView
-            android:layout_width="0dp" android:layout_height="wrap_content"
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Fountain Home"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp" android:textStyle="bold"/>
+            android:text="FOUNTAIN"
+            android:textColor="@color/accent_current"
+            android:textSize="20sp"
+            android:letterSpacing="0.15"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"/>
 
         <ImageButton android:id="@+id/search_btn"
             android:layout_width="44dp" android:layout_height="44dp"
             android:src="@drawable/ic_search"
             android:background="?attr/selectableItemBackground"
-            android:tint="#CCCCCC" android:contentDescription="Search"/>
-
-        <TextView android:id="@+id/profile_icon"
-            android:layout_width="36dp" android:layout_height="36dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/circle_bg"
-            android:gravity="center"
-            android:text="F"
-            android:textColor="#000000"
-            android:textSize="14sp" android:textStyle="bold"/>
+            android:tint="?android:attr/textColorPrimary"
+            android:contentDescription="Search"/>
     </LinearLayout>
 
-    <!-- Search bar (hidden) -->
     <SearchView android:id="@+id/search_bar"
         android:layout_width="match_parent" android:layout_height="52dp"
-        android:queryHint="Search movies, TV shows..."
+        android:queryHint="Search movies, TV, anime..."
         android:iconifiedByDefault="false"
-        android:background="#111111"
         android:visibility="gone"/>
 
-    <!-- Tab: Trending | Popular -->
-    <LinearLayout
-        android:layout_width="match_parent" android:layout_height="44dp"
+    <!-- Trending / Popular tabs -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
         android:orientation="horizontal"
-        android:paddingStart="16dp" android:paddingEnd="16dp"
+        android:paddingStart="14dp" android:paddingEnd="14dp"
         android:gravity="center_vertical">
-
         <TextView android:id="@+id/tab_trending"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Trending" android:textSize="15sp" android:textStyle="bold"
-            android:textColor="#CFFF04" android:paddingEnd="20dp"/>
-
+            android:textColor="@color/accent_current" android:paddingEnd="20dp"/>
         <TextView android:id="@+id/tab_popular"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Popular" android:textSize="15sp"
             android:textColor="#888888"/>
     </LinearLayout>
 
-    <ScrollView
-        android:layout_width="match_parent" android:layout_height="match_parent"
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
         android:overScrollMode="never" android:scrollbars="none">
 
-        <LinearLayout
-            android:layout_width="match_parent" android:layout_height="wrap_content"
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Featured Carousel — OnStream style large poster -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="340dp">
+            <!-- Hero carousel -->
+            <FrameLayout android:layout_width="match_parent" android:layout_height="360dp">
 
                 <ImageView android:id="@+id/featured_banner"
                     android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:scaleType="centerCrop" android:background="#111111"/>
+                    android:scaleType="centerCrop" android:background="#111"/>
 
-                <View
-                    android:layout_width="match_parent" android:layout_height="match_parent"
+                <View android:layout_width="match_parent" android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_gravity="bottom"
                     android:orientation="vertical"
-                    android:paddingHorizontal="20dp" android:paddingBottom="16dp">
+                    android:paddingHorizontal="20dp" android:paddingBottom="20dp">
 
                     <TextView android:id="@+id/featured_title"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF" android:textSize="24sp"
-                        android:textStyle="bold" android:gravity="center"/>
+                        android:textColor="#FFFFFF" android:textSize="26sp"
+                        android:textStyle="bold" android:gravity="center"
+                        android:shadowColor="#000" android:shadowRadius="8"
+                        android:shadowDx="1" android:shadowDy="1"/>
 
                     <TextView android:id="@+id/featured_genre"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#AAAAAA" android:textSize="12sp"
-                        android:gravity="center" android:layout_marginBottom="14dp"/>
+                        android:textColor="#CCCCCC" android:textSize="12sp"
+                        android:gravity="center" android:layout_marginBottom="12dp"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:gravity="center">
 
-                        <LinearLayout
-                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:orientation="vertical" android:gravity="center"
-                            android:layout_marginEnd="24dp">
+                            android:layout_marginEnd="20dp">
                             <ImageButton android:id="@+id/detail_btn"
                                 android:layout_width="44dp" android:layout_height="44dp"
                                 android:src="@drawable/ic_info"
                                 android:background="?attr/selectableItemBackground"
                                 android:tint="#FFFFFF"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Detail" android:textColor="#AAAAAA" android:textSize="11sp"/>
+                                android:text="Info" android:textColor="#CCCCCC" android:textSize="11sp"/>
                         </LinearLayout>
 
                         <Button android:id="@+id/watch_now_btn"
-                            android:layout_width="160dp" android:layout_height="48dp"
-                            android:text="WATCH NOW ▶"
+                            android:layout_width="150dp" android:layout_height="48dp"
+                            android:text="▶  PLAY NOW"
                             android:textSize="13sp" android:textStyle="bold"
                             android:textColor="#000000"
-                            android:backgroundTint="#CFFF04"/>
+                            android:backgroundTint="@color/accent_current"/>
 
-                        <LinearLayout
-                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:orientation="vertical" android:gravity="center"
-                            android:layout_marginStart="24dp">
+                            android:layout_marginStart="20dp">
                             <TextView android:id="@+id/featured_add"
                                 android:layout_width="44dp" android:layout_height="44dp"
-                                
-                                android:background="?attr/selectableItemBackground"
-                                android:tint="#FFFFFF"/>
+                                android:gravity="center"
+                                android:text="+"
+                                android:textColor="#FFFFFF" android:textSize="24sp"
+                                android:background="?attr/selectableItemBackground"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="+ Add" android:textColor="#AAAAAA" android:textSize="11sp"/>
+                                android:text="Add" android:textColor="#CCCCCC" android:textSize="11sp"/>
                         </LinearLayout>
-
                     </LinearLayout>
                 </LinearLayout>
             </FrameLayout>
 
-            <!-- Continue Watching -->
+            <!-- Continue watching -->
             <LinearLayout android:id="@+id/continue_section"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:visibility="gone">
-
-                <TextView
-                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:text="Continue watching"
-                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"
-                    android:padding="14dp"/>
-
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
                 <androidx.recyclerview.widget.RecyclerView android:id="@+id/continue_rv"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:paddingHorizontal="8dp" android:nestedScrollingEnabled="false"/>
@@ -163,41 +139,43 @@
                 android:paddingHorizontal="8dp" android:paddingTop="8dp"
                 android:nestedScrollingEnabled="false"/>
 
-            <!-- Latest Movies -->
-            <LinearLayout
-                android:layout_width="match_parent" android:layout_height="wrap_content"
+            <!-- Latest movies -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingStart="14dp" android:paddingEnd="14dp"
                 android:paddingTop="20dp" android:paddingBottom="8dp"
                 android:gravity="center_vertical">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:text="Latest movies"
-                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="15sp" android:textStyle="bold"/>
                 <TextView android:id="@+id/view_all_movies"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="#CFFF04" android:textSize="12sp"/>
+                    android:text="View all" android:textColor="@color/accent_current"
+                    android:textSize="12sp"/>
             </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_movies_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:paddingHorizontal="8dp" android:nestedScrollingEnabled="false"/>
 
             <!-- Latest TV -->
-            <LinearLayout
-                android:layout_width="match_parent" android:layout_height="wrap_content"
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingStart="14dp" android:paddingEnd="14dp"
                 android:paddingTop="20dp" android:paddingBottom="8dp"
                 android:gravity="center_vertical">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:text="Latest TV Series"
-                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="15sp" android:textStyle="bold"/>
                 <TextView android:id="@+id/view_all_tv"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="#CFFF04" android:textSize="12sp"/>
+                    android:text="View all" android:textColor="@color/accent_current"
+                    android:textSize="12sp"/>
             </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_tv_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp" android:paddingBottom="20dp"
+                android:paddingHorizontal="8dp" android:paddingBottom="24dp"
                 android:nestedScrollingEnabled="false"/>
 
         </LinearLayout>

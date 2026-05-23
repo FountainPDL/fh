@@ -2,242 +2,204 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#070707">
+    android:background="?android:attr/colorBackground">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:overScrollMode="never">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <LinearLayout android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Backdrop -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="230dp">
-
+            <!-- Backdrop with overlay -->
+            <FrameLayout android:layout_width="match_parent" android:layout_height="240dp">
                 <ImageView android:id="@+id/backdrop_image"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:background="#1A1A1A"/>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:scaleType="centerCrop" android:background="#111"/>
+                <View android:layout_width="match_parent" android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
-
                 <ImageButton android:id="@+id/back_btn"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="40dp" android:layout_height="40dp"
                     android:layout_margin="10dp"
                     android:src="@drawable/ic_close"
-                    android:background="#88000000"
-                    android:tint="#FFFFFF"
+                    android:background="#88000000" android:tint="#FFFFFF"
                     android:contentDescription="Back"/>
             </FrameLayout>
 
-            <!-- Poster + Info row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="12dp">
+            <!-- Poster + Info -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:padding="12dp">
 
                 <ImageView android:id="@+id/poster_image"
-                    android:layout_width="95dp"
-                    android:layout_height="140dp"
-                    android:scaleType="centerCrop"
-                    android:background="#1E1E1E"
-                    android:layout_marginEnd="14dp"/>
+                    android:layout_width="95dp" android:layout_height="140dp"
+                    android:scaleType="centerCrop" android:layout_marginEnd="12dp"
+                    android:background="#1E1E1E"/>
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
 
                     <TextView android:id="@+id/title_text"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF"
-                        android:textSize="19sp"
-                        android:textStyle="bold"
-                        android:lineSpacingExtra="2dp"/>
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="18sp" android:textStyle="bold"/>
 
                     <TextView android:id="@+id/meta_text"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#999999"
-                        android:textSize="12sp"
-                        android:layout_marginTop="6dp"/>
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textColor="#999999" android:textSize="12sp"
+                        android:layout_marginTop="4dp"/>
 
-                    <!-- Library buttons -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <!-- Action icons row -->
+                    <LinearLayout android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="12dp">
+                        android:orientation="horizontal" android:layout_marginTop="10dp">
 
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:layout_marginEnd="16dp">
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical"
+                            android:gravity="center">
                             <ImageButton android:id="@+id/favorite_btn"
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:src="@drawable/ic_star"
+                                android:layout_width="36dp" android:layout_height="36dp"
+                                android:src="@drawable/ic_favorite"
                                 android:background="?attr/selectableItemBackground"
-                                android:alpha="0.4"/>
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Favorite"
-                                android:textColor="#888888"
-                                android:textSize="10sp"/>
+                                android:tint="@color/accent_current" android:alpha="0.4"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Favorite" android:textColor="#888888" android:textSize="10sp"/>
                         </LinearLayout>
 
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical"
                             android:gravity="center">
                             <ImageButton android:id="@+id/watchlist_btn"
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:src="@drawable/ic_add"
+                                android:layout_width="36dp" android:layout_height="36dp"
+                                android:src="@drawable/ic_watch_later"
                                 android:background="?attr/selectableItemBackground"
-                                android:tint="#FFFFFF"
-                                android:alpha="0.4"/>
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Watchlist"
-                                android:textColor="#888888"
-                                android:textSize="10sp"/>
+                                android:tint="#FFFFFF" android:alpha="0.4"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Watchlist" android:textColor="#888888" android:textSize="10sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical"
+                            android:gravity="center">
+                            <ImageButton android:id="@+id/download_btn"
+                                android:layout_width="36dp" android:layout_height="36dp"
+                                android:src="@drawable/ic_download"
+                                android:background="?attr/selectableItemBackground"
+                                android:tint="#FFFFFF"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Save" android:textColor="#888888" android:textSize="10sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical"
+                            android:gravity="center">
+                            <ImageButton android:id="@+id/share_btn"
+                                android:layout_width="36dp" android:layout_height="36dp"
+                                android:src="@drawable/ic_share"
+                                android:background="?attr/selectableItemBackground"
+                                android:tint="#FFFFFF"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Share" android:textColor="#888888" android:textSize="10sp"/>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Play + Source -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                android:paddingBottom="12dp">
+            <!-- Play / Resume + Source -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:paddingHorizontal="12dp">
 
-                <Button android:id="@+id/play_btn"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:text="▶  PLAY"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:backgroundTint="#BB86FC"
-                    android:layout_marginEnd="10dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:paddingBottom="8dp">
 
-                <Spinner android:id="@+id/source_spinner"
-                    android:layout_width="130dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/spinner_bg"/>
+                    <Button android:id="@+id/play_btn"
+                        android:layout_width="0dp" android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="▶  PLAY"
+                        android:textSize="14sp" android:textStyle="bold"
+                        android:textColor="#000000"
+                        android:backgroundTint="@color/accent_current"
+                        android:layout_marginEnd="8dp"/>
+
+                    <Button android:id="@+id/resume_btn"
+                        android:layout_width="0dp" android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="↺ RESUME"
+                        android:textSize="13sp" android:textColor="@color/accent_current"
+                        android:backgroundTint="#22BB86FC"
+                        android:visibility="gone"/>
+                </LinearLayout>
+
+                <!-- Source + Episode menu row -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:paddingBottom="12dp">
+
+                    <Spinner android:id="@+id/source_spinner"
+                        android:layout_width="0dp" android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/spinner_bg"
+                        android:layout_marginEnd="8dp"/>
+
+                    <Button android:id="@+id/episode_menu_btn"
+                        android:layout_width="wrap_content" android:layout_height="44dp"
+                        android:text="Episodes ▾"
+                        android:textSize="12sp" android:textColor="@color/accent_current"
+                        android:backgroundTint="#22BB86FC"
+                        android:visibility="gone"/>
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Overview -->
             <TextView android:id="@+id/overview_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#BBBBBB"
-                android:textSize="13sp"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textColor="#BBBBBB" android:textSize="13sp"
                 android:lineSpacingExtra="3dp"
-                android:paddingHorizontal="14dp"
-                android:paddingBottom="16dp"
+                android:paddingHorizontal="14dp" android:paddingBottom="12dp"
                 android:visibility="gone"/>
 
-            <!-- TV Section -->
+            <!-- TV Section — season selector + episode list -->
             <LinearLayout android:id="@+id/tv_section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="#0E0E0E"
-                android:padding="14dp"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Season &amp; Episode"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:paddingBottom="10dp"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <Spinner android:id="@+id/season_spinner"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/spinner_bg"/>
-
-                    <Spinner android:id="@+id/episode_spinner"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="2"
-                        android:background="@drawable/spinner_bg"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Similar content -->
-            <LinearLayout android:id="@+id/similar_section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <!-- Season scroll buttons -->
+                <HorizontalScrollView android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingStart="14dp" android:paddingEnd="14dp"
-                    android:paddingTop="20dp" android:paddingBottom="8dp"
-                    android:gravity="center_vertical">
-                    <View android:layout_width="4dp" android:layout_height="16dp"
-                        android:background="#BB86FC" android:layout_marginEnd="8dp"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="More Like This"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp"
-                        android:textStyle="bold"/>
-                </LinearLayout>
+                    android:scrollbars="none"
+                    android:paddingHorizontal="12dp" android:paddingBottom="8dp">
+                    <LinearLayout android:id="@+id/season_buttons_container"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal"/>
+                </HorizontalScrollView>
 
-                <androidx.recyclerview.widget.RecyclerView android:id="@+id/similar_rv"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingHorizontal="8dp"
-                    android:paddingBottom="24dp"
+                <!-- Episode list -->
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/episode_list_rv"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:nestedScrollingEnabled="false"/>
             </LinearLayout>
 
+            <!-- Similar -->
+            <LinearLayout android:id="@+id/similar_section"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="More Like This"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="15sp" android:textStyle="bold"
+                    android:padding="14dp"/>
+
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/similar_rv"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingHorizontal="8dp" android:paddingBottom="24dp"
+                    android:nestedScrollingEnabled="false"/>
+            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Loading overlay -->
     <ProgressBar android:id="@+id/loading_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="visible"/>
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:visibility="visible"/>
 </FrameLayout>
