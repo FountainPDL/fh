@@ -3,6 +3,8 @@ package com.fountainhome.streaming.ui;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.fountainhome.streaming.R;
@@ -13,6 +15,7 @@ import com.fountainhome.streaming.ui.fragment.HomeFragment;
 import com.fountainhome.streaming.ui.fragment.MoreFragment;
 import com.fountainhome.streaming.ui.fragment.MoviesFragment;
 import com.fountainhome.streaming.ui.fragment.TVFragment;
+import com.fountainhome.streaming.ui.fragment.WatchListFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,11 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        try {
-            AppPreferences.applyTheme(this);
-        } catch (Exception e) {
-            Log.e(TAG, "Theme error: " + e.getMessage());
-        }
+        try { AppPreferences.applyTheme(this); } catch (Exception e) { Log.e(TAG, "theme: " + e); }
 
         super.onCreate(savedInstanceState);
 
@@ -33,15 +32,18 @@ public class MainActivity extends AppCompatActivity {
             binding = ActivityMainBinding.inflate(getLayoutInflater());
             setContentView(binding.getRoot());
         } catch (Exception e) {
-            Log.e(TAG, "Layout inflate error: " + e.getMessage());
+            Log.e(TAG, "inflate: " + e);
+            // Minimal fallback view so app doesn't black screen
+            TextView tv = new TextView(this);
+            tv.setText("Fountain Home — loading...");
+            tv.setTextColor(0xFFBB86FC);
+            tv.setGravity(android.view.Gravity.CENTER);
+            tv.setBackgroundColor(0xFF0A0A0A);
+            setContentView(tv);
             return;
         }
 
-        try {
-            applyAccentToNav();
-        } catch (Exception e) {
-            Log.e(TAG, "Accent error: " + e.getMessage());
-        }
+        try { applyAccentToNav(); } catch (Exception e) { Log.e(TAG, "accent: " + e); }
 
         if (savedInstanceState == null) {
             loadFragment(new HomeFragment(), "home");
@@ -50,11 +52,11 @@ public class MainActivity extends AppCompatActivity {
 
         binding.bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_home)   { loadFragment(new HomeFragment(),   "home");   return true; }
-            if (id == R.id.nav_movies) { loadFragment(new MoviesFragment(), "movies"); return true; }
-            if (id == R.id.nav_tv)     { loadFragment(new TVFragment(),     "tv");     return true; }
-            if (id == R.id.nav_anime)  { loadFragment(new AnimeFragment(),  "anime");  return true; }
-            if (id == R.id.nav_more)   { loadFragment(new MoreFragment(),   "more");   return true; }
+            if (id == R.id.nav_home)      { loadFragment(new HomeFragment(),      "home");      return true; }
+            if (id == R.id.nav_movies)    { loadFragment(new MoviesFragment(),    "movies");    return true; }
+            if (id == R.id.nav_tv)        { loadFragment(new TVFragment(),        "tv");        return true; }
+            if (id == R.id.nav_anime)     { loadFragment(new AnimeFragment(),     "anime");     return true; }
+            if (id == R.id.nav_more)      { loadFragment(new MoreFragment(),      "more");      return true; }
             return false;
         });
     }
@@ -76,9 +78,9 @@ public class MainActivity extends AppCompatActivity {
                 .beginTransaction()
                 .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                 .replace(R.id.fragment_container, fragment, tag)
-                .commit();
+                .commitAllowingStateLoss();
         } catch (Exception e) {
-            Log.e(TAG, "Fragment load error: " + e.getMessage());
+            Log.e(TAG, "loadFragment: " + e);
         }
     }
 }
