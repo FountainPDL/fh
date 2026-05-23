@@ -190,9 +190,9 @@ public class WatchActivity extends AppCompatActivity {
     }
 
     private void setupSeasonButtons(int seasons) {
-        if (seasons <= 0) seasons = 1;
+        final int totalSeasons = seasons <= 0 ? 1 : seasons;
         binding.seasonButtonsContainer.removeAllViews();
-        for (int s = 1; s <= seasons; s++) {
+        for (int s = 1; s <= totalSeasons; s++) {
             final int seasonNum = s;
             TextView btn = new TextView(this);
             btn.setText("S" + s);
@@ -204,7 +204,7 @@ public class WatchActivity extends AppCompatActivity {
                 selSeason = seasonNum;
                 selEpisode = 1;
                 vm.loadSeason(tmdbId, seasonNum);
-                setupSeasonButtons(seasons);
+                setupSeasonButtons(totalSeasons);
             });
             binding.seasonButtonsContainer.addView(btn);
         }
