@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.bumptech.glide.Glide;
 import com.fountainhome.streaming.R;
 import com.fountainhome.streaming.databinding.FragmentHomeBinding;
+import com.fountainhome.streaming.service.AppPreferences;
 import com.fountainhome.streaming.service.LibraryManager;
 import com.fountainhome.streaming.service.SourceGenerator;
 import com.fountainhome.streaming.ui.SearchActivity;
@@ -30,74 +31,58 @@ import java.util.List;
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
-    private static final String TAG = "HomeFragment";
     private boolean searchOpen = false;
 
-    @Nullable @Override
+    @Nullable
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        try {
-            binding = FragmentHomeBinding.inflate(inflater, container, false);
-            return binding.getRoot();
-        } catch (Exception e) {
-            Log.e(TAG, "onCreateView: " + e);
-            View v = new View(requireContext());
-            v.setBackgroundColor(0xFF0A0A0A);
-            return v;
-        }
+        binding = FragmentHomeBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (binding == null) return;
 
-        try { setupContent(); }
-        catch (Exception e) { Log.e(TAG, "setupContent: " + e); }
-    }
-
-    private void setupContent() {
         HomeViewModel vm = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
 
-        // Featured banner — crossfade animation between hero items
+        // Hero banner — crossfades between top movies
         vm.getFeatured().observe(getViewLifecycleOwner(), item -> {
             if (item == null || binding == null) return;
-            try {
-                Glide.with(this)
-                    .load(SourceGenerator.imageUrl(item.backdropPath, "w780"))
-                    .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade(600))
-                    .centerCrop()
-                    .into(binding.featuredBanner);
-                binding.featuredTitle.setText(item.displayTitle());
-                String meta = "★ " + String.format("%.1f", item.rating)
-                    + "  ·  " + ("movie".equals(item.mediaType) ? "Movie" : "TV Series")
-                    + (item.year().isEmpty() ? "" : "  ·  " + item.year());
-                binding.featuredGenre.setText(meta);
-                binding.watchNowBtn.setOnClickListener(v -> openWatch(item));
-                binding.featuredBanner.setOnClickListener(v -> openWatch(item));
-                binding.detailBtn.setOnClickListener(v -> openWatch(item));
-                binding.featuredAdd.setOnClickListener(v -> {
-                    if (getContext() == null) return;
-                    boolean inWl = LibraryManager.isIn(requireContext(),
-                        item.id, item.mediaType, LibraryManager.WATCHLIST);
-                    if (inWl) LibraryManager.remove(requireContext(),
-                        item.id, item.mediaType, LibraryManager.WATCHLIST);
-                    else LibraryManager.add(requireContext(), item, LibraryManager.WATCHLIST);
-                    binding.featuredAdd.setText(inWl ? "+" : "✓");
-                });
-            } catch (Exception e) { Log.e(TAG, "featured: " + e); }
+            Glide.with(this)
+                .load(SourceGenerator.imageUrl(item.backdropPath, "w780"))
+                .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade(600))
+                .centerCrop()
+                .into(binding.featuredBanner);
+            binding.featuredTitle.setText(item.displayTitle());
+            binding.featuredGenre.setText(
+                "★ " + String.format("%.1f", item.rating)
+                + "  ·  " + ("movie".equals(item.mediaType) ? "Movie" : "TV")
+                + (item.year().isEmpty() ? "" : "  ·  " + item.year()));
+            binding.watchNowBtn.setOnClickListener(v -> openWatch(item));
+            binding.featuredBanner.setOnClickListener(v -> openWatch(item));
+            binding.detailBtn.setOnClickListener(v -> openWatch(item));
+            binding.featuredAdd.setOnClickListener(v -> {
+                boolean inWl = LibraryManager.isIn(requireContext(),
+                    item.id, item.mediaType, LibraryManager.WATCHLIST);
+                if (inWl) LibraryManager.remove(requireContext(),
+                    item.id, item.mediaType, LibraryManager.WATCHLIST);
+                else LibraryManager.add(requireContext(), item, LibraryManager.WATCHLIST);
+                binding.featuredAdd.setText(inWl ? "+" : "✓");
+            });
         });
 
-        // Tabs
+        // Trending tab toggle
         binding.tabTrending.setOnClickListener(v -> {
-            setTabActive(true);
+            setTab(true);
             vm.getPopularMovies().observe(getViewLifecycleOwner(), items -> {
                 if (binding != null && binding.trendingRv.getAdapter() != null)
                     ((ContentAdapter) binding.trendingRv.getAdapter()).submitList(items);
             });
         });
         binding.tabPopular.setOnClickListener(v -> {
-            setTabActive(false);
+            setTab(false);
             vm.getTopRated().observe(getViewLifecycleOwner(), items -> {
                 if (binding != null && binding.trendingRv.getAdapter() != null)
                     ((ContentAdapter) binding.trendingRv.getAdapter()).submitList(items);
@@ -105,9 +90,9 @@ public class HomeFragment extends Fragment {
         });
 
         // Rows
-        setupRow(binding.trendingRv, vm.getPopularMovies());
+        setupRow(binding.trendingRv,    vm.getPopularMovies());
         setupRow(binding.latestMoviesRv, vm.getNowPlaying());
-        setupRow(binding.latestTvRv, vm.getPopularTV());
+        setupRow(binding.latestTvRv,    vm.getPopularTV());
 
         // Continue watching
         refreshContinue();
@@ -135,10 +120,12 @@ public class HomeFragment extends Fragment {
         // View all
         binding.viewAllMovies.setOnClickListener(v -> switchNav(R.id.nav_movies));
         binding.viewAllTv.setOnClickListener(v -> switchNav(R.id.nav_tv));
+    }
 
-        vm.getError().observe(getViewLifecycleOwner(), err -> {
-            if (err != null) Log.e(TAG, "error: " + err);
-        });
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshContinue();
     }
 
     private void setupRow(androidx.recyclerview.widget.RecyclerView rv,
@@ -148,37 +135,30 @@ public class HomeFragment extends Fragment {
             new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         rv.setAdapter(adapter);
         data.observe(getViewLifecycleOwner(), items -> {
-            if (items != null && !items.isEmpty()) adapter.submitList(items);
+            if (items != null) adapter.submitList(items);
         });
-    }
-
-    @Override public void onResume() {
-        super.onResume();
-        refreshContinue();
     }
 
     private void refreshContinue() {
         if (binding == null || getContext() == null) return;
-        try {
-            List<ContentItem> list = LibraryManager.get(requireContext(), LibraryManager.CONTINUE);
-            boolean show = !list.isEmpty() && com.fountainhome.streaming.service.AppPreferences
-                .getShowContinue(requireContext());
-            binding.continueSection.setVisibility(show ? View.VISIBLE : View.GONE);
-            if (show) {
-                ContentAdapter ca = new ContentAdapter(this::openWatch);
-                binding.continueRv.setLayoutManager(
-                    new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-                binding.continueRv.setAdapter(ca);
-                ca.submitList(list);
-            }
-        } catch (Exception e) { Log.e(TAG, "refreshContinue: " + e); }
+        List<ContentItem> list = LibraryManager.get(requireContext(), LibraryManager.CONTINUE);
+        boolean show = !list.isEmpty()
+            && AppPreferences.getShowContinue(requireContext());
+        binding.continueSection.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show) {
+            ContentAdapter ca = new ContentAdapter(this::openWatch);
+            binding.continueRv.setLayoutManager(
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            binding.continueRv.setAdapter(ca);
+            ca.submitList(list);
+        }
     }
 
-    private void setTabActive(boolean trending) {
+    private void setTab(boolean trending) {
         if (binding == null) return;
-        int accent = 0xFFBB86FC, grey = 0xFF888888;
-        binding.tabTrending.setTextColor(trending ? accent : grey);
-        binding.tabPopular.setTextColor(!trending ? accent : grey);
+        int accent = AppPreferences.getAccentColor(requireContext());
+        binding.tabTrending.setTextColor(trending ? accent : 0xFF888888);
+        binding.tabPopular.setTextColor(!trending ? accent : 0xFF888888);
     }
 
     private void openWatch(ContentItem item) {
@@ -195,7 +175,8 @@ public class HomeFragment extends Fragment {
         if (nav != null) nav.setSelectedItemId(navItemId);
     }
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
         binding = null;
     }

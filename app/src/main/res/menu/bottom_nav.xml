@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/nav_home"
-        android:icon="@drawable/ic_nav_home" android:title="Home"/>
+        android:icon="@drawable/ic_nav_home"
+        android:title="Home"/>
     <item android:id="@+id/nav_movies"
-        android:icon="@drawable/ic_nav_movies" android:title="Movies"/>
+        android:icon="@drawable/ic_nav_movies"
+        android:title="Movies"/>
     <item android:id="@+id/nav_tv"
-        android:icon="@drawable/ic_nav_tv" android:title="TV Series"/>
+        android:icon="@drawable/ic_nav_tv"
+        android:title="TV Series"/>
     <item android:id="@+id/nav_anime"
-        android:icon="@drawable/ic_anime" android:title="Anime"/>
+        android:icon="@drawable/ic_anime"
+        android:title="Anime"/>
     <item android:id="@+id/nav_more"
-        android:icon="@drawable/ic_nav_more" android:title="More"/>
+        android:icon="@drawable/ic_nav_more"
+        android:title="More"/>
 </menu>

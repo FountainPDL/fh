@@ -3,179 +3,302 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground">
+    android:background="#0A0A0A">
 
-    <!-- Top bar — NO F CIRCLE -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="60dp"
+    <!-- Top bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
         android:gravity="center_vertical"
-        android:paddingStart="16dp" android:paddingEnd="8dp"
-        android:background="?attr/colorSurface">
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:background="#141414">
 
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="FOUNTAIN"
-            android:textColor="@color/accent_current"
-            android:textSize="20sp"
-            android:letterSpacing="0.15"
+            android:textColor="#BB86FC"
+            android:textSize="22sp"
             android:textStyle="bold"
+            android:letterSpacing="0.15"
             android:fontFamily="sans-serif-condensed"/>
 
-        <ImageButton android:id="@+id/search_btn"
-            android:layout_width="44dp" android:layout_height="44dp"
+        <ImageButton
+            android:id="@+id/search_btn"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:src="@drawable/ic_search"
             android:background="?attr/selectableItemBackground"
-            android:tint="?android:attr/textColorPrimary"
+            android:tint="#FFFFFF"
             android:contentDescription="Search"/>
     </LinearLayout>
 
-    <SearchView android:id="@+id/search_bar"
-        android:layout_width="match_parent" android:layout_height="52dp"
+    <!-- Search bar -->
+    <SearchView
+        android:id="@+id/search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
         android:queryHint="Search movies, TV, anime..."
         android:iconifiedByDefault="false"
+        android:background="#1A1A1A"
         android:visibility="gone"/>
 
     <!-- Trending / Popular tabs -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
         android:orientation="horizontal"
-        android:paddingStart="14dp" android:paddingEnd="14dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:gravity="center_vertical">
-        <TextView android:id="@+id/tab_trending"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Trending" android:textSize="15sp" android:textStyle="bold"
-            android:textColor="@color/accent_current" android:paddingEnd="20dp"/>
-        <TextView android:id="@+id/tab_popular"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Popular" android:textSize="15sp"
+
+        <TextView
+            android:id="@+id/tab_trending"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Trending"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#BB86FC"
+            android:paddingEnd="20dp"/>
+
+        <TextView
+            android:id="@+id/tab_popular"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Popular"
+            android:textSize="15sp"
             android:textColor="#888888"/>
     </LinearLayout>
 
-    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
-        android:overScrollMode="never" android:scrollbars="none">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never"
+        android:scrollbars="none">
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Hero carousel -->
-            <FrameLayout android:layout_width="match_parent" android:layout_height="360dp">
+            <!-- Hero banner -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="340dp">
 
-                <ImageView android:id="@+id/featured_banner"
-                    android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:scaleType="centerCrop" android:background="#111"/>
+                <ImageView
+                    android:id="@+id/featured_banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="#111111"/>
 
-                <View android:layout_width="match_parent" android:layout_height="match_parent"
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="bottom"
                     android:orientation="vertical"
-                    android:paddingHorizontal="20dp" android:paddingBottom="20dp">
+                    android:paddingHorizontal="20dp"
+                    android:paddingBottom="16dp">
 
-                    <TextView android:id="@+id/featured_title"
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF" android:textSize="26sp"
-                        android:textStyle="bold" android:gravity="center"
-                        android:shadowColor="#000" android:shadowRadius="8"
-                        android:shadowDx="1" android:shadowDy="1"/>
+                    <TextView
+                        android:id="@+id/featured_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:shadowColor="#000000"
+                        android:shadowRadius="8"/>
 
-                    <TextView android:id="@+id/featured_genre"
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#CCCCCC" android:textSize="12sp"
-                        android:gravity="center" android:layout_marginBottom="12dp"/>
+                    <TextView
+                        android:id="@+id/featured_genre"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#CCCCCC"
+                        android:textSize="12sp"
+                        android:gravity="center"
+                        android:layout_marginBottom="12dp"/>
 
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
 
-                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:orientation="vertical" android:gravity="center"
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:gravity="center"
                             android:layout_marginEnd="20dp">
-                            <ImageButton android:id="@+id/detail_btn"
-                                android:layout_width="44dp" android:layout_height="44dp"
+                            <ImageButton
+                                android:id="@+id/detail_btn"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
                                 android:src="@drawable/ic_info"
                                 android:background="?attr/selectableItemBackground"
-                                android:tint="#FFFFFF"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Info" android:textColor="#CCCCCC" android:textSize="11sp"/>
+                                android:tint="#FFFFFF"
+                                android:contentDescription="Info"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Info"
+                                android:textColor="#CCCCCC"
+                                android:textSize="11sp"/>
                         </LinearLayout>
 
-                        <Button android:id="@+id/watch_now_btn"
-                            android:layout_width="150dp" android:layout_height="48dp"
+                        <Button
+                            android:id="@+id/watch_now_btn"
+                            android:layout_width="150dp"
+                            android:layout_height="48dp"
                             android:text="▶  PLAY NOW"
-                            android:textSize="13sp" android:textStyle="bold"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
                             android:textColor="#000000"
-                            android:backgroundTint="@color/accent_current"/>
+                            android:backgroundTint="#BB86FC"/>
 
-                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:orientation="vertical" android:gravity="center"
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:gravity="center"
                             android:layout_marginStart="20dp">
-                            <TextView android:id="@+id/featured_add"
-                                android:layout_width="44dp" android:layout_height="44dp"
+                            <TextView
+                                android:id="@+id/featured_add"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
                                 android:gravity="center"
                                 android:text="+"
-                                android:textColor="#FFFFFF" android:textSize="24sp"
+                                android:textColor="#FFFFFF"
+                                android:textSize="24sp"
                                 android:background="?attr/selectableItemBackground"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Add" android:textColor="#CCCCCC" android:textSize="11sp"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Add"
+                                android:textColor="#CCCCCC"
+                                android:textSize="11sp"/>
                         </LinearLayout>
+
                     </LinearLayout>
                 </LinearLayout>
             </FrameLayout>
 
             <!-- Continue watching -->
-            <LinearLayout android:id="@+id/continue_section"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:visibility="gone">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            <LinearLayout
+                android:id="@+id/continue_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:text="Continue watching"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
-                <androidx.recyclerview.widget.RecyclerView android:id="@+id/continue_rv"
-                    android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:paddingHorizontal="8dp" android:nestedScrollingEnabled="false"/>
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:padding="14dp"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/continue_rv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="8dp"
+                    android:nestedScrollingEnabled="false"/>
             </LinearLayout>
 
             <!-- Trending row -->
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/trending_rv"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp" android:paddingTop="8dp"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/trending_rv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingTop="8dp"
                 android:nestedScrollingEnabled="false"/>
 
             <!-- Latest movies -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingStart="14dp" android:paddingEnd="14dp"
-                android:paddingTop="20dp" android:paddingBottom="8dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="8dp"
                 android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Latest movies"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="15sp" android:textStyle="bold"/>
-                <TextView android:id="@+id/view_all_movies"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="@color/accent_current"
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Latest Movies"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/view_all_movies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View all"
+                    android:textColor="#BB86FC"
                     android:textSize="12sp"/>
             </LinearLayout>
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_movies_rv"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp" android:nestedScrollingEnabled="false"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/latest_movies_rv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:nestedScrollingEnabled="false"/>
 
             <!-- Latest TV -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingStart="14dp" android:paddingEnd="14dp"
-                android:paddingTop="20dp" android:paddingBottom="8dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="8dp"
                 android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Latest TV Series"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="15sp" android:textStyle="bold"/>
-                <TextView android:id="@+id/view_all_tv"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="@color/accent_current"
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Latest TV Series"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/view_all_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View all"
+                    android:textColor="#BB86FC"
                     android:textSize="12sp"/>
             </LinearLayout>
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_tv_rv"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp" android:paddingBottom="24dp"
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/latest_tv_rv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingBottom="24dp"
                 android:nestedScrollingEnabled="false"/>
 
         </LinearLayout>
