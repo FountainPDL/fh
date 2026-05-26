@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="accent_current">#FFBB86FC</color>
-    <color name="accent_purple">#FFBB86FC</color>
-    <color name="accent_blue">#FF2196F3</color>
-    <color name="accent_red">#FFCF6679</color>
-    <color name="accent_green">#FF4CAF50</color>
-    <color name="accent_orange">#FFFF9800</color>
-    <color name="accent_pink">#FFE91E8C</color>
-    <color name="accent_teal">#FF03DAC6</color>
+    <color name="purple">#FFBB86FC</color>
     <color name="surface">#FF141414</color>
-    <color name="background_dark">#FF0A0A0A</color>
+    <color name="background">#FF0A0A0A</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="divider">#FF2A2A2A</color>
-    <color name="icon_background">#FF120024</color>
 </resources>

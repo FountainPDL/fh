@@ -1,5 +1,4 @@
 -keep class com.fountainhome.** { *; }
 -keep class com.google.gson.** { *; }
 -keep class retrofit2.** { *; }
--keep class okhttp3.** { *; }
 -keepattributes Signature

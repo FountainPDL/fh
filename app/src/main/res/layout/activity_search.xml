@@ -1,40 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#070707">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:gravity="center_vertical"
-        android:background="#0E0E0E"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#0A0A0A">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="60dp"
+        android:gravity="center_vertical" android:background="#141414"
         android:paddingStart="4dp" android:paddingEnd="8dp">
-
         <ImageButton android:id="@+id/back_btn"
             android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@drawable/ic_close"
-            android:background="?attr/selectableItemBackground"
-            android:tint="#FFFFFF" android:contentDescription="Back"/>
-
+            android:src="@drawable/ic_close" android:tint="#FFFFFF"
+            android:background="?attr/selectableItemBackground" android:contentDescription="Back"/>
         <SearchView android:id="@+id/search_input"
-            android:layout_width="0dp" android:layout_height="48dp"
-            android:layout_weight="1"
-            android:queryHint="Search movies, TV shows..."
-            android:iconifiedByDefault="false"
-            android:background="#1A1A1A"/>
+            android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
+            android:queryHint="Search movies, TV shows, anime..."
+            android:iconifiedByDefault="false" android:background="#1A1A1A"/>
     </LinearLayout>
-
     <TextView android:id="@+id/empty_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Type to search..."
-        android:textColor="#555555" android:textSize="14sp"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Type to search..." android:textColor="#555555" android:textSize="14sp"
         android:gravity="center" android:padding="40dp"/>
-
     <androidx.recyclerview.widget.RecyclerView android:id="@+id/results_rv"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="4dp"/>
+        android:layout_width="match_parent" android:layout_height="match_parent" android:padding="4dp"/>
 </LinearLayout>

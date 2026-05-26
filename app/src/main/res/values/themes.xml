@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">#BB86FC</item>
-        <item name="colorPrimaryVariant">#3700B3</item>
         <item name="colorOnPrimary">#000000</item>
-        <item name="colorSecondary">#BB86FC</item>
         <item name="android:statusBarColor">#BB86FC</item>
-        <item name="android:navigationBarColor">#141414</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">#F5F5F5</item>
     </style>
+    <style name="Theme.FountainHome.Player" parent="Theme.FountainHome"/>
 </resources>

@@ -1,69 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#070707">
-
-    <!-- Header row -->
-    <LinearLayout
-        android:layout_width="match_parent" android:layout_height="56dp"
-        android:gravity="center_vertical"
-        android:background="#0A0A0A"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#0A0A0A">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+        android:gravity="center_vertical" android:background="#141414"
         android:paddingStart="4dp" android:paddingEnd="4dp">
-
         <ImageButton android:id="@+id/back_btn"
             android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@drawable/ic_close"
+            android:src="@drawable/ic_close" android:tint="#FFFFFF"
             android:background="?attr/selectableItemBackground"
-            android:tint="#FFFFFF" android:contentDescription="Back"/>
-
+            android:contentDescription="Back" android:visibility="gone"/>
         <TextView android:id="@+id/page_title"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="#FFFFFF" android:textSize="18sp"
-            android:textStyle="bold" android:layout_marginStart="8dp"/>
-
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold"
+            android:layout_marginStart="8dp"/>
         <ImageButton android:id="@+id/search_btn"
             android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@drawable/ic_search"
-            android:background="?attr/selectableItemBackground"
-            android:tint="#CCCCCC" android:contentDescription="Search"/>
+            android:src="@drawable/ic_search" android:tint="#FFFFFF"
+            android:background="?attr/selectableItemBackground" android:contentDescription="Search"/>
     </LinearLayout>
-
-    <!-- Tabs: Latest | Trending | Popular | Filter -->
-    <LinearLayout
-        android:layout_width="match_parent" android:layout_height="44dp"
-        android:orientation="horizontal"
-        android:paddingStart="14dp" android:paddingEnd="14dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
+        android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
         android:gravity="center_vertical">
-
         <TextView android:id="@+id/tab_latest"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Latest" android:textSize="13sp" android:textColor="#CFFF04"
-            android:paddingEnd="16dp"/>
-
+            android:text="Latest" android:textSize="13sp" android:textColor="#BB86FC"
+            android:textStyle="bold" android:paddingEnd="16dp"/>
         <TextView android:id="@+id/tab_trending"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Trending" android:textSize="13sp" android:textColor="#888888"
             android:paddingEnd="16dp"/>
-
         <TextView android:id="@+id/tab_popular"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
             android:text="Popular" android:textSize="13sp" android:textColor="#888888"/>
-
-        <TextView
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Filter" android:textColor="#888888" android:textSize="13sp"
-            android:paddingEnd="4dp"/>
+        <ImageButton android:id="@+id/filter_btn"
+            android:layout_width="36dp" android:layout_height="36dp"
+            android:src="@drawable/ic_filter" android:tint="#888888"
+            android:background="?attr/selectableItemBackground" android:contentDescription="Filter"/>
     </LinearLayout>
-
     <ProgressBar android:id="@+id/progress_bar"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="center" android:visibility="gone"/>
-
     <androidx.recyclerview.widget.RecyclerView android:id="@+id/content_rv"
-        android:layout_width="match_parent" android:layout_height="match_parent"
-        android:padding="4dp"/>
+        android:layout_width="match_parent" android:layout_height="match_parent" android:padding="4dp"/>
 </LinearLayout>
