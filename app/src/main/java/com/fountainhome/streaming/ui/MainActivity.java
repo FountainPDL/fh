@@ -17,61 +17,95 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Global crash handler — shows error ON SCREEN instead of silent close
+
+        // MUST be before super.onCreate to catch all crashes
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            runOnUiThread(() -> {
-                try {
-                    ScrollView sv = new ScrollView(this);
-                    TextView tv = new TextView(this);
-                    tv.setPadding(32, 80, 32, 32);
-                    tv.setTextSize(12);
-                    tv.setTextColor(0xFFFF4444);
-                    tv.setBackgroundColor(0xFF0A0A0A);
-
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("CRASH REPORT — copy this:\n\n");
-                    sb.append(throwable.toString()).append("\n\n");
-                    for (StackTraceElement e : throwable.getStackTrace()) {
-                        sb.append("  at ").append(e.toString()).append("\n");
-                        if (sb.length() > 3000) { sb.append("..."); break; }
-                    }
-                    Throwable cause = throwable.getCause();
-                    if (cause != null) {
-                        sb.append("\nCaused by: ").append(cause.toString()).append("\n");
-                        for (StackTraceElement e : cause.getStackTrace()) {
-                            sb.append("  at ").append(e.toString()).append("\n");
-                            if (sb.length() > 5000) break;
-                        }
-                    }
-
-                    tv.setText(sb.toString());
-                    sv.addView(tv);
-                    setContentView(sv);
-                } catch (Exception ignored) {}
-            });
+            try {
+                final String msg = buildCrashReport(throwable);
+                runOnUiThread(() -> {
+                    try {
+                        ScrollView sv = new ScrollView(MainActivity.this);
+                        TextView tv = new TextView(MainActivity.this);
+                        tv.setPadding(24, 80, 24, 24);
+                        tv.setTextSize(11);
+                        tv.setTextColor(0xFFFF6666);
+                        tv.setBackgroundColor(0xFF000000);
+                        tv.setText(msg);
+                        sv.addView(tv);
+                        setContentView(sv);
+                    } catch (Exception ignored) {}
+                });
+            } catch (Exception ignored) {}
         });
 
-        super.onCreate(savedInstanceState);
-
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-
-        applyAccent();
-
-        if (savedInstanceState == null) {
-            loadFragment(new HomeFragment(), "home");
-            binding.bottomNav.setSelectedItemId(R.id.nav_home);
+        try {
+            super.onCreate(savedInstanceState);
+        } catch (Throwable t) {
+            showCrash(t);
+            return;
         }
 
-        binding.bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_home)   { loadFragment(new HomeFragment(),   "home");   return true; }
-            if (id == R.id.nav_movies) { loadFragment(new MoviesFragment(), "movies"); return true; }
-            if (id == R.id.nav_tv)     { loadFragment(new TVFragment(),     "tv");     return true; }
-            if (id == R.id.nav_anime)  { loadFragment(new AnimeFragment(),  "anime");  return true; }
-            if (id == R.id.nav_more)   { loadFragment(new MoreFragment(),   "more");   return true; }
-            return false;
-        });
+        try {
+            binding = ActivityMainBinding.inflate(getLayoutInflater());
+            setContentView(binding.getRoot());
+        } catch (Throwable t) {
+            showCrash(t);
+            return;
+        }
+
+        try {
+            applyAccent();
+        } catch (Throwable ignored) {}
+
+        try {
+            if (savedInstanceState == null) {
+                loadFragment(new HomeFragment(), "home");
+                binding.bottomNav.setSelectedItemId(R.id.nav_home);
+            }
+
+            binding.bottomNav.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+                if (id == R.id.nav_home)   { loadFragment(new HomeFragment(),   "home");   return true; }
+                if (id == R.id.nav_movies) { loadFragment(new MoviesFragment(), "movies"); return true; }
+                if (id == R.id.nav_tv)     { loadFragment(new TVFragment(),     "tv");     return true; }
+                if (id == R.id.nav_anime)  { loadFragment(new AnimeFragment(),  "anime");  return true; }
+                if (id == R.id.nav_more)   { loadFragment(new MoreFragment(),   "more");   return true; }
+                return false;
+            });
+        } catch (Throwable t) {
+            showCrash(t);
+        }
+    }
+
+    private void showCrash(Throwable t) {
+        try {
+            ScrollView sv = new ScrollView(this);
+            TextView tv = new TextView(this);
+            tv.setPadding(24, 80, 24, 24);
+            tv.setTextSize(11);
+            tv.setTextColor(0xFFFF6666);
+            tv.setBackgroundColor(0xFF000000);
+            tv.setText(buildCrashReport(t));
+            sv.addView(tv);
+            setContentView(sv);
+        } catch (Exception ignored) {}
+    }
+
+    private String buildCrashReport(Throwable t) {
+        StringBuilder sb = new StringBuilder("=== CRASH REPORT ===\n\n");
+        sb.append(t.getClass().getName()).append(": ").append(t.getMessage()).append("\n\n");
+        for (StackTraceElement e : t.getStackTrace()) {
+            sb.append("  ").append(e).append("\n");
+            if (sb.length() > 4000) { sb.append("...truncated"); break; }
+        }
+        if (t.getCause() != null) {
+            sb.append("\nCAUSED BY: ").append(t.getCause()).append("\n");
+            for (StackTraceElement e : t.getCause().getStackTrace()) {
+                sb.append("  ").append(e).append("\n");
+                if (sb.length() > 7000) break;
+            }
+        }
+        return sb.toString();
     }
 
     public void applyAccent() {
