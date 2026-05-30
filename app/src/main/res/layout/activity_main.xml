@@ -2,18 +2,75 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:orientation="vertical" android:background="#0A0A0A">
+
     <FrameLayout android:id="@+id/fragment_container"
         android:layout_width="match_parent" android:layout_height="0dp"
         android:layout_weight="1"/>
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_nav"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="#141414"
-        android:theme="@style/Theme.FountainHome"
-        app:itemIconTint="#888888"
-        app:itemTextColor="#888888"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav"
-        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+
+    <LinearLayout android:id="@+id/bottom_nav_bar"
+        android:layout_width="match_parent" android:layout_height="60dp"
+        android:orientation="horizontal" android:background="#141414"
+        android:gravity="center_vertical">
+
+        <LinearLayout android:id="@+id/nav_home"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:orientation="vertical"
+            android:gravity="center" android:background="?attr/selectableItemBackground">
+            <ImageView android:id="@+id/icon_home"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_nav_home"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Home" android:textSize="10sp" android:textColor="#888888"
+                android:id="@+id/label_home"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/nav_movies"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:orientation="vertical"
+            android:gravity="center" android:background="?attr/selectableItemBackground">
+            <ImageView android:id="@+id/icon_movies"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_nav_movies"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Movies" android:textSize="10sp" android:textColor="#888888"
+                android:id="@+id/label_movies"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/nav_tv"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:orientation="vertical"
+            android:gravity="center" android:background="?attr/selectableItemBackground">
+            <ImageView android:id="@+id/icon_tv"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_nav_tv"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="TV" android:textSize="10sp" android:textColor="#888888"
+                android:id="@+id/label_tv"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/nav_anime"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:orientation="vertical"
+            android:gravity="center" android:background="?attr/selectableItemBackground">
+            <ImageView android:id="@+id/icon_anime"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_anime"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Anime" android:textSize="10sp" android:textColor="#888888"
+                android:id="@+id/label_anime"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/nav_more"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:orientation="vertical"
+            android:gravity="center" android:background="?attr/selectableItemBackground">
+            <ImageView android:id="@+id/icon_more"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_nav_more"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="More" android:textSize="10sp" android:textColor="#888888"
+                android:id="@+id/label_more"/>
+        </LinearLayout>
+
+    </LinearLayout>
 </LinearLayout>
