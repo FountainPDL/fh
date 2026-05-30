@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.NoActionBar">
+    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.NoActionBar.Bridge">
         <item name="colorPrimary">#BB86FC</item>
         <item name="colorPrimaryVariant">#9B59FC</item>
         <item name="colorOnPrimary">#000000</item>
@@ -8,7 +8,7 @@
         <item name="colorSecondaryVariant">#9B59FC</item>
         <item name="colorOnSecondary">#000000</item>
         <item name="colorError">#CF6679</item>
-        <item name="colorOnError">#000000</item>
+        <item name="colorOnError">#FFFFFF</item>
         <item name="colorSurface">#141414</item>
         <item name="colorOnSurface">#FFFFFF</item>
         <item name="android:colorBackground">#0A0A0A</item>
@@ -19,6 +19,5 @@
         <item name="android:statusBarColor">#0A0A0A</item>
         <item name="android:navigationBarColor">#141414</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:forceDarkAllowed">false</item>
     </style>
 </resources>
