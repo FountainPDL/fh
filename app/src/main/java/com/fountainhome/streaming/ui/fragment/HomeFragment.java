@@ -26,6 +26,6 @@ public class HomeFragment extends Fragment {
     private void refreshContinue(){if(b==null||getContext()==null)return;List<ContentItem>list=LibraryManager.get(requireContext(),LibraryManager.CONTINUE);boolean show=!list.isEmpty()&&AppPreferences.getShowContinue(requireContext());b.continueSection.setVisibility(show?View.VISIBLE:View.GONE);if(show){ContentAdapter a=new ContentAdapter(this::open);b.continueRv.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false));b.continueRv.setAdapter(a);a.submitList(list);}}
     private void setTab(boolean t){if(b==null)return;int ac=AppPreferences.getAccentColor(requireContext());b.tabTrending.setTextColor(t?ac:0xFF888888);b.tabPopular.setTextColor(!t?ac:0xFF888888);}
     private void open(ContentItem item){Intent i=new Intent(getContext(),WatchActivity.class);i.putExtra("type",item.mediaType);i.putExtra("id",item.id);startActivity(i);}
-    private void nav(int id){if(getActivity()==null)return;com.google.android.material.bottomnavigation.BottomNavigationView n=getActivity().findViewById(R.id.bottom_nav);if(n!=null)n.setSelectedItemId(id);}
+    private void nav(int id) {}
     @Override public void onDestroyView(){super.onDestroyView();b=null;}
 }
