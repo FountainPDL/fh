@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.webkit.*;
-import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,12 +18,22 @@ public class StreamExtractor {
         found.set(false);
         h.post(()->{
             wv=new WebView(ctx.getApplicationContext());
-            WebSettings ws=wv.getSettings();ws.setJavaScriptEnabled(true);ws.setDomStorageEnabled(true);ws.setMediaPlaybackRequiresUserGesture(false);ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);ws.setUserAgentString("Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36");
+            WebSettings ws=wv.getSettings();
+            ws.setJavaScriptEnabled(true);ws.setDomStorageEnabled(true);
+            ws.setMediaPlaybackRequiresUserGesture(false);
+            ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            ws.setUserAgentString("Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36");
             wv.setWebViewClient(new WebViewClient(){
                 @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){
                     if(found.get())return null;
                     String url=r.getUrl().toString().toLowerCase();
-                    for(String p:PATTERNS)if(url.contains(p)){found.set(true);Map<String,String>headers=new HashMap<>(r.getRequestHeaders());headers.put("Referer",embedUrl);h.post(()->{cb.onFound(r.getUrl().toString(),headers);destroy();});break;}
+                    for(String p:PATTERNS)if(url.contains(p)){
+                        found.set(true);
+                        Map<String,String>hd=new HashMap<>(r.getRequestHeaders());
+                        hd.put("Referer",embedUrl);
+                        h.post(()->{cb.onFound(r.getUrl().toString(),hd);destroy();});
+                        break;
+                    }
                     return null;
                 }
             });

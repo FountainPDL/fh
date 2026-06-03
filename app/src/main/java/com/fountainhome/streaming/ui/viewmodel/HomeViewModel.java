@@ -24,7 +24,7 @@ public class HomeViewModel extends AndroidViewModel {
     private List<ContentItem>toMovie(List<Models.MovieResult>rs){List<ContentItem>l=new ArrayList<>();if(rs==null)return l;for(Models.MovieResult r:rs){ContentItem ci=new ContentItem();ci.id=r.id;ci.title=r.title;ci.posterPath=r.poster_path;ci.backdropPath=r.backdrop_path;ci.rating=r.vote_average;ci.mediaType="movie";ci.releaseDate=r.release_date;l.add(ci);}return l;}
     private List<ContentItem>toTV(List<Models.TVResult>rs){List<ContentItem>l=new ArrayList<>();if(rs==null)return l;for(Models.TVResult r:rs){ContentItem ci=new ContentItem();ci.id=r.id;ci.name=r.name;ci.posterPath=r.poster_path;ci.backdropPath=r.backdrop_path;ci.rating=r.vote_average;ci.mediaType="tv";l.add(ci);}return l;}
     @Override protected void onCleared(){cleared=true;if(heroR!=null)hero.removeCallbacks(heroR);super.onCleared();}
-    public LiveData<ContentItem> getFeatured(){return featured;}
+    public LiveData<ContentItem>getFeatured(){return featured;}
     public LiveData<List<ContentItem>>getPopularMovies(){return popularMovies;}
     public LiveData<List<ContentItem>>getPopularTV(){return popularTV;}
     public LiveData<List<ContentItem>>getTopRated(){return topRated;}

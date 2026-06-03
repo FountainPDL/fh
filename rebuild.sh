@@ -1,36 +1,28 @@
 #!/bin/bash
 set -e
 cd ~/fh
+echo "=== FOUNTAIN HOME COMPLETE REBUILD ==="
 
-echo "╔══════════════════════════════════════════╗"
-echo "║   FOUNTAIN HOME v1.23 — FULL REBUILD     ║"
-echo "╚══════════════════════════════════════════╝"
-
-echo ""
-echo "Step 1: Copying helper scripts..."
-cp ~/fh/setup_files.py /tmp/setup_files.py 2>/dev/null || true
-cp ~/fh/write_java_files.py /tmp/write_java_files.py 2>/dev/null || true
-
-echo "Step 2: Cleaning old source..."
+echo "Cleaning..."
 rm -rf app/src/main/java/com/fountainhome
 rm -rf app/src/main/res/layout
 rm -rf app/src/main/res/values
 rm -rf app/src/main/res/values-night
 rm -rf app/src/main/res/drawable
 rm -rf app/src/main/res/menu
+rm -rf app/src/main/res/anim
 rm -rf app/src/main/res/mipmap-anydpi-v26
 
 mkdir -p app/src/main/java/com/fountainhome/streaming/{api,download,service,ui/{adapter,fragment,player,viewmodel},anime}
-mkdir -p app/src/main/res/{layout,values,values-night,drawable,menu,mipmap-anydpi-v26}
+mkdir -p app/src/main/res/{layout,values,drawable,menu,anim,mipmap-anydpi-v26}
 mkdir -p app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}
 
-echo "Step 3: Writing build config files..."
-
-cat > build.gradle << 'GRADLE'
+echo "Writing build files..."
+cat > build.gradle << 'EOF'
 plugins { id 'com.android.application' version '8.2.2' apply false }
-GRADLE
+EOF
 
-cat > settings.gradle << 'GRADLE'
+cat > settings.gradle << 'EOF'
 pluginManagement {
     repositories { gradlePluginPortal(); google(); mavenCentral() }
 }
@@ -40,35 +32,28 @@ dependencyResolutionManagement {
 }
 rootProject.name = "FountainHome"
 include ':app'
-GRADLE
+EOF
 
-cat > gradle.properties << 'GRADLE'
+cat > gradle.properties << 'EOF'
 org.gradle.jvmargs=-Xmx2048m
 org.gradle.parallel=true
 android.useAndroidX=true
 android.enableJetifier=true
-GRADLE
+EOF
 
-cat > app/proguard-rules.pro << 'GRADLE'
--keep class com.fountainhome.** { *; }
--keep class com.google.gson.** { *; }
--keep class retrofit2.** { *; }
--keepattributes Signature
-GRADLE
-
-cat > app/build.gradle << 'GRADLE'
+cat > app/build.gradle << 'EOF'
 plugins { id 'com.android.application' }
 android {
     namespace 'com.fountainhome.streaming'
     compileSdk 34
     defaultConfig {
         applicationId "com.fountainhome.streaming"
-        minSdk 24; targetSdk 34; versionCode 3; versionName "1.23"
+        minSdk 24; targetSdk 34; versionCode 4; versionName "1.24"
         buildConfigField "String", "TMDB_API_KEY", '"8baba8ab6b8bbe247645bcae7df63d0d"'
     }
     buildTypes {
         debug { debuggable true }
-        release { minifyEnabled false; proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' }
+        release { minifyEnabled false; proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),'proguard-rules.pro' }
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     buildFeatures { viewBinding true; buildConfig true }
@@ -96,28 +81,51 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-livedata:2.7.0'
     implementation 'androidx.work:work-runtime:2.9.0'
 }
-GRADLE
+EOF
 
-echo "Step 4: Running Python file writers..."
+cat > app/proguard-rules.pro << 'EOF'
+-keep class com.fountainhome.** { *; }
+-keep class com.google.gson.** { *; }
+-keep class retrofit2.** { *; }
+-keepattributes Signature
+EOF
+
+echo "Running Python file writers..."
 python3 ~/fh/setup_files.py
+python3 ~/fh/write_java_files.py
 
-echo ""
-echo "Step 5: Verifying key files..."
-test -f app/src/main/AndroidManifest.xml && echo "  manifest OK" || echo "  MISSING manifest!"
-test -f app/src/main/res/layout/activity_main.xml && echo "  activity_main OK" || echo "  MISSING activity_main!"
-test -f app/src/main/res/layout/fragment_home.xml && echo "  fragment_home OK" || echo "  MISSING fragment_home!"
-test -f app/src/main/java/com/fountainhome/streaming/ui/MainActivity.java && echo "  MainActivity OK" || echo "  MISSING MainActivity!"
-test -f app/src/main/java/com/fountainhome/streaming/FountainApp.java && echo "  FountainApp OK" || echo "  MISSING FountainApp!"
+echo "Resizing icon..."
+python3 << 'PYEOF'
+import os
+try:
+    from PIL import Image
+    src = os.path.expanduser("~/fh/icon_source.png")
+    if not os.path.exists(src):
+        for p in ["/sdcard/Download/1002512526.png","/sdcard/Download/fountain_icon.png"]:
+            if os.path.exists(p): src=p; break
+    img = Image.open(src).convert("RGBA")
+    w,h=img.size
+    if w!=h:
+        s=min(w,h); img=img.crop(((w-s)//2,(h-s)//2,(w+s)//2,(h+s)//2))
+    for folder,size in {"mipmap-mdpi":48,"mipmap-hdpi":72,"mipmap-xhdpi":96,"mipmap-xxhdpi":144,"mipmap-xxxhdpi":192}.items():
+        out=f"app/src/main/res/{folder}"
+        os.makedirs(out,exist_ok=True)
+        r=img.resize((size,size),Image.LANCZOS)
+        r.save(f"{out}/ic_launcher.png"); r.save(f"{out}/ic_launcher_round.png")
+        print(f"  {folder}: {size}px")
+    print("Icon done!")
+except Exception as e:
+    print(f"Icon error: {e}")
+PYEOF
+
+echo "Verifying..."
 COUNT=$(find app/src/main/java -name "*.java" | wc -l)
-echo "  Total Java files: $COUNT"
+echo "  Java files: $COUNT"
+test -f app/src/main/AndroidManifest.xml && echo "  Manifest: OK"
+test -f app/src/main/res/values/themes.xml && echo "  Themes: OK"
 
-echo ""
-echo "Step 6: Committing and pushing..."
+echo "Pushing..."
 git add .
-git commit -m "v1.23 COMPLETE REBUILD — all features, custom icon, clean from scratch"
+git commit -m "v1.24 FULL REBUILD - all features, custom nav, video playback, adblock, anime hero"
 git push
-
-echo ""
-echo "╔══════════════════════════════════════════╗"
-echo "║  DONE! Watch GitHub Actions for build.   ║"
-echo "╚══════════════════════════════════════════╝"
+echo "=== DONE - check GitHub Actions ==="

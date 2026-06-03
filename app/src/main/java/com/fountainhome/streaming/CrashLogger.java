@@ -18,7 +18,6 @@ public class CrashLogger {
                 }
                 pw.flush(); pw.close();
             } catch (Exception ignored) {}
-            // Let system handle it so app closes normally
             android.os.Process.killProcess(android.os.Process.myPid());
         });
     }
@@ -28,8 +27,11 @@ public class CrashLogger {
             if (!f.exists()) return "No crash log yet.";
             BufferedReader br = new BufferedReader(new FileReader(f));
             StringBuilder sb = new StringBuilder();
-            String line; while ((line = br.readLine()) != null) sb.append(line).append("\n");
-            br.close(); return sb.toString();
-        } catch (Exception e) { return "Error reading log: " + e.getMessage(); }
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line).append("
+");
+            br.close();
+            return sb.toString();
+        } catch (Exception e) { return "Error: " + e.getMessage(); }
     }
 }
