@@ -28,8 +28,7 @@ public class CrashLogger {
             BufferedReader br = new BufferedReader(new FileReader(f));
             StringBuilder sb = new StringBuilder();
             String line;
-            while ((line = br.readLine()) != null) sb.append(line).append("
-");
+            while ((line = br.readLine()) != null) { sb.append(line); sb.append("\n"); }
             br.close();
             return sb.toString();
         } catch (Exception e) { return "Error: " + e.getMessage(); }
