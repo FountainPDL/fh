@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#0A0A0A">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+        android:gravity="center_vertical" android:background="#141414" android:paddingStart="16dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Menu" android:textSize="22sp" android:textStyle="bold" android:textColor="#FFFFFF"/>
+    </LinearLayout>
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:overScrollMode="never">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingBottom="32dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:padding="16dp" android:background="#141414" android:layout_marginBottom="8dp">
+                <TextView android:layout_width="56dp" android:layout_height="56dp"
+                    android:background="@drawable/circle_bg" android:gravity="center"
+                    android:text="F" android:textColor="#000000" android:textSize="22sp"
+                    android:textStyle="bold" android:layout_marginEnd="16dp"/>
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:gravity="center_vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Fountain Home" android:textColor="#BB86FC" android:textSize="17sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="v1.24 — Premium Streaming" android:textColor="#888888" android:textSize="12sp"/>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="LIBRARY" android:textColor="#BB86FC" android:textSize="11sp"
+                android:paddingStart="16dp" android:paddingTop="8dp" android:paddingBottom="4dp"/>
+            <LinearLayout android:id="@+id/nav_watchlist_page"
+                android:layout_width="match_parent" android:layout_height="56dp"
+                android:gravity="center_vertical" android:background="#141414"
+                android:paddingStart="16dp" android:paddingEnd="16dp">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                    android:src="@drawable/ic_watch_later" android:tint="#BB86FC" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Watch List" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_right" android:tint="#555555"/>
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                android:background="#2A2A2A" android:layout_marginStart="56dp"/>
+            <LinearLayout android:id="@+id/nav_downloads_page"
+                android:layout_width="match_parent" android:layout_height="56dp"
+                android:gravity="center_vertical" android:background="#141414"
+                android:paddingStart="16dp" android:paddingEnd="16dp">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                    android:src="@drawable/ic_download" android:tint="#BB86FC" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Downloads" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_right" android:tint="#555555"/>
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                android:background="#2A2A2A" android:layout_marginStart="56dp"/>
+            <LinearLayout android:id="@+id/nav_history_page"
+                android:layout_width="match_parent" android:layout_height="56dp"
+                android:gravity="center_vertical" android:background="#141414"
+                android:paddingStart="16dp" android:paddingEnd="16dp">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                    android:src="@drawable/ic_star" android:tint="#BB86FC" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="History" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_right" android:tint="#555555"/>
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="SETTINGS" android:textColor="#BB86FC" android:textSize="11sp"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="4dp"/>
+            <LinearLayout android:id="@+id/nav_settings_page"
+                android:layout_width="match_parent" android:layout_height="56dp"
+                android:gravity="center_vertical" android:background="#141414"
+                android:paddingStart="16dp" android:paddingEnd="16dp">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                    android:src="@drawable/ic_filter" android:tint="#BB86FC" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Settings" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_right" android:tint="#555555"/>
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                android:background="#2A2A2A" android:layout_marginStart="56dp"/>
+            <LinearLayout android:id="@+id/nav_about_page"
+                android:layout_width="match_parent" android:layout_height="56dp"
+                android:gravity="center_vertical" android:background="#141414"
+                android:paddingStart="16dp" android:paddingEnd="16dp">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                    android:src="@drawable/ic_info" android:tint="#BB86FC" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="About" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_right" android:tint="#555555"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#0A0A0A">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="60dp"
+        android:gravity="center_vertical" android:background="#141414"
+        android:paddingStart="16dp" android:paddingEnd="8dp">
+        <TextView android:id="@+id/app_title"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="FOUNTAIN HOME" android:textColor="#BB86FC"
+            android:textSize="20sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+        <ImageButton android:id="@+id/search_btn"
+            android:layout_width="44dp" android:layout_height="44dp"
+            android:src="@drawable/ic_search" android:tint="#FFFFFF"
+            android:background="?attr/selectableItemBackground" android:contentDescription="Search"/>
+    </LinearLayout>
+    <SearchView android:id="@+id/search_bar"
+        android:layout_width="match_parent" android:layout_height="52dp"
+        android:queryHint="Search movies, TV, anime..."
+        android:iconifiedByDefault="false" android:background="#1A1A1A" android:visibility="gone"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
+        android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="16dp"
+        android:gravity="center_vertical">
+        <TextView android:id="@+id/tab_trending"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Trending" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="#BB86FC" android:paddingEnd="20dp"/>
+        <TextView android:id="@+id/tab_popular"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Popular" android:textSize="14sp" android:textColor="#888888"/>
+    </LinearLayout>
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
+        android:overScrollMode="never" android:scrollbars="none">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <FrameLayout android:layout_width="match_parent" android:layout_height="360dp">
+                <ImageView android:id="@+id/featured_banner"
+                    android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:scaleType="centerCrop" android:background="#111111"/>
+                <View android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:background="@drawable/gradient_hero"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_gravity="bottom" android:orientation="vertical"
+                    android:paddingLeft="20dp" android:paddingRight="20dp" android:paddingBottom="20dp">
+                    <TextView android:id="@+id/featured_title"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF" android:textSize="24sp" android:textStyle="bold"
+                        android:gravity="center" android:shadowColor="#000" android:shadowRadius="10"/>
+                    <TextView android:id="@+id/featured_genre"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textColor="#CCCCCC" android:textSize="12sp"
+                        android:gravity="center" android:layout_marginBottom="14dp"/>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center">
+                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:gravity="center" android:layout_marginEnd="24dp">
+                            <ImageButton android:id="@+id/detail_btn"
+                                android:layout_width="44dp" android:layout_height="44dp"
+                                android:src="@drawable/ic_info" android:tint="#FFFFFF"
+                                android:background="?attr/selectableItemBackground" android:contentDescription="Info"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Info" android:textColor="#CCCCCC" android:textSize="11sp"/>
+                        </LinearLayout>
+                        <Button android:id="@+id/watch_now_btn"
+                            android:layout_width="160dp" android:layout_height="50dp"
+                            android:text="PLAY NOW" android:textSize="14sp" android:textStyle="bold"
+                            android:textColor="#000000" android:backgroundTint="#BB86FC"/>
+                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:gravity="center" android:layout_marginStart="24dp">
+                            <TextView android:id="@+id/featured_add"
+                                android:layout_width="44dp" android:layout_height="44dp"
+                                android:gravity="center" android:text="+"
+                                android:textColor="#FFFFFF" android:textSize="26sp"
+                                android:background="?attr/selectableItemBackground"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Add" android:textColor="#CCCCCC" android:textSize="11sp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </FrameLayout>
+            <LinearLayout android:id="@+id/continue_section"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Continue watching" android:textColor="#FFFFFF"
+                    android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/continue_rv"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingLeft="8dp" android:paddingRight="8dp" android:nestedScrollingEnabled="false"/>
+            </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/trending_rv"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="8dp"
+                android:nestedScrollingEnabled="false"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:paddingLeft="14dp" android:paddingRight="14dp"
+                android:paddingTop="20dp" android:paddingBottom="8dp" android:gravity="center_vertical">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Latest Movies" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/view_all_movies"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+            </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_movies_rv"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingLeft="8dp" android:paddingRight="8dp" android:nestedScrollingEnabled="false"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:paddingLeft="14dp" android:paddingRight="14dp"
+                android:paddingTop="20dp" android:paddingBottom="8dp" android:gravity="center_vertical">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Latest TV Series" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/view_all_tv"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+            </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_tv_rv"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingBottom="24dp"
+                android:nestedScrollingEnabled="false"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#0A0A0A">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+        android:gravity="center_vertical" android:background="#141414"
+        android:paddingStart="4dp" android:paddingEnd="8dp">
+        <ImageButton android:id="@+id/back_btn"
+            android:layout_width="44dp" android:layout_height="44dp"
+            android:src="@drawable/ic_close" android:tint="#FFFFFF"
+            android:background="?attr/selectableItemBackground" android:contentDescription="Back"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Settings" android:textSize="18sp" android:textStyle="bold"
+            android:textColor="#FFFFFF" android:layout_marginStart="8dp"/>
+    </LinearLayout>
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:overScrollMode="never">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingBottom="32dp">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="ACCENT COLOR" android:textColor="#BB86FC" android:textSize="11sp"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="72dp"
+                android:orientation="horizontal" android:background="#141414"
+                android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
+                <View android:id="@+id/color_purple" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginEnd="8dp"/>
+                <View android:id="@+id/color_blue"   android:layout_width="40dp" android:layout_height="40dp" android:layout_marginEnd="8dp"/>
+                <View android:id="@+id/color_red"    android:layout_width="40dp" android:layout_height="40dp" android:layout_marginEnd="8dp"/>
+                <View android:id="@+id/color_green"  android:layout_width="40dp" android:layout_height="40dp" android:layout_marginEnd="8dp"/>
+                <View android:id="@+id/color_orange" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginEnd="8dp"/>
+                <View android:id="@+id/color_pink"   android:layout_width="40dp" android:layout_height="40dp" android:layout_marginEnd="8dp"/>
+                <View android:id="@+id/color_teal"   android:layout_width="40dp" android:layout_height="40dp"/>
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="PLAYER" android:textColor="#BB86FC" android:textSize="11sp"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="#141414">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:text="Default Source" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                    <Spinner android:id="@+id/source_spinner"
+                        android:layout_width="150dp" android:layout_height="40dp" android:background="@drawable/spinner_bg"/>
+                </LinearLayout>
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#2A2A2A" android:layout_marginStart="16dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Autoplay Next Episode" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Auto-advance when episode ends" android:textColor="#888888" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay_switch"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                </LinearLayout>
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#2A2A2A" android:layout_marginStart="16dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Picture in Picture" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Float video when leaving app" android:textColor="#888888" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <androidx.appcompat.widget.SwitchCompat android:id="@+id/pip_switch"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                </LinearLayout>
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#2A2A2A" android:layout_marginStart="16dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:text="Subtitle Language" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                    <Spinner android:id="@+id/sub_lang_spinner"
+                        android:layout_width="160dp" android:layout_height="40dp" android:background="@drawable/spinner_bg"/>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="ANIME" android:textColor="#BB86FC" android:textSize="11sp"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                android:gravity="center_vertical" android:background="#141414"
+                android:paddingStart="16dp" android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Sub / Dub Default" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                <Spinner android:id="@+id/dub_sub_spinner"
+                    android:layout_width="150dp" android:layout_height="40dp" android:background="@drawable/spinner_bg"/>
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="DOWNLOADS" android:textColor="#BB86FC" android:textSize="11sp"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="#141414">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="WiFi Only" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Only download on WiFi" android:textColor="#888888" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <androidx.appcompat.widget.SwitchCompat android:id="@+id/wifi_only_switch"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                </LinearLayout>
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#2A2A2A" android:layout_marginStart="16dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
+                    android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:text="Download Quality" android:textColor="#FFFFFF" android:textSize="15sp"/>
+                    <Spinner android:id="@+id/quality_spinner"
+                        android:layout_width="120dp" android:layout_height="40dp" android:background="@drawable/spinner_bg"/>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="STORAGE" android:textColor="#BB86FC" android:textSize="11sp"
+                android:paddingStart="16dp" android:paddingTop="16dp" android:paddingBottom="6dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:background="#141414">
+                <TextView android:id="@+id/storage_text"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Cache: calculating..." android:textColor="#888888"
+                    android:textSize="12sp" android:paddingStart="16dp" android:paddingTop="12dp" android:paddingBottom="4dp"/>
+                <Button android:id="@+id/clear_cache_btn"
+                    android:layout_width="match_parent" android:layout_height="48dp"
+                    android:text="Clear Cache" android:textColor="#FFFFFF" android:backgroundTint="#2A2A2A"
+                    android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:layout_marginTop="8dp"/>
+                <Button android:id="@+id/clear_history_btn"
+                    android:layout_width="match_parent" android:layout_height="48dp"
+                    android:text="Clear Watch History" android:textColor="#FFFFFF" android:backgroundTint="#2A2A2A"
+                    android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:layout_marginTop="6dp"/>
+                <Button android:id="@+id/clear_all_btn"
+                    android:layout_width="match_parent" android:layout_height="48dp"
+                    android:text="Clear All Data" android:textColor="#CF6679" android:backgroundTint="#2A2A2A"
+                    android:layout_marginStart="16dp" android:layout_marginEnd="16dp"
+                    android:layout_marginTop="6dp" android:layout_marginBottom="16dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

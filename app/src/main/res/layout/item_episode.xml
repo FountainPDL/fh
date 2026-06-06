@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:padding="10dp"
+    android:background="?attr/selectableItemBackground">
+    <FrameLayout android:layout_width="120dp" android:layout_height="70dp" android:layout_marginEnd="12dp">
+        <ImageView android:id="@+id/ep_thumbnail"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="centerCrop" android:background="#1E1E1E"/>
+        <View android:id="@+id/ep_progress"
+            android:layout_width="60dp" android:layout_height="3dp"
+            android:layout_gravity="bottom|start" android:background="#BB86FC" android:visibility="gone"/>
+        <TextView android:id="@+id/ep_number"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end" android:background="#CC000000"
+            android:textColor="#FFFFFF" android:textSize="10sp" android:padding="3dp"/>
+    </FrameLayout>
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical">
+        <TextView android:id="@+id/ep_title"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textColor="#EEEEEE" android:textSize="13sp" android:textStyle="bold"
+            android:maxLines="1" android:ellipsize="end"/>
+        <TextView android:id="@+id/ep_duration"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#888888" android:textSize="11sp" android:visibility="gone"/>
+        <TextView android:id="@+id/ep_overview"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textColor="#AAAAAA" android:textSize="11sp" android:maxLines="2" android:ellipsize="end"/>
+    </LinearLayout>
+    <ImageView android:id="@+id/download_icon"
+        android:layout_width="24dp" android:layout_height="24dp"
+        android:layout_gravity="center_vertical" android:layout_marginStart="8dp"
+        android:src="@drawable/ic_download" android:tint="#FFFFFF"/>
+</LinearLayout>
