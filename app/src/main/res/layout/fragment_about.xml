@@ -5,32 +5,76 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
         android:gravity="center_vertical" android:background="#141414"
         android:paddingStart="4dp" android:paddingEnd="8dp">
-        <ImageButton android:id="@+id/back_btn"
-            android:layout_width="44dp" android:layout_height="44dp"
+        <ImageButton android:id="@+id/back_btn" android:layout_width="44dp" android:layout_height="44dp"
             android:src="@drawable/ic_close" android:tint="#FFFFFF"
             android:background="?attr/selectableItemBackground" android:contentDescription="Back"/>
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="About" android:textSize="18sp" android:textStyle="bold"
             android:textColor="#FFFFFF" android:layout_marginStart="8dp"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
-        android:orientation="vertical" android:gravity="center" android:padding="32dp">
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="FOUNTAIN HOME" android:textColor="#BB86FC"
-            android:textSize="28sp" android:textStyle="bold" android:gravity="center" android:layout_marginBottom="8dp"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Version 1.24" android:textColor="#888888"
-            android:textSize="14sp" android:gravity="center" android:layout_marginBottom="32dp"/>
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Premium streaming — Movies, TV Series and Anime.
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:overScrollMode="never">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="20dp">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="FOUNTAIN HOME" android:textColor="#BB86FC"
+                android:textSize="28sp" android:textStyle="bold" android:gravity="center" android:layout_marginBottom="4dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Version 1.25  —  by FountainPDL"
+                android:textColor="#888888" android:textSize="13sp" android:gravity="center" android:layout_marginBottom="24dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="#222222" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="What is Fountain Home?"
+                android:textColor="#BB86FC" android:textSize="15sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Fountain Home is a free, all-in-one streaming app for Movies, TV Series, and Anime. Built natively for Android by FountainPDL, it aggregates content from multiple embed sources and provides a clean, dark, ad-free experience with no account required."
+                android:textColor="#CCCCCC" android:textSize="13sp" android:lineSpacingExtra="4dp" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="How It Works"
+                android:textColor="#BB86FC" android:textSize="15sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="1. Metadata is fetched from TMDB API and AniList GraphQL.
 
-Sources: VidSrc, 2Embed, AutoEmbed, SuperEmbed
-Anime: AniList API
-Data: TMDB API"
-            android:textColor="#AAAAAA" android:textSize="14sp"
-            android:gravity="center" android:lineSpacingExtra="4dp" android:layout_marginBottom="32dp"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Built with Java + Android SDK"
-            android:textColor="#555555" android:textSize="12sp" android:gravity="center"/>
-    </LinearLayout>
+2. Pressing Play loads an embed URL from the selected source.
+
+3. StreamExtractor attempts to intercept the direct .m3u8 or .mp4 stream for native ExoPlayer. If extraction fails, the embed loads in WebView.
+
+4. Sources auto-advance on failure. You can also switch manually from the spinner."
+                android:textColor="#CCCCCC" android:textSize="13sp" android:lineSpacingExtra="4dp" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="How To Use"
+                android:textColor="#BB86FC" android:textSize="15sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Movies / TV — Browse or search, tap a title, then tap PLAY. Change source from the dropdown if one fails.
+
+Anime — Go to the Anime tab. Tap a title, choose SUB or DUB, select your episode and play.
+
+Player — Tap screen to toggle controls. Tap fullscreen for landscape mode. Use X or back to exit.
+
+Downloads — Tap Save on any detail page. View under More → Downloads.
+
+Watchlist / Status — Long-press any card for quick options. Or use buttons on the detail page to set Planning / Watching / Watched / Dropped."
+                android:textColor="#CCCCCC" android:textSize="13sp" android:lineSpacingExtra="4dp" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Content Sources"
+                android:textColor="#BB86FC" android:textSize="15sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Movies / TV:
+VidSrc  ·  2Embed  ·  AutoEmbed  ·  SuperEmbed
+
+Anime (separate sources):
+AutoEmbed Anime  ·  2Anime  ·  Yugen
+
+Metadata:
+TMDB API  ·  AniList GraphQL"
+                android:textColor="#CCCCCC" android:textSize="13sp" android:lineSpacingExtra="4dp" android:layout_marginBottom="20dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="#222222" android:layout_marginBottom="20dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Made with passion by FountainPDL
+Fountain Home — Ministry Brand
+All content belongs to respective owners."
+                android:textColor="#555555" android:textSize="12sp" android:gravity="center" android:lineSpacingExtra="4dp"/>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
