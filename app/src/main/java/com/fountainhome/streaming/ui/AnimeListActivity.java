@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.*;
 import com.fountainhome.streaming.anime.*;
 import com.fountainhome.streaming.databinding.ActivityAnimeListBinding;
 import java.util.*;
+import androidx.annotation.NonNull;
 public class AnimeListActivity extends AppCompatActivity {
     private ActivityAnimeListBinding b;
     private AnimeAdapter adapter;
@@ -38,7 +39,7 @@ public class AnimeListActivity extends AppCompatActivity {
         b.contentRv.setAdapter(adapter);
         // Infinite scroll — AniList supports pagination
         b.contentRv.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override public void onScrolled(androidx.annotation.NonNull RecyclerView rv, int dx, int dy) {
+            @Override public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
                 int total = lm.getItemCount();
                 int last = lm.findLastVisibleItemPosition();
                 if (!loading && last >= total - 6) loadMore();
