@@ -37,6 +37,7 @@
         android:overScrollMode="never" android:scrollbars="none">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical">
+            <!-- Hero -->
             <FrameLayout android:id="@+id/anime_hero_section"
                 android:layout_width="match_parent" android:layout_height="260dp" android:visibility="gone">
                 <ImageView android:id="@+id/anime_hero_banner"
@@ -59,22 +60,46 @@
                         android:textColor="#000000" android:backgroundTint="#BB86FC"/>
                 </LinearLayout>
             </FrameLayout>
-            <TextView android:id="@+id/trending_title"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Trending" android:textColor="#FFFFFF"
-                android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
+            <!-- Trending row -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingTop="14dp" android:paddingBottom="8dp" android:gravity="center_vertical">
+                <TextView android:id="@+id/trending_title"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Trending" android:textColor="#FFFFFF"
+                    android:textSize="15sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/view_all_trending"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+            </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/trending_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:paddingStart="8dp" android:paddingEnd="8dp" android:nestedScrollingEnabled="false"/>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Most Popular" android:textColor="#FFFFFF"
-                android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
+            <!-- Popular row -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingTop="14dp" android:paddingBottom="8dp" android:gravity="center_vertical">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="Most Popular" android:textColor="#FFFFFF"
+                    android:textSize="15sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/view_all_popular"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+            </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/popular_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:paddingStart="8dp" android:paddingEnd="8dp" android:nestedScrollingEnabled="false"/>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="This Season" android:textColor="#FFFFFF"
-                android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
+            <!-- This Season row -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingTop="14dp" android:paddingBottom="8dp" android:gravity="center_vertical">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="This Season" android:textColor="#FFFFFF"
+                    android:textSize="15sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/view_all_season"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+            </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/season_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingBottom="24dp"
