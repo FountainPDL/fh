@@ -18,7 +18,8 @@ public class SettingsFragment extends Fragment {
     @Override public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
         super.onViewCreated(v, s);
         b.backBtn.setOnClickListener(x -> requireActivity().onBackPressed());
-        setupAccent(); setupSource(); setupPlayer(); setupSubtitles(); setupAnime(); setupDownloads(); setupUi(); setupStorage();
+        setupAccent(); setupSource(); setupPlayer(); setupGestures(); setupSubtitles();
+        setupAnime(); setupDownloads(); setupUi(); setupStorage();
     }
     private void setupAccent() {
         String[][] cols = {{AppPreferences.COLOR_PURPLE},{AppPreferences.COLOR_BLUE},{AppPreferences.COLOR_RED},{AppPreferences.COLOR_GREEN},{AppPreferences.COLOR_ORANGE},{AppPreferences.COLOR_PINK},{AppPreferences.COLOR_TEAL}};
@@ -62,7 +63,6 @@ public class SettingsFragment extends Fragment {
         b.hwAccelSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setHwAccel(requireContext(), c));
         b.keepScreenSwitch.setChecked(AppPreferences.getKeepScreenOn(requireContext()));
         b.keepScreenSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setKeepScreenOn(requireContext(), c));
-        // Playback speed
         String[] speeds = {"0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "2.0x"};
         float[] speedVals = {0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
         ArrayAdapter<String> sp = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, speeds);
@@ -74,6 +74,27 @@ public class SettingsFragment extends Fragment {
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setPlaybackSpeed(requireContext(), speedVals[pos]); }
             public void onNothingSelected(AdapterView<?> p) {}
         });
+    }
+    private void setupGestures() {
+        b.gestureSwitch.setChecked(AppPreferences.getGestureControls(requireContext()));
+        b.gestureSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setGestureControls(requireContext(), c));
+        String[] dt = {"5s", "10s", "15s", "30s"};
+        int[] dtVals = {5, 10, 15, 30};
+        ArrayAdapter<String> dta = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, dt);
+        dta.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.dtSeekSpinner.setAdapter(dta);
+        int curDt = AppPreferences.getDoubleTapSeek(requireContext());
+        for (int i = 0; i < dtVals.length; i++) if (dtVals[i] == curDt) { b.dtSeekSpinner.setSelection(i); break; }
+        b.dtSeekSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setDoubleTapSeek(requireContext(), dtVals[pos]); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+        b.showSkipIntroSwitch.setChecked(AppPreferences.getShowSkipIntro(requireContext()));
+        b.showSkipIntroSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowSkipIntro(requireContext(), c));
+        b.autoSkipIntroSwitch.setChecked(AppPreferences.getAutoSkipIntro(requireContext()));
+        b.autoSkipIntroSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setAutoSkipIntro(requireContext(), c));
+        b.bgPlaybackSwitch.setChecked(AppPreferences.getBackgroundPlayback(requireContext()));
+        b.bgPlaybackSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setBackgroundPlayback(requireContext(), c));
     }
     private void setupSubtitles() {
         b.subEnabledSwitch.setChecked(AppPreferences.getSubEnabled(requireContext()));

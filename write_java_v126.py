@@ -1,4 +1,125 @@
-package com.fountainhome.streaming.ui.player;
+import os
+
+def w(path, text):
+    d = os.path.dirname(path)
+    if d: os.makedirs(d, exist_ok=True)
+    open(path, 'w').write(text)
+
+S = "app/src/main/java/com/fountainhome/streaming"
+files = {}
+
+# ── Hardened AdBlockWebViewClient — blocks redirects/popups/foreign schemes ──
+files[f"{S}/service/AdBlockWebViewClient.java"] = r'''package com.fountainhome.streaming.service;
+import android.net.Uri;
+import android.webkit.*;
+import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+import java.util.List;
+public class AdBlockWebViewClient extends WebViewClient {
+    private static final List<String> BLOCK = Arrays.asList(
+        "doubleclick.net","googlesyndication.com","googleadservices.com","outbrain.com","taboola.com",
+        "exoclick.com","juicyads.com","trafficjunky.net","popads.net","popcash.net","adsterra.com",
+        "propellerads.com","criteo.com","media.net","pubmatic.com","appnexus.com","clickadu.com",
+        "coinzilla.com","adfoc.us","bc.vc","shorte.st","ouo.io","linkvertise.com","onclickalgo.com",
+        "adnium.com","propellerclick.com","clickagy.com","smartadserver.com","yllix.com","adcash.com",
+        "revcontent.com","mgid.com","zedo.com","adroll.com","hilltopads.net","adskeeper.com"
+    );
+    private static final List<String> ALLOWED_HOSTS = Arrays.asList(
+        "vsembed.ru","2embed.online","2embed.cc","autoembed.cc","multiembed.mov",
+        "vidsrc.xyz","vidsrc.me","themoviedb.org","image.tmdb.org","2anime.xyz","yugen.to","graphql.anilist.co"
+    );
+    private static final WebResourceResponse EMPTY =
+        new WebResourceResponse("text/plain", "utf-8", new ByteArrayInputStream("".getBytes()));
+
+    @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
+        String url = r.getUrl().toString().toLowerCase();
+        for (String b : BLOCK) if (url.contains(b)) return EMPTY;
+        return null;
+    }
+    @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+        Uri uri = r.getUrl();
+        String scheme = uri.getScheme();
+        // Block anything that isn't a plain http/https navigation.
+        // This alone stops most "redirect" tricks: intent://, market://, whatsapp://, tel:, sms:, etc.
+        if (scheme == null || !(scheme.equals("http") || scheme.equals("https"))) return true;
+        String url = uri.toString().toLowerCase();
+        for (String b : BLOCK) if (url.contains(b)) return true;
+        String host = uri.getHost();
+        if (host == null) return true;
+        for (String ok : ALLOWED_HOSTS) if (host.contains(ok)) return false;
+        if (host.contains("embed") || host.contains("vid") || host.contains("stream") || host.contains("play")) return false;
+        // Unknown domain trying to hijack navigation — block it.
+        return true;
+    }
+}
+'''
+
+# ── AppPreferences — full rewrite with new gesture/player settings ──
+files[f"{S}/service/AppPreferences.java"] = r'''package com.fountainhome.streaming.service;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+public class AppPreferences {
+    private static final String PREFS = "fh_prefs";
+    public static final String COLOR_PURPLE="#BB86FC", COLOR_BLUE="#2196F3", COLOR_RED="#CF6679";
+    public static final String COLOR_GREEN="#4CAF50", COLOR_ORANGE="#FF9800", COLOR_PINK="#E91E8C", COLOR_TEAL="#03DAC6";
+    public static final String STATUS_NONE="none", STATUS_PLAN="planning", STATUS_WATCH="watching",
+        STATUS_DONE="watched", STATUS_DROP="dropped";
+    private static SharedPreferences p(Context c) { return c.getSharedPreferences(PREFS, 0); }
+    public static String  getAccent(Context c)                { return p(c).getString("accent", COLOR_PURPLE); }
+    public static void    setAccent(Context c, String v)      { p(c).edit().putString("accent", v).apply(); }
+    public static int     getAccentColor(Context c)           { try { return Color.parseColor(getAccent(c)); } catch (Exception e) { return Color.parseColor(COLOR_PURPLE); } }
+    public static String  getSource(Context c)                { return p(c).getString("source", "VidSrc"); }
+    public static void    setSource(Context c, String v)      { p(c).edit().putString("source", v).apply(); }
+    public static String  getAnimeDubSub(Context c)           { return p(c).getString("dub_sub", "sub"); }
+    public static void    setAnimeDubSub(Context c, String v) { p(c).edit().putString("dub_sub", v).apply(); }
+    public static boolean getAutoplay(Context c)              { return p(c).getBoolean("autoplay", true); }
+    public static void    setAutoplay(Context c, boolean v)   { p(c).edit().putBoolean("autoplay", v).apply(); }
+    public static boolean getPiP(Context c)                   { return p(c).getBoolean("pip", true); }
+    public static void    setPiP(Context c, boolean v)        { p(c).edit().putBoolean("pip", v).apply(); }
+    public static float   getPlaybackSpeed(Context c)         { return p(c).getFloat("speed", 1.0f); }
+    public static void    setPlaybackSpeed(Context c, float v){ p(c).edit().putFloat("speed", v).apply(); }
+    public static boolean getHwAccel(Context c)               { return p(c).getBoolean("hw_accel", true); }
+    public static void    setHwAccel(Context c, boolean v)    { p(c).edit().putBoolean("hw_accel", v).apply(); }
+    public static boolean getAutoSkipIntro(Context c)         { return p(c).getBoolean("skip_intro", false); }
+    public static void    setAutoSkipIntro(Context c, boolean v){ p(c).edit().putBoolean("skip_intro", v).apply(); }
+    public static boolean getKeepScreenOn(Context c)          { return p(c).getBoolean("screen_on", true); }
+    public static void    setKeepScreenOn(Context c, boolean v){ p(c).edit().putBoolean("screen_on", v).apply(); }
+    public static String  getSubLang(Context c)               { return p(c).getString("sub_lang", "en"); }
+    public static void    setSubLang(Context c, String v)     { p(c).edit().putString("sub_lang", v).apply(); }
+    public static boolean getSubEnabled(Context c)            { return p(c).getBoolean("sub_on", true); }
+    public static void    setSubEnabled(Context c, boolean v) { p(c).edit().putBoolean("sub_on", v).apply(); }
+    public static boolean getWifiOnly(Context c)              { return p(c).getBoolean("wifi_only", false); }
+    public static void    setWifiOnly(Context c, boolean v)   { p(c).edit().putBoolean("wifi_only", v).apply(); }
+    public static String  getDlQuality(Context c)             { return p(c).getString("dl_quality", "720p"); }
+    public static void    setDlQuality(Context c, String v)   { p(c).edit().putString("dl_quality", v).apply(); }
+    public static boolean getSubWithDownload(Context c)       { return p(c).getBoolean("dl_sub", true); }
+    public static void    setSubWithDownload(Context c, boolean v){ p(c).edit().putBoolean("dl_sub", v).apply(); }
+    public static boolean getShowContinue(Context c)          { return p(c).getBoolean("show_continue", true); }
+    public static void    setShowContinue(Context c, boolean v){ p(c).edit().putBoolean("show_continue", v).apply(); }
+    public static boolean getShowRating(Context c)            { return p(c).getBoolean("show_rating", true); }
+    public static void    setShowRating(Context c, boolean v) { p(c).edit().putBoolean("show_rating", v).apply(); }
+    public static int     getGridColumns(Context c)           { return p(c).getInt("grid_cols", 3); }
+    public static void    setGridColumns(Context c, int v)    { p(c).edit().putInt("grid_cols", v).apply(); }
+    // --- Player gestures (new in v1.26) ---
+    public static boolean getGestureControls(Context c)       { return p(c).getBoolean("gestures", true); }
+    public static void    setGestureControls(Context c, boolean v){ p(c).edit().putBoolean("gestures", v).apply(); }
+    public static int     getDoubleTapSeek(Context c)         { return p(c).getInt("dt_seek", 10); }
+    public static void    setDoubleTapSeek(Context c, int v)  { p(c).edit().putInt("dt_seek", v).apply(); }
+    public static boolean getShowSkipIntro(Context c)         { return p(c).getBoolean("show_skip_intro", true); }
+    public static void    setShowSkipIntro(Context c, boolean v){ p(c).edit().putBoolean("show_skip_intro", v).apply(); }
+    public static boolean getBackgroundPlayback(Context c)    { return p(c).getBoolean("bg_playback", false); }
+    public static void    setBackgroundPlayback(Context c, boolean v){ p(c).edit().putBoolean("bg_playback", v).apply(); }
+    // --- Status ---
+    public static String  getItemStatus(Context c, int id, String type) { return p(c).getString("status_" + type + "_" + id, STATUS_NONE); }
+    public static void    setItemStatus(Context c, int id, String type, String status) { p(c).edit().putString("status_" + type + "_" + id, status).apply(); }
+    public static void    clearAll(Context c) { p(c).edit().clear().apply(); }
+    public static int     getSurfaceColor(Context c) { return Color.parseColor("#141414"); }
+}
+'''
+
+# ── PlayerActivity — full AniLab-style rewrite ──
+files[f"{S}/ui/player/PlayerActivity.java"] = r'''package com.fountainhome.streaming.ui.player;
 import android.annotation.SuppressLint;
 import android.app.PictureInPictureParams;
 import android.content.Intent;
@@ -538,3 +659,171 @@ public class PlayerActivity extends AppCompatActivity {
         super.onDestroy();
     }
 }
+'''
+
+# ── SettingsFragment — add Player Gestures section ──
+files[f"{S}/ui/fragment/SettingsFragment.java"] = r'''package com.fountainhome.streaming.ui.fragment;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.*;
+import android.widget.*;
+import androidx.annotation.*;
+import androidx.fragment.app.Fragment;
+import com.fountainhome.streaming.databinding.FragmentSettingsBinding;
+import com.fountainhome.streaming.service.*;
+import com.fountainhome.streaming.ui.MainActivity;
+import java.io.File;
+public class SettingsFragment extends Fragment {
+    private FragmentSettingsBinding b;
+    @Nullable @Override
+    public View onCreateView(@NonNull LayoutInflater i, @Nullable ViewGroup c, @Nullable Bundle s) {
+        b = FragmentSettingsBinding.inflate(i, c, false); return b.getRoot();
+    }
+    @Override public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
+        super.onViewCreated(v, s);
+        b.backBtn.setOnClickListener(x -> requireActivity().onBackPressed());
+        setupAccent(); setupSource(); setupPlayer(); setupGestures(); setupSubtitles();
+        setupAnime(); setupDownloads(); setupUi(); setupStorage();
+    }
+    private void setupAccent() {
+        String[][] cols = {{AppPreferences.COLOR_PURPLE},{AppPreferences.COLOR_BLUE},{AppPreferences.COLOR_RED},{AppPreferences.COLOR_GREEN},{AppPreferences.COLOR_ORANGE},{AppPreferences.COLOR_PINK},{AppPreferences.COLOR_TEAL}};
+        View[] sw = {b.colorPurple, b.colorBlue, b.colorRed, b.colorGreen, b.colorOrange, b.colorPink, b.colorTeal};
+        String cur = AppPreferences.getAccent(requireContext());
+        for (int i = 0; i < sw.length; i++) {
+            final String hex = cols[i][0];
+            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            gd.setColor(Color.parseColor(hex));
+            sw[i].setBackground(gd);
+            boolean sel = hex.equalsIgnoreCase(cur);
+            sw[i].setAlpha(sel ? 1f : 0.4f); sw[i].setScaleX(sel ? 1.25f : 1f); sw[i].setScaleY(sel ? 1.25f : 1f);
+            sw[i].setOnClickListener(vv -> {
+                AppPreferences.setAccent(requireContext(), hex);
+                for (View s2 : sw) { s2.setAlpha(0.4f); s2.setScaleX(1f); s2.setScaleY(1f); }
+                vv.setAlpha(1f); vv.setScaleX(1.25f); vv.setScaleY(1.25f);
+                if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).applyAccent();
+                Toast.makeText(getContext(), "Accent updated", Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+    private void setupSource() {
+        String[] srcs = {"VidSrc", "2Embed", "AutoEmbed", "SuperEmbed VIP"};
+        ArrayAdapter<String> a = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, srcs);
+        a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.sourceSpinner.setAdapter(a);
+        String cur = AppPreferences.getSource(requireContext());
+        for (int i = 0; i < srcs.length; i++) if (srcs[i].equals(cur)) { b.sourceSpinner.setSelection(i); break; }
+        b.sourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setSource(requireContext(), srcs[pos]); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+    }
+    private void setupPlayer() {
+        b.autoplaySwitch.setChecked(AppPreferences.getAutoplay(requireContext()));
+        b.autoplaySwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setAutoplay(requireContext(), c));
+        b.pipSwitch.setChecked(AppPreferences.getPiP(requireContext()));
+        b.pipSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setPiP(requireContext(), c));
+        b.hwAccelSwitch.setChecked(AppPreferences.getHwAccel(requireContext()));
+        b.hwAccelSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setHwAccel(requireContext(), c));
+        b.keepScreenSwitch.setChecked(AppPreferences.getKeepScreenOn(requireContext()));
+        b.keepScreenSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setKeepScreenOn(requireContext(), c));
+        String[] speeds = {"0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "2.0x"};
+        float[] speedVals = {0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
+        ArrayAdapter<String> sp = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, speeds);
+        sp.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.speedSpinner.setAdapter(sp);
+        float cur = AppPreferences.getPlaybackSpeed(requireContext());
+        for (int i = 0; i < speedVals.length; i++) if (speedVals[i] == cur) { b.speedSpinner.setSelection(i); break; }
+        b.speedSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setPlaybackSpeed(requireContext(), speedVals[pos]); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+    }
+    private void setupGestures() {
+        b.gestureSwitch.setChecked(AppPreferences.getGestureControls(requireContext()));
+        b.gestureSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setGestureControls(requireContext(), c));
+        String[] dt = {"5s", "10s", "15s", "30s"};
+        int[] dtVals = {5, 10, 15, 30};
+        ArrayAdapter<String> dta = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, dt);
+        dta.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.dtSeekSpinner.setAdapter(dta);
+        int curDt = AppPreferences.getDoubleTapSeek(requireContext());
+        for (int i = 0; i < dtVals.length; i++) if (dtVals[i] == curDt) { b.dtSeekSpinner.setSelection(i); break; }
+        b.dtSeekSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setDoubleTapSeek(requireContext(), dtVals[pos]); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+        b.showSkipIntroSwitch.setChecked(AppPreferences.getShowSkipIntro(requireContext()));
+        b.showSkipIntroSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowSkipIntro(requireContext(), c));
+        b.autoSkipIntroSwitch.setChecked(AppPreferences.getAutoSkipIntro(requireContext()));
+        b.autoSkipIntroSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setAutoSkipIntro(requireContext(), c));
+        b.bgPlaybackSwitch.setChecked(AppPreferences.getBackgroundPlayback(requireContext()));
+        b.bgPlaybackSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setBackgroundPlayback(requireContext(), c));
+    }
+    private void setupSubtitles() {
+        b.subEnabledSwitch.setChecked(AppPreferences.getSubEnabled(requireContext()));
+        b.subEnabledSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setSubEnabled(requireContext(), c));
+        String[] langs = {"English", "Spanish", "French", "German", "Japanese", "Korean", "Arabic"};
+        String[] codes = {"en", "es", "fr", "de", "ja", "ko", "ar"};
+        ArrayAdapter<String> la = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, langs);
+        la.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.subLangSpinner.setAdapter(la);
+        String cl = AppPreferences.getSubLang(requireContext());
+        for (int i = 0; i < codes.length; i++) if (codes[i].equals(cl)) { b.subLangSpinner.setSelection(i); break; }
+        b.subLangSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setSubLang(requireContext(), codes[pos]); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+    }
+    private void setupAnime() {
+        String[] ds = {"Sub (Subbed)", "Dub (Dubbed)"};
+        ArrayAdapter<String> da = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, ds);
+        da.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.dubSubSpinner.setAdapter(da);
+        b.dubSubSpinner.setSelection("dub".equals(AppPreferences.getAnimeDubSub(requireContext())) ? 1 : 0);
+        b.dubSubSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setAnimeDubSub(requireContext(), pos == 1 ? "dub" : "sub"); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+    }
+    private void setupDownloads() {
+        b.wifiOnlySwitch.setChecked(AppPreferences.getWifiOnly(requireContext()));
+        b.wifiOnlySwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setWifiOnly(requireContext(), c));
+        b.dlSubSwitch.setChecked(AppPreferences.getSubWithDownload(requireContext()));
+        b.dlSubSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setSubWithDownload(requireContext(), c));
+        String[] qs = {"360p", "480p", "720p", "1080p"};
+        ArrayAdapter<String> qa = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, qs);
+        qa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.qualitySpinner.setAdapter(qa);
+        String cq = AppPreferences.getDlQuality(requireContext());
+        for (int i = 0; i < qs.length; i++) if (qs[i].equals(cq)) { b.qualitySpinner.setSelection(i); break; }
+        b.qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setDlQuality(requireContext(), qs[pos]); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+    }
+    private void setupUi() {
+        b.showRatingSwitch.setChecked(AppPreferences.getShowRating(requireContext()));
+        b.showRatingSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowRating(requireContext(), c));
+        b.showContinueSwitch.setChecked(AppPreferences.getShowContinue(requireContext()));
+        b.showContinueSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowContinue(requireContext(), c));
+    }
+    private void setupStorage() {
+        long sz = ds(requireContext().getCacheDir());
+        b.storageText.setText("Cache: " + fmt(sz));
+        b.clearCacheBtn.setOnClickListener(v -> { cd(requireContext().getCacheDir()); b.storageText.setText("Cache: 0 B"); Toast.makeText(getContext(), "Cache cleared", Toast.LENGTH_SHORT).show(); });
+        b.clearHistoryBtn.setOnClickListener(v -> { LibraryManager.clearList(requireContext(), LibraryManager.CONTINUE); Toast.makeText(getContext(), "History cleared", Toast.LENGTH_SHORT).show(); });
+        b.clearAllBtn.setOnClickListener(v -> { LibraryManager.clearList(requireContext(), LibraryManager.FAVORITES); LibraryManager.clearList(requireContext(), LibraryManager.WATCHLIST); LibraryManager.clearList(requireContext(), LibraryManager.CONTINUE); AppPreferences.clearAll(requireContext()); Toast.makeText(getContext(), "All cleared", Toast.LENGTH_SHORT).show(); });
+    }
+    private void cd(File d) { if (d!=null&&d.isDirectory()){File[]fs=d.listFiles();if(fs!=null)for(File f:fs)cd(f);}if(d!=null)d.delete(); }
+    private long ds(File d) { long s=0;if(d!=null&&d.isDirectory()){File[]fs=d.listFiles();if(fs!=null)for(File f:fs)s+=f.length();}return s; }
+    private String fmt(long bv) { if(bv<1024)return bv+" B";if(bv<1048576)return(bv/1024)+" KB";return(bv/1048576)+" MB"; }
+    @Override public void onDestroyView() { super.onDestroyView(); b = null; }
+}
+'''
+
+print(f"Writing {len(files)} Java files...")
+for path, content in files.items():
+    w(path, content)
+    print(f"  {path}")
+print("Done!")
