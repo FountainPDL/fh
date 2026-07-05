@@ -83,6 +83,8 @@ public class PlayerActivity extends AppCompatActivity {
         if (imdbId == null) imdbId = "";
         cur = new ContentItem();
         cur.id = tmdbId; cur.mediaType = type; cur.title = titleStr; cur.imdbId = imdbId;
+        cur.posterPath = getIntent().getStringExtra("posterPath");
+        cur.rating = getIntent().getDoubleExtra("rating", 0);
         b.titleText.setText(titleStr != null ? titleStr : "");
         updateLabel();
 

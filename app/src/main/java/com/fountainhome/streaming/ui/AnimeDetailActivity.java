@@ -126,6 +126,7 @@ public class AnimeDetailActivity extends AppCompatActivity {
         Intent i = new Intent(this, PlayerActivity.class);
         i.putExtra("type", "anime"); i.putExtra("id", anilistId);
         i.putExtra("title", title); i.putExtra("imdbId", "");
+        i.putExtra("posterPath", cover); i.putExtra("rating", getIntent().getDoubleExtra("rating", 0));
         i.putExtra("season", 1); i.putExtra("episode", selectedEp);
         startActivity(i);
         AppPreferences.setItemStatus(this, anilistId, "anime", AppPreferences.STATUS_WATCH);

@@ -4,7 +4,7 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId "com.fountainhome.streaming"
-        minSdk 24; targetSdk 34; versionCode 8; versionName "1.27"
+        minSdk 24; targetSdk 34; versionCode 9; versionName "1.28"
         buildConfigField "String", "TMDB_API_KEY", '"8baba8ab6b8bbe247645bcae7df63d0d"'
     }
     signingConfigs {

@@ -47,10 +47,10 @@ public class StreamExtractor {
                     }
                     return null;
                 }
-                @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
-                    String scheme = r.getUrl().getScheme();
-                    return scheme == null || !(scheme.equals("http") || scheme.equals("https"));
-                }
+                // No shouldOverrideUrlLoading override here on purpose — this WebView is
+                // never shown or touched by the user, so it can't be hijacked the way a
+                // visible one could. Letting it navigate freely is what lets embed pages
+                // complete their normal redirect chain down to the real video request.
             });
             String html = "<!DOCTYPE html><html><head><style>*{margin:0;padding:0;background:#000}"
                 + "iframe{width:100vw;height:100vh;border:none}</style></head>"
