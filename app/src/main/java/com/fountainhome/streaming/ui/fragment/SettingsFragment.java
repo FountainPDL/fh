@@ -43,7 +43,7 @@ public class SettingsFragment extends Fragment {
         }
     }
     private void setupSource() {
-        String[] srcs = {"VidSrc", "2Embed", "AutoEmbed", "SuperEmbed VIP"};
+        String[] srcs = {"VidSrc", "VidLink", "VidRock", "VIDEASY", "VidFast", "VidKing", "2Embed", "AutoEmbed", "SuperEmbed VIP"};
         ArrayAdapter<String> a = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, srcs);
         a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         b.sourceSpinner.setAdapter(a);

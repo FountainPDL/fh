@@ -1,4 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
+import os
+
+def w(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, 'w').write(text)
+
+print("Writing v1.27 layouts...")
+
+# ── activity_player.xml — WebView removed entirely. Pure ExoPlayer + custom UI. ──
+w("app/src/main/res/layout/activity_player.xml", """<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000">
 
@@ -70,7 +79,7 @@
     <TextView android:id="@+id/skip_intro_pill"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="top|end" android:layout_marginTop="70dp" android:layout_marginEnd="16dp"
-        android:text="Skip Intro  ›" android:textColor="#FFFFFF" android:textSize="13sp"
+        android:text="Skip Intro  \u203a" android:textColor="#FFFFFF" android:textSize="13sp"
         android:textStyle="bold" android:background="@drawable/pill_bg"
         android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingTop="8dp" android:paddingBottom="8dp"
         android:visibility="gone"/>
@@ -204,3 +213,6 @@
         android:contentDescription="Unlock"/>
 
 </FrameLayout>
+""")
+
+print("v1.27 layouts done!")

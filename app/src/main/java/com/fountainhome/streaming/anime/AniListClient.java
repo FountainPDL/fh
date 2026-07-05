@@ -13,6 +13,7 @@ public class AniListClient {
     private static final ExecutorService exec = Executors.newCachedThreadPool();
     private static final Handler mh = new Handler(Looper.getMainLooper());
     public interface Callback<T> { void onSuccess(T r); void onError(String e); }
+    public interface IntCallback { void onResult(int value); }
     public static class AnimeItem {
         public int id, episodes, seasonYear;
         public String titleEnglish, titleRomaji, coverImage, bannerImage, description, status, season, format;
@@ -86,5 +87,17 @@ public class AniListClient {
     public static void search(String kw, Callback<List<AnimeItem>> cb) {
         String safeKw = kw.replace("\"", "").replace("\\", "");
         run("query($s:String){Page(page:1,perPage:20){media(search:$s,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{\"s\":\"" + safeKw + "\"}", cb);
+    }
+    // Resolves the MyAnimeList ID for a given AniList ID, straight from AniList's own
+    // graph (Media.idMal) — no separate MyAnimeList API key or OAuth needed.
+    public static void getMalId(int anilistId, IntCallback cb) {
+        exec.execute(() -> {
+            try {
+                String res = query("query($id:Int){Media(id:$id,type:ANIME){idMal}}", "{\"id\":" + anilistId + "}");
+                JsonObject media = JsonParser.parseString(res).getAsJsonObject().getAsJsonObject("data").getAsJsonObject("Media");
+                int malId = media.has("idMal") && !media.get("idMal").isJsonNull() ? media.get("idMal").getAsInt() : 0;
+                mh.post(() -> cb.onResult(malId));
+            } catch (Exception e) { mh.post(() -> cb.onResult(0)); }
+        });
     }
 }

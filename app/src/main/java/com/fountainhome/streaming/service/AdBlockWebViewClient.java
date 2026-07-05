@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.List;
 public class AdBlockWebViewClient extends WebViewClient {
-    private static final List<String> BLOCK = Arrays.asList(
+    static final List<String> BLOCK = Arrays.asList(
         "doubleclick.net","googlesyndication.com","googleadservices.com","outbrain.com","taboola.com",
         "exoclick.com","juicyads.com","trafficjunky.net","popads.net","popcash.net","adsterra.com",
         "propellerads.com","criteo.com","media.net","pubmatic.com","appnexus.com","clickadu.com",
@@ -14,7 +14,8 @@ public class AdBlockWebViewClient extends WebViewClient {
         "revcontent.com","mgid.com","zedo.com","adroll.com","hilltopads.net","adskeeper.com"
     );
     private static final List<String> ALLOWED_HOSTS = Arrays.asList(
-        "vsembed.ru","2embed.online","2embed.cc","autoembed.cc","multiembed.mov",
+        "vsembed.ru","2embed.online","vidlink.pro","vidrock.ru","videasy.net","vidfast.pro","vidking.net",
+        "111movies.net","peachify.pro","superflixapi.pro","vidnest.fun","autoembed.cc","multiembed.mov",
         "vidsrc.xyz","vidsrc.me","themoviedb.org","image.tmdb.org","2anime.xyz","yugen.to","graphql.anilist.co"
     );
     private static final WebResourceResponse EMPTY =
@@ -28,8 +29,6 @@ public class AdBlockWebViewClient extends WebViewClient {
     @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
         Uri uri = r.getUrl();
         String scheme = uri.getScheme();
-        // Block anything that isn't a plain http/https navigation.
-        // This alone stops most "redirect" tricks: intent://, market://, whatsapp://, tel:, sms:, etc.
         if (scheme == null || !(scheme.equals("http") || scheme.equals("https"))) return true;
         String url = uri.toString().toLowerCase();
         for (String b : BLOCK) if (url.contains(b)) return true;
@@ -37,7 +36,6 @@ public class AdBlockWebViewClient extends WebViewClient {
         if (host == null) return true;
         for (String ok : ALLOWED_HOSTS) if (host.contains(ok)) return false;
         if (host.contains("embed") || host.contains("vid") || host.contains("stream") || host.contains("play")) return false;
-        // Unknown domain trying to hijack navigation — block it.
         return true;
     }
 }

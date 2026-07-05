@@ -83,6 +83,12 @@
                         android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
                         android:text="RESUME" android:textSize="13sp" android:textColor="#BB86FC"
                         android:backgroundTint="#22BB86FC" android:visibility="gone"/>
+                    <ImageButton android:id="@+id/download_movie_btn"
+                        android:layout_width="48dp" android:layout_height="48dp"
+                        android:src="@drawable/ic_download" android:tint="#FFFFFF"
+                        android:background="#1E1E1E" android:padding="12dp"
+                        android:layout_marginStart="8dp"
+                        android:contentDescription="Download video"/>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="horizontal" android:paddingBottom="12dp">

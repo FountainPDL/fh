@@ -13,7 +13,6 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.webkit.*;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.media3.common.MediaItem;
@@ -23,7 +22,9 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import com.fountainhome.streaming.R;
+import com.fountainhome.streaming.anime.AniListClient;
 import com.fountainhome.streaming.databinding.ActivityPlayerBinding;
+import com.fountainhome.streaming.download.DownloadManager2;
 import com.fountainhome.streaming.service.*;
 import com.fountainhome.streaming.ui.viewmodel.ContentItem;
 import java.util.*;
@@ -35,7 +36,7 @@ public class PlayerActivity extends AppCompatActivity {
     private int currentSourceIdx = 0;
     private String imdbId = "", type, titleStr;
     private int tmdbId, season = 1, episode = 1;
-    private boolean fs = false, usingExo = false, ctrlVisible = true, locked = false, seekTracking = false;
+    private boolean fs = false, ctrlVisible = true, locked = false, seekTracking = false;
     private ContentItem cur;
     private final Handler ph = new Handler(Looper.getMainLooper());
     private Runnable pr, hideCtrl, upNextCountdown;
@@ -50,7 +51,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private final Runnable posUpdater = new Runnable() {
         @Override public void run() {
-            if (b != null && exo != null && usingExo) {
+            if (b != null && exo != null) {
                 long pos = exo.getCurrentPosition(), dur = exo.getDuration();
                 if (dur > 0) {
                     b.seekBar.setMax(1000);
@@ -93,45 +94,7 @@ public class PlayerActivity extends AppCompatActivity {
         b.speedBtn.setText(fmtSpeed(AppPreferences.getPlaybackSpeed(this)));
 
         hideCtrl = this::hideControls;
-        scheduleHide();
         setupGestures();
-
-        WebSettings ws = b.playerWebView.getSettings();
-        ws.setJavaScriptEnabled(true); ws.setDomStorageEnabled(true);
-        ws.setMediaPlaybackRequiresUserGesture(false);
-        ws.setLoadWithOverviewMode(true); ws.setUseWideViewPort(true);
-        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        ws.setJavaScriptCanOpenWindowsAutomatically(false);
-        ws.setSupportMultipleWindows(false);
-        ws.setUserAgentString("Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36");
-        b.playerWebView.setWebViewClient(new AdBlockWebViewClient() {
-            @Override public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
-                super.onReceivedError(view, req, err);
-                if (req != null && req.isForMainFrame()) runOnUiThread(() -> tryNextSource());
-            }
-            @Override public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                // Neuter popup/redirect tricks: window.open, alert/confirm hijacks, target=_blank links
-                String js = "window.open=function(){return null;};window.alert=function(){};window.confirm=function(){return false;};"
-                    + "document.addEventListener('click',function(e){var t=e.target;while(t){if(t.tagName=='A'&&t.target=='_blank'){t.removeAttribute('target');}t=t.parentElement;}},true);";
-                view.evaluateJavascript(js, null);
-            }
-        });
-        b.playerWebView.setWebChromeClient(new WebChromeClient() {
-            @Override public void onProgressChanged(WebView v, int p) {
-                b.loadingBar.setProgress(p);
-                b.loadingBar.setVisibility(p < 100 ? View.VISIBLE : View.GONE);
-            }
-            @Override public void onShowCustomView(View v, CustomViewCallback cb) {
-                enterFs(); b.fullscreenContainer.addView(v); b.fullscreenContainer.setVisibility(View.VISIBLE);
-            }
-            @Override public void onHideCustomView() {
-                b.fullscreenContainer.removeAllViews(); b.fullscreenContainer.setVisibility(View.GONE); exitFs();
-            }
-            @Override public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
-                return false; // block every popup/new-window attempt
-            }
-        });
 
         b.backBtn.setOnClickListener(v -> { save(); finish(); });
         b.fullscreenBtn.setOnClickListener(v -> { if (fs) exitFs(); else enterFs(); resetHide(); });
@@ -143,6 +106,7 @@ public class PlayerActivity extends AppCompatActivity {
         b.skipBackBtn.setOnClickListener(v -> { if (exo != null) exo.seekTo(Math.max(0, exo.getCurrentPosition() - 10000)); resetHide(); });
         b.skipForwardBtn.setOnClickListener(v -> { if (exo != null) exo.seekTo(exo.getCurrentPosition() + 10000); resetHide(); });
         b.skipIntroPill.setOnClickListener(v -> { if (exo != null) exo.seekTo(90000); b.skipIntroPill.setVisibility(View.GONE); });
+        b.retrySourcesBtn.setOnClickListener(v -> { b.noStreamCard.setVisibility(View.GONE); build(); });
 
         b.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar sb, int p, boolean fromUser) {
@@ -167,6 +131,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         build(); startSaving(); enterFs();
         ph.post(posUpdater);
+        showControls();
     }
 
     // ---------- Gestures: tap / double-tap seek / brightness & volume swipe ----------
@@ -174,7 +139,7 @@ public class PlayerActivity extends AppCompatActivity {
         gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override public boolean onSingleTapConfirmed(MotionEvent e) { toggleControls(); return true; }
             @Override public boolean onDoubleTap(MotionEvent e) {
-                if (!usingExo || exo == null) return false;
+                if (exo == null) return false;
                 int seekMs = AppPreferences.getDoubleTapSeek(PlayerActivity.this) * 1000;
                 boolean isLeft = e.getX() < b.touchInterceptor.getWidth() / 2f;
                 long pos = exo.getCurrentPosition();
@@ -203,7 +168,7 @@ public class PlayerActivity extends AppCompatActivity {
         startVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
     }
     private void onTouchMove(MotionEvent e) {
-        if (!usingExo || !AppPreferences.getGestureControls(this)) return;
+        if (!AppPreferences.getGestureControls(this)) return;
         float dy = dragStartY - e.getY();
         float dx = Math.abs(e.getX() - dragStartX);
         if (Math.abs(dy) < 24 || dx > 120) return;
@@ -262,11 +227,15 @@ public class PlayerActivity extends AppCompatActivity {
     private void showMoreMenu() {
         PopupMenu menu = new PopupMenu(this, b.moreBtn);
         menu.getMenu().add("Picture-in-Picture");
+        menu.getMenu().add("Download");
         menu.getMenu().add("Share");
         menu.setOnMenuItemClickListener(item -> {
             String t = item.getTitle().toString();
             if ("Picture-in-Picture".equals(t)) pip();
-            else if ("Share".equals(t)) {
+            else if ("Download".equals(t)) {
+                DownloadManager2.downloadVideo(this, cur, season, episode);
+                Toast.makeText(this, "Download started \u2014 check the notification for progress", Toast.LENGTH_LONG).show();
+            } else if ("Share".equals(t)) {
                 Intent i = new Intent(Intent.ACTION_SEND); i.setType("text/plain");
                 i.putExtra(Intent.EXTRA_TEXT, (titleStr != null ? titleStr : "") + " \u2014 Fountain Home");
                 startActivity(Intent.createChooser(i, "Share"));
@@ -360,21 +329,32 @@ public class PlayerActivity extends AppCompatActivity {
         if (upNextCountdown != null) { ph.removeCallbacks(upNextCountdown); upNextCountdown = null; }
     }
 
-    // ---------- Controls visibility ----------
+    // ---------- Controls visibility (cancel + state-guard so a stale fade-out
+    //            callback can never re-hide controls after a later show) ----------
     private void toggleControls() { if (ctrlVisible) hideControls(); else showControls(); }
     private void showControls() {
         ctrlVisible = true;
+        b.controlsBar.animate().cancel();
+        b.topControls.animate().cancel();
+        b.centerControls.animate().cancel();
         b.controlsBar.setVisibility(View.VISIBLE);
         b.topControls.setVisibility(View.VISIBLE);
-        if (usingExo) b.centerControls.setVisibility(View.VISIBLE);
+        b.centerControls.setVisibility(View.VISIBLE);
         b.controlsBar.setAlpha(1f); b.topControls.setAlpha(1f); b.centerControls.setAlpha(1f);
         scheduleHide();
     }
     private void hideControls() {
+        if (!ctrlVisible) return;
         ctrlVisible = false;
-        b.controlsBar.animate().alpha(0f).setDuration(400).withEndAction(() -> b.controlsBar.setVisibility(View.INVISIBLE)).start();
-        b.topControls.animate().alpha(0f).setDuration(400).withEndAction(() -> b.topControls.setVisibility(View.INVISIBLE)).start();
-        if (usingExo) b.centerControls.animate().alpha(0f).setDuration(400).withEndAction(() -> b.centerControls.setVisibility(View.INVISIBLE)).start();
+        b.controlsBar.animate().cancel();
+        b.topControls.animate().cancel();
+        b.centerControls.animate().cancel();
+        b.controlsBar.animate().alpha(0f).setDuration(400)
+            .withEndAction(() -> { if (!ctrlVisible) b.controlsBar.setVisibility(View.INVISIBLE); }).start();
+        b.topControls.animate().alpha(0f).setDuration(400)
+            .withEndAction(() -> { if (!ctrlVisible) b.topControls.setVisibility(View.INVISIBLE); }).start();
+        b.centerControls.animate().alpha(0f).setDuration(400)
+            .withEndAction(() -> { if (!ctrlVisible) b.centerControls.setVisibility(View.INVISIBLE); }).start();
     }
     private void scheduleHide() { ph.removeCallbacks(hideCtrl); ph.postDelayed(hideCtrl, 3500); }
     private void resetHide() { showControls(); }
@@ -383,17 +363,27 @@ public class PlayerActivity extends AppCompatActivity {
         ph.postDelayed(pr, 10000);
     }
     private void save() {
-        try { long pos = usingExo && exo != null ? exo.getCurrentPosition() : 0; LibraryManager.updateProgress(this, cur, season, episode, pos); }
+        try { long pos = exo != null ? exo.getCurrentPosition() : 0; LibraryManager.updateProgress(this, cur, season, episode, pos); }
         catch (Exception ignored) {}
     }
 
-    // ---------- Source build / playback ----------
+    // ---------- Source resolution / playback — every source is just a URL resolver ----------
     private void build() {
         currentSourceIdx = 0;
         resetEpisodeState();
-        if ("anime".equals(type)) sources = SourceGenerator.getAnimeSources(tmdbId, season, episode);
-        else if ("movie".equals(type)) sources = SourceGenerator.getMovieSources(imdbId, tmdbId);
-        else sources = SourceGenerator.getTVSources(imdbId, tmdbId, season, episode);
+        b.noStreamCard.setVisibility(View.GONE);
+        if ("anime".equals(type)) {
+            showLoad(true);
+            AniListClient.getMalId(tmdbId, malId -> {
+                sources = SourceGenerator.getAnimeSources(tmdbId, malId, season, episode);
+                finishBuild();
+            });
+        } else {
+            sources = "movie".equals(type) ? SourceGenerator.getMovieSources(imdbId, tmdbId) : SourceGenerator.getTVSources(imdbId, tmdbId, season, episode);
+            finishBuild();
+        }
+    }
+    private void finishBuild() {
         String pref = AppPreferences.getSource(this);
         List<SourceGenerator.Source> ro = new ArrayList<>();
         for (SourceGenerator.Source src : sources) if (src.label.startsWith(pref)) ro.add(0, src);
@@ -409,32 +399,32 @@ public class PlayerActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (init) { init = false; return; } currentSourceIdx = pos; play(pos); }
             public void onNothingSelected(AdapterView<?> p) {}
         });
-        if (!sources.isEmpty()) play(0);
+        if (!sources.isEmpty()) play(0); else showNoStreamFound();
         long saved = WatchProgress.get(this, tmdbId, type, season, episode);
-        if (saved > 5000) ph.postDelayed(() -> { if (usingExo && exo != null) exo.seekTo(saved); }, 2000);
+        if (saved > 5000) ph.postDelayed(() -> { if (exo != null) exo.seekTo(saved); }, 2000);
     }
     private void tryNextSource() {
         currentSourceIdx++;
         if (currentSourceIdx < sources.size()) { b.sourceSpinner.setSelection(currentSourceIdx); play(currentSourceIdx); }
-        else { showLoad(false); Toast.makeText(this, "No working source found. Try changing source.", Toast.LENGTH_LONG).show(); }
+        else showNoStreamFound();
     }
     private void play(int idx) {
-        if (idx < 0 || idx >= sources.size()) return;
+        if (idx < 0 || idx >= sources.size()) { showNoStreamFound(); return; }
         String url = sources.get(idx).url;
         showLoad(true); freeExo();
-        b.playerWebView.setVisibility(View.GONE);
         b.playerView.setVisibility(View.GONE);
+        b.noStreamCard.setVisibility(View.GONE);
+        // The source is used purely to resolve a playable URL. Whatever it hands back
+        // plays only in our own ExoPlayer-based UI below — nothing from the source is
+        // ever rendered directly.
         new StreamExtractor().extract(this, url, 8000, new StreamExtractor.Callback() {
             @Override public void onFound(String su, Map<String, String> h) { runOnUiThread(() -> playExo(su, h)); }
-            @Override public void onFailed() { runOnUiThread(() -> playWv(url)); }
+            @Override public void onFailed() { runOnUiThread(() -> tryNextSource()); }
         });
     }
     private void playExo(String url, Map<String, String> headers) {
-        showLoad(false); usingExo = true;
+        showLoad(false);
         b.playerView.setVisibility(View.VISIBLE);
-        b.playerWebView.setVisibility(View.GONE);
-        b.touchInterceptor.setVisibility(View.VISIBLE);
-        setControlsForMode(true);
         DefaultHttpDataSource.Factory dsf = new DefaultHttpDataSource.Factory()
             .setUserAgent("Mozilla/5.0 Chrome/120.0.0.0 Mobile Safari/537.36")
             .setDefaultRequestProperties(headers).setAllowCrossProtocolRedirects(true)
@@ -459,27 +449,9 @@ public class PlayerActivity extends AppCompatActivity {
         exo.play();
         updatePlayPauseIcon();
     }
-    @SuppressLint("SetJavaScriptEnabled")
-    private void playWv(String url) {
-        showLoad(false); usingExo = false; freeExo();
-        b.playerWebView.setVisibility(View.VISIBLE);
-        b.playerView.setVisibility(View.GONE);
-        // Hide the gesture layer entirely so the embed's own controls stay touchable
-        b.touchInterceptor.setVisibility(View.GONE);
-        setControlsForMode(false);
-        String html = "<!DOCTYPE html><html><head>"
-            + "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-            + "<style>*{margin:0;padding:0;background:#000}iframe,video{width:100vw;height:100vh;border:none}</style></head>"
-            + "<body><iframe src='" + url + "' allowfullscreen allow='autoplay;fullscreen;encrypted-media;picture-in-picture'></iframe></body></html>";
-        b.playerWebView.loadDataWithBaseURL("https://www.google.com", html, "text/html", "utf-8", null);
-        ph.postDelayed(() -> { if (!usingExo && b != null && b.playerWebView.getProgress() < 30) tryNextSource(); }, 15000);
-    }
-    private void setControlsForMode(boolean exoMode) {
-        int vis = exoMode ? View.VISIBLE : View.GONE;
-        b.centerControls.setVisibility(vis);
-        b.lockBtn.setVisibility(vis);
-        b.speedBtn.setVisibility(vis);
-        b.seekRow.setVisibility(vis);
+    private void showNoStreamFound() {
+        showLoad(false);
+        b.noStreamCard.setVisibility(View.VISIBLE);
     }
     private void enterFs() {
         fs = true;
@@ -505,8 +477,7 @@ public class PlayerActivity extends AppCompatActivity {
         int vis = inPip ? View.GONE : View.VISIBLE;
         b.controlsBar.setVisibility(vis);
         b.topControls.setVisibility(vis);
-        if (usingExo) b.centerControls.setVisibility(vis);
-        b.touchInterceptor.setVisibility((!inPip && usingExo) ? View.VISIBLE : View.GONE);
+        b.centerControls.setVisibility(vis);
         if (inPip && exo != null) exo.play();
     }
     @Override protected void onUserLeaveHint() { super.onUserLeaveHint(); if (AppPreferences.getPiP(this)) pip(); }
@@ -521,20 +492,11 @@ public class PlayerActivity extends AppCompatActivity {
         } else b.episodeLabel.setVisibility(View.GONE);
     }
     private void freeExo() { if (exo != null) { exo.release(); exo = null; } }
-    @Override public void onBackPressed() {
-        if (fs) { exitFs(); return; }
-        if (!usingExo && b.playerWebView.canGoBack()) b.playerWebView.goBack();
-        else { save(); super.onBackPressed(); }
-    }
+    @Override public void onBackPressed() { if (fs) { exitFs(); return; } save(); super.onBackPressed(); }
     @Override protected void onPause() {
         super.onPause(); save();
-        if (exo != null) { if (!AppPreferences.getBackgroundPlayback(this) || isFinishing()) exo.pause(); }
-        else b.playerWebView.onPause();
+        if (exo != null && (!AppPreferences.getBackgroundPlayback(this) || isFinishing())) exo.pause();
     }
-    @Override protected void onResume() { super.onResume(); if (exo != null) exo.play(); else b.playerWebView.onResume(); }
-    @Override protected void onDestroy() {
-        save(); ph.removeCallbacksAndMessages(null); freeExo();
-        if (b != null) b.playerWebView.destroy();
-        super.onDestroy();
-    }
+    @Override protected void onResume() { super.onResume(); if (exo != null) exo.play(); }
+    @Override protected void onDestroy() { save(); ph.removeCallbacksAndMessages(null); freeExo(); super.onDestroy(); }
 }

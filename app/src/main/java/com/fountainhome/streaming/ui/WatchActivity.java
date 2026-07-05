@@ -58,6 +58,7 @@ public class WatchActivity extends AppCompatActivity {
         b.playBtn.setOnClickListener(v->openPlayer(ci));
         long pos=WatchProgress.get(this,tmdbId,type,selSeason,selEpisode);
         if(pos>10000){b.resumeBtn.setVisibility(View.VISIBLE);b.resumeBtn.setOnClickListener(v->openPlayer(ci));}
+        b.downloadMovieBtn.setOnClickListener(v->{DownloadManager2.downloadVideo(this,ci,selSeason,selEpisode);Toast.makeText(this,"Download started \u2014 check the notification for progress",Toast.LENGTH_LONG).show();});
         if("tv".equals(type)){b.episodeMenuBtn.setVisibility(View.VISIBLE);b.episodeMenuBtn.setOnClickListener(v->showMenu(ci));}
     }
     private void filterEps(String q){filteredEps.clear();if(q.isEmpty()){filteredEps.addAll(eps);}else{try{int n=Integer.parseInt(q.trim());for(Models.Episode ep:eps)if(ep.episode_number==n||String.valueOf(ep.episode_number).contains(q.trim()))filteredEps.add(ep);}catch(Exception e){for(Models.Episode ep:eps)if(ep.name!=null&&ep.name.toLowerCase().contains(q.toLowerCase()))filteredEps.add(ep);}}populateEps(filteredEps);}
