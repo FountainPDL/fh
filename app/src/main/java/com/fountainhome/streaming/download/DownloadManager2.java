@@ -53,7 +53,7 @@ public class DownloadManager2 {
             // Extract stream URL
             new StreamExtractor().extract(ctx,
                 "anime".equals(item.mediaType)
-                    ? SourceGenerator.getAnimeSources(item.id, season, episode).get(0).url
+                    ? SourceGenerator.getAnimeSources(item.id, com.fountainhome.streaming.anime.AniListClient.getMalIdSync(item.id), season, episode).get(0).url
                     : "movie".equals(item.mediaType)
                         ? SourceGenerator.getMovieSources(item.imdbId, item.id).get(0).url
                         : SourceGenerator.getTVSources(item.imdbId, item.id, season, episode).get(0).url,
