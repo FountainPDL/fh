@@ -1,4 +1,9 @@
-package com.fountainhome.streaming.service;
+import os
+
+print("=== v1.30: remove popup/window blocking from the hidden stream resolver ===")
+
+path = "app/src/main/java/com/fountainhome/streaming/service/StreamExtractor.java"
+content = r'''package com.fountainhome.streaming.service;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
@@ -59,3 +64,9 @@ public class StreamExtractor {
     }
     private void destroy() { h.post(() -> { if (wv != null) { wv.stopLoading(); wv.destroy(); wv = null; } }); }
 }
+'''
+os.makedirs(os.path.dirname(path), exist_ok=True)
+open(path, 'w').write(content)
+print("[OK] StreamExtractor.java — popup/window blocking removed")
+print()
+print("=== v1.30 complete ===")
