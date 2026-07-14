@@ -139,6 +139,17 @@ public class SettingsFragment extends Fragment {
         });
     }
     private void setupUi() {
+        String[] cols = {"2", "3", "4"};
+        ArrayAdapter<String> ca = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, cols);
+        ca.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        b.gridColsSpinner.setAdapter(ca);
+        int curCols = AppPreferences.getGridColumns(requireContext());
+        for (int i = 0; i < cols.length; i++) if (Integer.parseInt(cols[i]) == curCols) { b.gridColsSpinner.setSelection(i); break; }
+        b.gridColsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setGridColumns(requireContext(), Integer.parseInt(cols[pos])); }
+            public void onNothingSelected(AdapterView<?> p) {}
+        });
+
         b.showRatingSwitch.setChecked(AppPreferences.getShowRating(requireContext()));
         b.showRatingSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowRating(requireContext(), c));
         b.showContinueSwitch.setChecked(AppPreferences.getShowContinue(requireContext()));

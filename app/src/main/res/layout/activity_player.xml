@@ -36,6 +36,10 @@
     </LinearLayout>
 
     <!-- Gesture layer: tap / double-tap seek / brightness+volume drag -->
+    <FrameLayout android:id="@+id/resolver_container"
+        android:layout_width="320dp" android:layout_height="180dp"
+        android:layout_gravity="top|start" android:visibility="invisible"/>
+
     <View android:id="@+id/touch_interceptor"
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:clickable="true" android:focusable="true"/>

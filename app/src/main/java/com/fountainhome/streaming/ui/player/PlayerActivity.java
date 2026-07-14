@@ -419,7 +419,7 @@ public class PlayerActivity extends AppCompatActivity {
         // The source is used purely to resolve a playable URL. Whatever it hands back
         // plays only in our own ExoPlayer-based UI below — nothing from the source is
         // ever rendered directly.
-        new StreamExtractor().extract(this, url, 8000, new StreamExtractor.Callback() {
+        new StreamExtractor().extract(b.resolverContainer, url, 8000, new StreamExtractor.Callback() {
             @Override public void onFound(String su, Map<String, String> h) { runOnUiThread(() -> playExo(su, h)); }
             @Override public void onFailed() { runOnUiThread(() -> tryNextSource()); }
         });

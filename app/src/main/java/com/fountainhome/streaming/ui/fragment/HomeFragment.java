@@ -1,4 +1,5 @@
 package com.fountainhome.streaming.ui.fragment;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.*;
@@ -25,7 +26,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(v,s);
         int accent=AppPreferences.getAccentColor(requireContext());
         b.appTitle.setTextColor(accent);
-        b.appTitle.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.title_pulse));
+        startTitleShimmer();
         b.watchNowBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(accent));
         b.tabTrending.setTextColor(accent);b.viewAllMovies.setTextColor(accent);b.viewAllTv.setTextColor(accent);
         HomeViewModel vm=new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
@@ -42,7 +43,23 @@ public class HomeFragment extends Fragment {
     private void row(androidx.recyclerview.widget.RecyclerView rv,androidx.lifecycle.LiveData<List<ContentItem>>data){ContentAdapter a=new ContentAdapter(this::open);rv.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false));rv.setAdapter(a);data.observe(getViewLifecycleOwner(),items->{if(items!=null)a.submitList(items);});}
     private void refreshContinue(){if(b==null||getContext()==null)return;List<ContentItem>list=LibraryManager.get(requireContext(),LibraryManager.CONTINUE);boolean show=!list.isEmpty()&&AppPreferences.getShowContinue(requireContext());b.continueSection.setVisibility(show?View.VISIBLE:View.GONE);if(show){ContentAdapter a=new ContentAdapter(this::open);b.continueRv.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false));b.continueRv.setAdapter(a);a.submitList(list);}}
     private void setTab(boolean t){if(b==null)return;int ac=AppPreferences.getAccentColor(requireContext());b.tabTrending.setTextColor(t?ac:0xFF888888);b.tabPopular.setTextColor(!t?ac:0xFF888888);}
-    private void open(ContentItem item){Intent i=new Intent(getContext(),WatchActivity.class);i.putExtra("type",item.mediaType);i.putExtra("id",item.id);startActivity(i);}
+    private void open(ContentItem item){if("anime".equals(item.mediaType)){Intent i=new Intent(getContext(),com.fountainhome.streaming.ui.AnimeDetailActivity.class);i.putExtra("anime_id",item.id);i.putExtra("title",item.displayTitle());i.putExtra("cover",item.posterPath);i.putExtra("banner",item.backdropPath);i.putExtra("rating",item.rating);startActivity(i);}else{Intent i=new Intent(getContext(),WatchActivity.class);i.putExtra("type",item.mediaType);i.putExtra("id",item.id);startActivity(i);}}
     private void nav(int tab){if(getActivity()instanceof com.fountainhome.streaming.ui.MainActivity)((com.fountainhome.streaming.ui.MainActivity)getActivity()).selectTab(tab);}
     @Override public void onDestroyView(){super.onDestroyView();b=null;}
+
+    private void startTitleShimmer() {
+        if (b == null) return;
+        b.titleShimmer.post(() -> {
+            if (b == null || b.appTitle.getWidth() == 0) return;
+            float startX = -b.appTitle.getWidth() * 0.6f;
+            float endX = b.appTitle.getWidth() * 1.2f;
+            b.titleShimmer.setTranslationX(startX);
+            ObjectAnimator anim = ObjectAnimator.ofFloat(b.titleShimmer, "translationX", startX, endX);
+            anim.setDuration(1400);
+            anim.setStartDelay(500);
+            anim.setRepeatCount(ObjectAnimator.INFINITE);
+            anim.setRepeatDelay(1800);
+            anim.start();
+        });
+    }
 }
