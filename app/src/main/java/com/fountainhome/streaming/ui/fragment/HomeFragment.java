@@ -49,17 +49,21 @@ public class HomeFragment extends Fragment {
 
     private void startTitleShimmer() {
         if (b == null) return;
-        b.titleShimmer.post(() -> {
-            if (b == null || b.appTitle.getWidth() == 0) return;
-            float startX = -b.appTitle.getWidth() * 0.6f;
-            float endX = b.appTitle.getWidth() * 1.2f;
-            b.titleShimmer.setTranslationX(startX);
-            ObjectAnimator anim = ObjectAnimator.ofFloat(b.titleShimmer, "translationX", startX, endX);
-            anim.setDuration(1400);
-            anim.setStartDelay(500);
-            anim.setRepeatCount(ObjectAnimator.INFINITE);
-            anim.setRepeatDelay(1800);
-            anim.start();
+        b.titleShimmer.post(this::runShimmerSweep);
+    }
+    private void runShimmerSweep() {
+        if (b == null || b.appTitle.getWidth() == 0) return;
+        float startX = -b.appTitle.getWidth() * 0.6f;
+        float endX = b.appTitle.getWidth() * 1.2f;
+        b.titleShimmer.setTranslationX(startX);
+        ObjectAnimator anim = ObjectAnimator.ofFloat(b.titleShimmer, "translationX", startX, endX);
+        anim.setDuration(1400);
+        anim.setStartDelay(500);
+        anim.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator animation) {
+                if (b != null) b.titleShimmer.postDelayed(() -> runShimmerSweep(), 1800);
+            }
         });
+        anim.start();
     }
 }
