@@ -489,11 +489,11 @@ public class EmbedPlayerActivity extends AppCompatActivity implements EmbedWebPl
             b.floatBar.setVisibility(View.GONE);
         }
         b.playerHolder.setLayoutParams(lp);
-        setImmersive(immersive);
+        applyImmersive(immersive);
     }
 
     @SuppressWarnings("deprecation")
-    private void setImmersive(boolean on) {
+    private void applyImmersive(boolean on) {
         View d = getWindow().getDecorView();
         if (on) {
             d.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION

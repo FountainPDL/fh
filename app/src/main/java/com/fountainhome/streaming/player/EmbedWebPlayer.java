@@ -375,7 +375,7 @@ public class EmbedWebPlayer {
         return new long[]{pos, dur, ended ? 1 : 0};
     }
 
-    static boolean sameSite(String a, String b) {
+    public static boolean sameSite(String a, String b) {
         if (a == null || b == null || a.isEmpty() || b.isEmpty()) return false;
         a = a.toLowerCase();
         b = b.toLowerCase();
