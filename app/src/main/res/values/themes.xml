@@ -20,4 +20,20 @@
         <item name="android:navigationBarColor">#141414</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
+    <style name="HomePill">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:background">@drawable/pill_bg</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+    <!-- Launch theme: dark window with the logo centred, so nothing white ever shows. Switched to the normal theme in MainActivity. -->
+    <style name="Theme.FountainHome.Splash" parent="Theme.FountainHome">
+        <item name="android:windowBackground">@drawable/splash_window</item>
+    </style>
 </resources>

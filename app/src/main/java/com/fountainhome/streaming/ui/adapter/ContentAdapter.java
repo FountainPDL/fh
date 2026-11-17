@@ -21,7 +21,7 @@ public class ContentAdapter extends ListAdapter<ContentItem,ContentAdapter.VH> {
         h.b.titleText.setText(item.displayTitle());
         h.b.ratingText.setText(item.rating>0?String.format("★%.1f",item.rating):"");
         h.b.ratingText.setVisibility(item.rating>0?View.VISIBLE:View.GONE);
-        Glide.with(h.itemView).load(SourceGenerator.imageUrl(item.posterPath,"w342"))
+        Glide.with(h.itemView).load(com.fountainhome.streaming.service.OfflineStore.image(h.itemView.getContext(),item.posterPath,"w342"))
             .apply(new RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL).placeholder(android.R.color.darker_gray))
             .centerCrop().into(h.b.posterImage);
         h.itemView.setOnClickListener(v->l.onClick(item));

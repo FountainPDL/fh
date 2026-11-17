@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/player_root"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#000000">
+
+    <LinearLayout android:id="@+id/content_column"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Portrait top bar -->
+        <LinearLayout android:id="@+id/top_bar"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:gravity="center_vertical" android:background="#0A0A0A"
+            android:paddingStart="4dp" android:paddingEnd="4dp">
+            <ImageButton android:id="@+id/back_btn"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:src="@drawable/ic_back" android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="6dp">
+                <TextView android:id="@+id/title_text"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"
+                    android:maxLines="1" android:ellipsize="end"/>
+                <TextView android:id="@+id/subtitle_text"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:textColor="#999999" android:textSize="11sp"
+                    android:maxLines="1" android:ellipsize="end"/>
+            </LinearLayout>
+            <ImageButton android:id="@+id/server_btn"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:src="@drawable/ic_dns" android:tint="#FFFFFF" android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Servers"/>
+            <ImageButton android:id="@+id/more_btn"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:src="@drawable/ic_more" android:tint="#FFFFFF" android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="More"/>
+        </LinearLayout>
+
+        <!-- The player. Height is set to 16:9 in portrait and MATCH_PARENT in landscape. -->
+        <FrameLayout android:id="@+id/player_holder"
+            android:layout_width="match_parent" android:layout_height="220dp"
+            android:background="#000000">
+            <FrameLayout android:id="@+id/web_container"
+                android:layout_width="match_parent" android:layout_height="match_parent"/>
+
+            <LinearLayout android:id="@+id/loading_overlay"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:orientation="vertical" android:gravity="center"
+                android:background="#000000" android:clickable="true">
+                <ProgressBar android:id="@+id/load_bar"
+                    android:layout_width="36dp" android:layout_height="36dp"/>
+                <TextView android:id="@+id/load_text"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" android:textColor="#BBBBBB" android:textSize="13sp"/>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/slow_hint"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="14dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:background="@drawable/pill_bg"
+                android:paddingStart="14dp" android:paddingEnd="6dp"
+                android:visibility="gone">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Taking a while?" android:textColor="#DDDDDD" android:textSize="12sp"/>
+                <Button android:id="@+id/slow_hint_btn"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content" android:layout_height="36dp"
+                    android:text="Try next server" android:textSize="12sp" android:textColor="#BB86FC"
+                    android:minWidth="0dp"/>
+            </LinearLayout>
+
+            <!-- Invisible strip in the top-left corner: tap to bring back the landscape controls -->
+            <View android:id="@+id/reveal_zone"
+                android:layout_width="96dp" android:layout_height="40dp"
+                android:layout_gravity="top|start" android:visibility="gone"/>
+
+            <LinearLayout android:id="@+id/float_bar"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_gravity="top|start" android:layout_margin="10dp"
+                android:orientation="horizontal" android:background="@drawable/pill_bg"
+                android:padding="2dp" android:visibility="gone">
+                <ImageButton android:id="@+id/float_back"
+                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:src="@drawable/ic_back" android:tint="#FFFFFF" android:padding="9dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back"/>
+                <ImageButton android:id="@+id/float_server"
+                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:src="@drawable/ic_dns" android:tint="#FFFFFF" android:padding="9dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Servers"/>
+                <ImageButton android:id="@+id/float_more"
+                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:src="@drawable/ic_more" android:tint="#FFFFFF" android:padding="9dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="More"/>
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Portrait panel below the player -->
+        <ScrollView android:id="@+id/info_panel"
+            android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:background="#0A0A0A" android:overScrollMode="never">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+
+                <LinearLayout android:id="@+id/ep_row"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:visibility="gone" android:layout_marginBottom="14dp">
+                    <ImageButton android:id="@+id/prev_btn"
+                        android:layout_width="48dp" android:layout_height="48dp"
+                        android:src="@drawable/ic_skip_prev" android:tint="#FFFFFF" android:padding="11dp"
+                        android:background="@drawable/spinner_bg" android:contentDescription="Previous episode"/>
+                    <TextView android:id="@+id/ep_label"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="15sp"
+                        android:textStyle="bold"/>
+                    <ImageButton android:id="@+id/next_btn"
+                        android:layout_width="48dp" android:layout_height="48dp"
+                        android:src="@drawable/ic_skip_next" android:tint="#FFFFFF" android:padding="11dp"
+                        android:background="@drawable/spinner_bg" android:contentDescription="Next episode"/>
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="SERVERS" android:textColor="#BB86FC" android:textSize="11sp"
+                    android:layout_marginBottom="8dp"/>
+                <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:scrollbars="none" android:overScrollMode="never">
+                    <LinearLayout android:id="@+id/server_chips"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal"/>
+                </HorizontalScrollView>
+
+                <TextView android:id="@+id/help_text"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp" android:textColor="#777777" android:textSize="12sp"
+                    android:lineSpacingExtra="3dp"
+                    android:text="Video not showing or stuck? Pick another server above. Some servers need a few seconds to start. Use the player's own fullscreen button for fullscreen."/>
+
+                <Button android:id="@+id/panel_download_btn"
+                    android:layout_width="match_parent" android:layout_height="46dp"
+                    android:layout_marginTop="18dp" android:text="Download for offline"
+                    android:textColor="#BB86FC" android:backgroundTint="#22BB86FC"/>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- Holds the WebView's own HTML5 fullscreen view -->
+    <FrameLayout android:id="@+id/fullscreen_host"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="#000000" android:visibility="gone"/>
+</FrameLayout>

@@ -59,6 +59,10 @@ public class SettingsFragment extends Fragment {
         b.autoplaySwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setAutoplay(requireContext(), c));
         b.pipSwitch.setChecked(AppPreferences.getPiP(requireContext()));
         b.pipSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setPiP(requireContext(), c));
+        // These options belonged to the old native player; the provider's own web player handles them now.
+        for (View dead : new View[]{b.hwAccelSwitch, b.speedSpinner, b.gestureSwitch, b.dtSeekSpinner,
+                b.showSkipIntroSwitch, b.autoSkipIntroSwitch, b.subEnabledSwitch, b.subLangSpinner})
+            if (dead.getParent() instanceof View) ((View) dead.getParent()).setVisibility(View.GONE);
         b.hwAccelSwitch.setChecked(AppPreferences.getHwAccel(requireContext()));
         b.hwAccelSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setHwAccel(requireContext(), c));
         b.keepScreenSwitch.setChecked(AppPreferences.getKeepScreenOn(requireContext()));

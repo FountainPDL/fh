@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.media3.ui.PlayerView android:id="@+id/player_view"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        app:use_controller="true" app:resize_mode="fit"
+        app:show_buffering="when_playing" app:show_timeout="3500"/>
+
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|start" android:layout_margin="10dp"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:background="@drawable/pill_bg" android:paddingEnd="14dp">
+        <ImageButton android:id="@+id/back_btn"
+            android:layout_width="40dp" android:layout_height="40dp"
+            android:src="@drawable/ic_back" android:tint="#FFFFFF" android:padding="9dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"/>
+        <TextView android:id="@+id/title_text"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="2dp" android:maxWidth="260dp"
+            android:textColor="#FFFFFF" android:textSize="13sp" android:maxLines="1"
+            android:ellipsize="end"/>
+    </LinearLayout>
+</FrameLayout>

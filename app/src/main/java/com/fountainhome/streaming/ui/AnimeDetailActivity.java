@@ -15,7 +15,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.fountainhome.streaming.databinding.ActivityAnimeDetailBinding;
 import com.fountainhome.streaming.service.*;
-import com.fountainhome.streaming.ui.player.PlayerActivity;
+import com.fountainhome.streaming.player.EmbedPlayerActivity;
 import com.fountainhome.streaming.ui.viewmodel.ContentItem;
 public class AnimeDetailActivity extends AppCompatActivity {
     private ActivityAnimeDetailBinding b;
@@ -81,11 +81,17 @@ public class AnimeDetailActivity extends AppCompatActivity {
         b.dubBtn.setOnClickListener(v -> { AppPreferences.setAnimeDubSub(this, "dub"); openPlayer(true); });
         b.backBtn.setOnClickListener(v -> finish());
 
-        // Source spinner
-        String[] srcs = {"AutoEmbed Sub", "AutoEmbed Dub", "2Anime", "Yugen"};
+        // Server spinner: the choice is applied by the player (preferred server first)
+        final String[] srcs = {"VidLink", "VIDEASY", "SuperFlix", "AutoEmbed", "2Anime", "Yugen"};
         ArrayAdapter<String> sa = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, srcs);
         sa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         b.sourceSpinner.setAdapter(sa);
+        String curSrc = AppPreferences.getAnimeSource(this);
+        for (int k = 0; k < srcs.length; k++) if (srcs[k].equals(curSrc)) { b.sourceSpinner.setSelection(k); break; }
+        b.sourceSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) { AppPreferences.setAnimeSource(AnimeDetailActivity.this, srcs[pos]); }
+            public void onNothingSelected(android.widget.AdapterView<?> p) {}
+        });
 
         // Episode list
         if (totalEpisodes > 0) {
@@ -123,10 +129,10 @@ public class AnimeDetailActivity extends AppCompatActivity {
         b.statusBtn.setText(label); b.statusBtn.setTextColor(color);
     }
     private void openPlayer(boolean dub) {
-        Intent i = new Intent(this, PlayerActivity.class);
+        Intent i = new Intent(this, EmbedPlayerActivity.class);
         i.putExtra("type", "anime"); i.putExtra("id", anilistId);
         i.putExtra("title", title); i.putExtra("imdbId", "");
-        i.putExtra("posterPath", cover); i.putExtra("rating", getIntent().getDoubleExtra("rating", 0));
+        i.putExtra("posterPath", cover); i.putExtra("backdropPath", getIntent().getStringExtra("banner")); i.putExtra("total_episodes", totalEpisodes); i.putExtra("rating", getIntent().getDoubleExtra("rating", 0));
         i.putExtra("season", 1); i.putExtra("episode", selectedEp);
         startActivity(i);
         AppPreferences.setItemStatus(this, anilistId, "anime", AppPreferences.STATUS_WATCH);

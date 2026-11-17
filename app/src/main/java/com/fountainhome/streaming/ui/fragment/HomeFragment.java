@@ -1,69 +1,195 @@
 package com.fountainhome.streaming.ui.fragment;
-import android.animation.ObjectAnimator;
+
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
-import android.view.*;
-import android.view.animation.AnimationUtils;
-import android.widget.SearchView;
-import androidx.annotation.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.fountainhome.streaming.R;
 import com.fountainhome.streaming.databinding.FragmentHomeBinding;
-import com.fountainhome.streaming.service.*;
+import com.fountainhome.streaming.player.EmbedPlayerActivity;
+import com.fountainhome.streaming.service.AppPreferences;
+import com.fountainhome.streaming.service.LibraryManager;
+import com.fountainhome.streaming.service.OfflineStore;
+import com.fountainhome.streaming.ui.MainActivity;
 import com.fountainhome.streaming.ui.SearchActivity;
 import com.fountainhome.streaming.ui.WatchActivity;
-import com.fountainhome.streaming.ui.adapter.ContentAdapter;
-import com.fountainhome.streaming.ui.viewmodel.*;
-import java.util.List;
-public class HomeFragment extends Fragment {
-    private FragmentHomeBinding b;private boolean searchOpen=false;
-    @Nullable @Override public View onCreateView(@NonNull LayoutInflater i,@Nullable ViewGroup c,@Nullable Bundle s){b=FragmentHomeBinding.inflate(i,c,false);return b.getRoot();}
-    @Override public void onViewCreated(@NonNull View v,@Nullable Bundle s){
-        super.onViewCreated(v,s);
-        int accent=AppPreferences.getAccentColor(requireContext());
-        b.appTitle.setTextColor(accent);
-        startTitleShimmer();
-        b.watchNowBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(accent));
-        b.tabTrending.setTextColor(accent);b.viewAllMovies.setTextColor(accent);b.viewAllTv.setTextColor(accent);
-        HomeViewModel vm=new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
-        vm.getFeatured().observe(getViewLifecycleOwner(),item->{if(item==null||b==null)return;Glide.with(this).load(SourceGenerator.imageUrl(item.backdropPath,"w780")).transition(DrawableTransitionOptions.withCrossFade(800)).centerCrop().into(b.featuredBanner);b.featuredTitle.setText(item.displayTitle());b.featuredTitle.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.slide_up));b.featuredGenre.setText(String.format("★%.1f",item.rating)+"  ·  "+("movie".equals(item.mediaType)?"Movie":"TV")+(item.year().isEmpty()?"":" · "+item.year()));b.watchNowBtn.setOnClickListener(x->open(item));b.featuredBanner.setOnClickListener(x->open(item));b.detailBtn.setOnClickListener(x->open(item));b.featuredAdd.setOnClickListener(x->{boolean in=LibraryManager.isIn(requireContext(),item.id,item.mediaType,LibraryManager.WATCHLIST);if(in)LibraryManager.remove(requireContext(),item.id,item.mediaType,LibraryManager.WATCHLIST);else LibraryManager.add(requireContext(),item,LibraryManager.WATCHLIST);b.featuredAdd.setText(in?"+":"✓");});});
-        b.tabTrending.setOnClickListener(x->{setTab(true);vm.getPopularMovies().observe(getViewLifecycleOwner(),items->{if(b!=null&&b.trendingRv.getAdapter()!=null)((ContentAdapter)b.trendingRv.getAdapter()).submitList(items);});});
-        b.tabPopular.setOnClickListener(x->{setTab(false);vm.getTopRated().observe(getViewLifecycleOwner(),items->{if(b!=null&&b.trendingRv.getAdapter()!=null)((ContentAdapter)b.trendingRv.getAdapter()).submitList(items);});});
-        row(b.trendingRv,vm.getPopularMovies());row(b.latestMoviesRv,vm.getNowPlaying());row(b.latestTvRv,vm.getPopularTV());
-        refreshContinue();
-        b.searchBtn.setOnClickListener(x->{searchOpen=!searchOpen;b.searchBar.setVisibility(searchOpen?View.VISIBLE:View.GONE);if(searchOpen)b.searchBar.requestFocus();});
-        b.searchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener(){public boolean onQueryTextSubmit(String q){if(q!=null&&!q.trim().isEmpty()){Intent i=new Intent(getContext(),SearchActivity.class);i.putExtra("query",q.trim());startActivity(i);b.searchBar.setVisibility(View.GONE);searchOpen=false;}return true;}public boolean onQueryTextChange(String q){return false;}});
-        b.viewAllMovies.setOnClickListener(x->nav(1));b.viewAllTv.setOnClickListener(x->nav(2));
-    }
-    @Override public void onResume(){super.onResume();refreshContinue();}
-    private void row(androidx.recyclerview.widget.RecyclerView rv,androidx.lifecycle.LiveData<List<ContentItem>>data){ContentAdapter a=new ContentAdapter(this::open);rv.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false));rv.setAdapter(a);data.observe(getViewLifecycleOwner(),items->{if(items!=null)a.submitList(items);});}
-    private void refreshContinue(){if(b==null||getContext()==null)return;List<ContentItem>list=LibraryManager.get(requireContext(),LibraryManager.CONTINUE);boolean show=!list.isEmpty()&&AppPreferences.getShowContinue(requireContext());b.continueSection.setVisibility(show?View.VISIBLE:View.GONE);if(show){ContentAdapter a=new ContentAdapter(this::open);b.continueRv.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false));b.continueRv.setAdapter(a);a.submitList(list);}}
-    private void setTab(boolean t){if(b==null)return;int ac=AppPreferences.getAccentColor(requireContext());b.tabTrending.setTextColor(t?ac:0xFF888888);b.tabPopular.setTextColor(!t?ac:0xFF888888);}
-    private void open(ContentItem item){if("anime".equals(item.mediaType)){Intent i=new Intent(getContext(),com.fountainhome.streaming.ui.AnimeDetailActivity.class);i.putExtra("anime_id",item.id);i.putExtra("title",item.displayTitle());i.putExtra("cover",item.posterPath);i.putExtra("banner",item.backdropPath);i.putExtra("rating",item.rating);startActivity(i);}else{Intent i=new Intent(getContext(),WatchActivity.class);i.putExtra("type",item.mediaType);i.putExtra("id",item.id);startActivity(i);}}
-    private void nav(int tab){if(getActivity()instanceof com.fountainhome.streaming.ui.MainActivity)((com.fountainhome.streaming.ui.MainActivity)getActivity()).selectTab(tab);}
-    @Override public void onDestroyView(){super.onDestroyView();b=null;}
+import com.fountainhome.streaming.ui.adapter.HomeRowAdapter;
+import com.fountainhome.streaming.ui.viewmodel.ContentItem;
+import com.fountainhome.streaming.ui.viewmodel.HomeViewModel;
 
-    private void startTitleShimmer() {
-        if (b == null) return;
-        b.titleShimmer.post(this::runShimmerSweep);
+import java.util.List;
+
+/** Netflix-style home: full-bleed hero, category pills, and horizontal rows. */
+public class HomeFragment extends Fragment {
+    private FragmentHomeBinding b;
+    private HomeViewModel vm;
+    private ContentItem hero;
+    private Row continueRow, top10Row, trendingRow, tvRow, newRow, ratedRow, listRow;
+
+    /** A titled horizontal row with its own adapter; hidden until it has items. */
+    private final class Row {
+        final View root; final HomeRowAdapter adapter;
+        Row(String title, int style, HomeRowAdapter.OnClick click) {
+            root = getLayoutInflater().inflate(R.layout.item_home_row, b.rowsContainer, false);
+            ((TextView) root.findViewById(R.id.row_title)).setText(title);
+            adapter = new HomeRowAdapter(style, click);
+            ((RecyclerView) root.findViewById(R.id.row_rv)).setAdapter(adapter);
+            b.rowsContainer.addView(root);
+        }
+        void set(List<ContentItem> l) {
+            adapter.submit(l);
+            root.setVisibility(l == null || l.isEmpty() ? View.GONE : View.VISIBLE);
+        }
     }
-    private void runShimmerSweep() {
-        if (b == null || b.appTitle.getWidth() == 0) return;
-        float startX = -b.appTitle.getWidth() * 0.6f;
-        float endX = b.appTitle.getWidth() * 1.2f;
-        b.titleShimmer.setTranslationX(startX);
-        ObjectAnimator anim = ObjectAnimator.ofFloat(b.titleShimmer, "translationX", startX, endX);
-        anim.setDuration(1400);
-        anim.setStartDelay(500);
-        anim.addListener(new android.animation.AnimatorListenerAdapter() {
-            @Override public void onAnimationEnd(android.animation.Animator animation) {
-                if (b != null) b.titleShimmer.postDelayed(() -> runShimmerSweep(), 1800);
-            }
+
+    @Nullable @Override
+    public View onCreateView(@NonNull LayoutInflater i, @Nullable ViewGroup c, @Nullable Bundle s) {
+        b = FragmentHomeBinding.inflate(i, c, false);
+        return b.getRoot();
+    }
+
+    @Override public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
+        super.onViewCreated(v, s);
+        vm = new ViewModelProvider(this).get(HomeViewModel.class);
+
+        HomeRowAdapter.OnClick open = this::openDetails;
+        continueRow = new Row("Continue Watching", HomeRowAdapter.LAND, this::resume);
+        top10Row = new Row("Top 10 This Week", HomeRowAdapter.TOP10, open);
+        trendingRow = new Row("Trending Now", HomeRowAdapter.POSTER, open);
+        listRow = new Row("My List", HomeRowAdapter.POSTER, open);
+        tvRow = new Row("Popular TV Shows", HomeRowAdapter.POSTER, open);
+        newRow = new Row("New Releases", HomeRowAdapter.POSTER, open);
+        ratedRow = new Row("Top Rated Movies", HomeRowAdapter.POSTER, open);
+
+        b.searchBtn.setOnClickListener(x -> startActivity(new Intent(requireContext(), SearchActivity.class)));
+        b.pillTv.setOnClickListener(x -> tab(2));
+        b.pillMovies.setOnClickListener(x -> tab(1));
+        b.pillAnime.setOnClickListener(x -> tab(3));
+        b.pillOffline.setOnClickListener(x -> openOffline());
+        b.offlineBanner.setOnClickListener(x -> openOffline());
+        b.heroPlay.setOnClickListener(x -> { if (hero != null) play(hero); });
+        b.heroInfo.setOnClickListener(x -> { if (hero != null) openDetails(hero); });
+        b.heroMylist.setOnClickListener(x -> {
+            if (hero == null) return;
+            if (LibraryManager.isIn(requireContext(), hero.id, hero.mediaType, LibraryManager.WATCHLIST))
+                LibraryManager.remove(requireContext(), hero.id, hero.mediaType, LibraryManager.WATCHLIST);
+            else LibraryManager.add(requireContext(), hero, LibraryManager.WATCHLIST);
+            refreshMyListIcon();
         });
-        anim.start();
+
+        vm.getHero().observe(getViewLifecycleOwner(), this::showHero);
+        vm.getTop10().observe(getViewLifecycleOwner(), l -> top10Row.set(l));
+        vm.getTrending().observe(getViewLifecycleOwner(), l -> trendingRow.set(l));
+        vm.getPopularTV().observe(getViewLifecycleOwner(), l -> tvRow.set(l));
+        vm.getNewReleases().observe(getViewLifecycleOwner(), l -> newRow.set(l));
+        vm.getTopRated().observe(getViewLifecycleOwner(), l -> ratedRow.set(l));
+        vm.getFailed().observe(getViewLifecycleOwner(), f -> {
+            boolean off = Boolean.TRUE.equals(f) && !online();
+            b.offlineBanner.setVisibility(off ? View.VISIBLE : View.GONE);
+        });
+    }
+
+    @Override public void onResume() {
+        super.onResume();
+        if (b == null) return;
+        // Personal rows change whenever the user watches or lists something.
+        Context c = requireContext();
+        if (AppPreferences.getShowContinue(c)) continueRow.set(LibraryManager.get(c, LibraryManager.CONTINUE));
+        else continueRow.set(null);
+        listRow.set(LibraryManager.get(c, LibraryManager.WATCHLIST));
+        refreshMyListIcon();
+    }
+
+    @Override public void onDestroyView() { super.onDestroyView(); b = null; }
+
+    // ------------------------------------------------------------------
+
+    private void showHero(ContentItem c) {
+        if (c == null || b == null) return;
+        hero = c;
+        Glide.with(this).load(OfflineStore.image(requireContext(), c.backdropPath, "w1280")).centerCrop().into(b.heroImage);
+        b.heroTitle.setText(c.displayTitle());
+        StringBuilder m = new StringBuilder("tv".equals(c.mediaType) ? "TV Series" : "Movie");
+        if (!c.year().isEmpty()) m.append("  ·  ").append(c.year());
+        if (c.rating > 0) m.append("  ·  ★ ").append(String.format("%.1f", c.rating));
+        b.heroMeta.setText(m);
+        refreshMyListIcon();
+    }
+
+    private void refreshMyListIcon() {
+        if (b == null || hero == null) return;
+        boolean in = LibraryManager.isIn(requireContext(), hero.id, hero.mediaType, LibraryManager.WATCHLIST);
+        b.heroMylistIcon.setImageResource(in ? R.drawable.ic_check : R.drawable.ic_plus);
+    }
+
+    private void openDetails(ContentItem c) {
+        Intent i;
+        if ("anime".equals(c.mediaType)) {
+            i = new Intent(requireContext(), com.fountainhome.streaming.ui.AnimeDetailActivity.class);
+            i.putExtra("anime_id", c.id);
+            i.putExtra("title", c.displayTitle());
+            i.putExtra("cover", c.posterPath);
+            i.putExtra("banner", c.backdropPath);
+            i.putExtra("rating", c.rating);
+        } else {
+            i = new Intent(requireContext(), WatchActivity.class);
+            i.putExtra("type", c.mediaType);
+            i.putExtra("id", c.id);
+        }
+        startActivity(i);
+    }
+
+    /** Hero "Play": open the title's page so the user picks the episode; movies go straight to the player. */
+    private void play(ContentItem c) {
+        if ("movie".equals(c.mediaType)) startPlayer(c, 1, 1);
+        else openDetails(c);
+    }
+
+    private void resume(ContentItem c) {
+        if ("anime".equals(c.mediaType)) { openDetails(c); return; }
+        startPlayer(c, Math.max(1, c.lastSeason), Math.max(1, c.lastEpisode));
+    }
+
+    private void startPlayer(ContentItem c, int season, int episode) {
+        Intent i = new Intent(requireContext(), EmbedPlayerActivity.class);
+        i.putExtra("type", c.mediaType);
+        i.putExtra("id", c.id);
+        i.putExtra("imdbId", c.imdbId != null ? c.imdbId : "");
+        i.putExtra("title", c.displayTitle());
+        i.putExtra("posterPath", c.posterPath != null ? c.posterPath : "");
+        i.putExtra("backdropPath", c.backdropPath != null ? c.backdropPath : "");
+        i.putExtra("rating", c.rating);
+        i.putExtra("season", season);
+        i.putExtra("episode", episode);
+        startActivity(i);
+    }
+
+    private void tab(int index) {
+        if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).selectTab(index);
+    }
+
+    private void openOffline() {
+        requireActivity().getSupportFragmentManager().beginTransaction()
+            .replace(R.id.fragment_container, new OfflineFragment()).addToBackStack(null).commit();
+    }
+
+    private boolean online() {
+        ConnectivityManager cm = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return true;
+        NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        return nc != null && nc.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 }

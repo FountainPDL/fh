@@ -14,6 +14,8 @@ public class AppPreferences {
     public static int     getAccentColor(Context c)           { try { return Color.parseColor(getAccent(c)); } catch (Exception e) { return Color.parseColor(COLOR_PURPLE); } }
     public static String  getSource(Context c)                { return p(c).getString("source", "VidSrc"); }
     public static void    setSource(Context c, String v)      { p(c).edit().putString("source", v).apply(); }
+    public static String  getAnimeSource(Context c)           { return p(c).getString("anime_source", "VidLink"); }
+    public static void    setAnimeSource(Context c, String v) { p(c).edit().putString("anime_source", v).apply(); }
     public static String  getAnimeDubSub(Context c)           { return p(c).getString("dub_sub", "sub"); }
     public static void    setAnimeDubSub(Context c, String v) { p(c).edit().putString("dub_sub", v).apply(); }
     public static boolean getAutoplay(Context c)              { return p(c).getBoolean("autoplay", true); }
@@ -53,6 +55,9 @@ public class AppPreferences {
     public static void    setShowSkipIntro(Context c, boolean v){ p(c).edit().putBoolean("show_skip_intro", v).apply(); }
     public static boolean getBackgroundPlayback(Context c)    { return p(c).getBoolean("bg_playback", false); }
     public static void    setBackgroundPlayback(Context c, boolean v){ p(c).edit().putBoolean("bg_playback", v).apply(); }
+    // --- Embed player: load the provider page directly instead of inside the wrapper iframe ---
+    public static boolean getEmbedDirect(Context c)           { return p(c).getBoolean("embed_direct", false); }
+    public static void    setEmbedDirect(Context c, boolean v){ p(c).edit().putBoolean("embed_direct", v).apply(); }
     // --- Status ---
     public static String  getItemStatus(Context c, int id, String type) { return p(c).getString("status_" + type + "_" + id, STATUS_NONE); }
     public static void    setItemStatus(Context c, int id, String type, String status) { p(c).edit().putString("status_" + type + "_" + id, status).apply(); }

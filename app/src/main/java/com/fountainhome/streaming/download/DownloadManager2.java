@@ -1,160 +1,120 @@
 package com.fountainhome.streaming.download;
-import android.app.*;
+
 import android.content.Context;
-import android.os.*;
-import androidx.core.app.NotificationCompat;
-import com.fountainhome.streaming.service.*;
+import android.content.Intent;
+import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
+
+import com.fountainhome.streaming.service.DownloadService;
 import com.fountainhome.streaming.ui.viewmodel.ContentItem;
-import java.io.*;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import okhttp3.*;
+
+import java.io.File;
+
+/**
+ * Entry point the UI uses for downloads. It only creates / updates the database row and
+ * starts {@link DownloadService}; the service does the actual work.
+ */
 public class DownloadManager2 {
-    private static final String CH = "fh_dl";
-    private static final ExecutorService exec = Executors.newFixedThreadPool(2);
+    private DownloadManager2() {}
 
-    // Save metadata only (no video file)
-    public static void saveForOffline(Context ctx, ContentItem item) {
-        exec.execute(() -> {
-            DownloadItem dl = new DownloadItem();
-            dl.tmdbId = item.id; dl.type = item.mediaType;
-            dl.title = item.displayTitle();
-            dl.posterPath = item.posterPath != null ? item.posterPath : "";
-            dl.overview = item.overview != null ? item.overview : "";
-            dl.rating = item.rating; dl.imdbId = item.imdbId != null ? item.imdbId : "";
-            dl.season = item.lastSeason; dl.episode = item.lastEpisode;
-            dl.status = "offline"; dl.isOfflineReady = false;
-            dl.addedAt = System.currentTimeMillis();
-            AppDatabase.get(ctx).downloadDao().insert(dl);
-        });
+    /** The app's Offline folder (private to the app, no storage permission needed). */
+    public static File offlineRoot(Context c) {
+        File base = c.getExternalFilesDir(null);
+        if (base == null) base = c.getFilesDir();
+        File d = new File(base, "Offline");
+        if (!d.exists()) d.mkdirs();
+        return d;
     }
 
-    // Quick save episode metadata
-    public static void quickSave(Context ctx, int tmdbId, String type, String title, int season, int episode) {
-        exec.execute(() -> {
-            DownloadItem dl = new DownloadItem();
-            dl.tmdbId = tmdbId; dl.type = type; dl.title = title;
-            dl.season = season; dl.episode = episode;
-            dl.status = "offline"; dl.isOfflineReady = false;
-            dl.addedAt = System.currentTimeMillis();
-            AppDatabase.get(ctx).downloadDao().insert(dl);
-        });
+    public static String safeName(String s) {
+        String n = s == null ? "" : s.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "").trim();
+        if (n.length() > 60) n = n.substring(0, 60).trim();
+        return n.isEmpty() ? "video" : n;
     }
 
-    // Real video download with progress notification
-    public static void downloadVideo(Context ctx, ContentItem item, int season, int episode) {
-        setupChannel(ctx);
-        exec.execute(() -> {
-            String label = item.displayTitle() + (season > 0 ? " S" + season + "E" + episode : "");
-            int notifId = (item.id * 1000 + episode);
-            showNotif(ctx, notifId, label, "Finding stream...", 0);
-
-            // Extract stream URL
-            new StreamExtractor().extract(ctx,
-                "anime".equals(item.mediaType)
-                    ? SourceGenerator.getAnimeSources(item.id, com.fountainhome.streaming.anime.AniListClient.getMalIdSync(item.id), season, episode).get(0).url
-                    : "movie".equals(item.mediaType)
-                        ? SourceGenerator.getMovieSources(item.imdbId, item.id).get(0).url
-                        : SourceGenerator.getTVSources(item.imdbId, item.id, season, episode).get(0).url,
-                15000,
-                new StreamExtractor.Callback() {
-                    @Override public void onFound(String url, Map<String, String> headers) {
-                        doDownload(ctx, item, season, episode, url, headers, label, notifId);
-                    }
-                    @Override public void onFailed() {
-                        cancelNotif(ctx, notifId);
-                        android.os.Handler h = new android.os.Handler(Looper.getMainLooper());
-                        h.post(() -> android.widget.Toast.makeText(ctx, "Could not extract stream for download", android.widget.Toast.LENGTH_LONG).show());
-                    }
-                });
-        });
+    public static boolean isDownloaded(Context c, int tmdbId, String type, int season, int episode) {
+        DownloadItem d = AppDatabase.get(c).downloadDao().find(tmdbId, type, norm(type, season), norm(type, episode));
+        return d != null && DownloadItem.COMPLETED.equals(d.status) && d.localPath != null && new File(d.localPath).isFile();
     }
 
-    private static void doDownload(Context ctx, ContentItem item, int season, int episode,
-                                    String url, Map<String, String> headers, String label, int notifId) {
-        // Create output directory
-        File dir = new File(Environment.getExternalStorageDirectory(), "F-Home/" + sanitize(item.displayTitle()));
-        dir.mkdirs();
-        String filename = season > 0 ? "S" + season + "E" + episode + ".mp4" : item.displayTitle() + ".mp4";
-        File outFile = new File(dir, filename);
+    /** Queue a movie (season/episode ignored) or one episode for download. */
+    public static void enqueue(Context ctx, ContentItem item, int season, int episode) {
+        Context app = ctx.getApplicationContext();
+        DownloadDao dao = AppDatabase.get(app).downloadDao();
+        int s = norm(item.mediaType, season), e = norm(item.mediaType, episode);
 
-        try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .build();
-            okhttp3.Request.Builder rb = new okhttp3.Request.Builder().url(url);
-            for (Map.Entry<String, String> e : headers.entrySet()) rb.addHeader(e.getKey(), e.getValue());
-            Response response = client.newCall(rb.build()).execute();
-            if (response.body() == null) { cancelNotif(ctx, notifId); return; }
-            long total = response.body().contentLength();
-            InputStream in = response.body().byteStream();
-            FileOutputStream fos = new FileOutputStream(outFile);
-            byte[] buf = new byte[8192];
-            long downloaded = 0; int read;
-            while ((read = in.read(buf)) != -1) {
-                fos.write(buf, 0, read);
-                downloaded += read;
-                if (total > 0) {
-                    int pct = (int) (downloaded * 100 / total);
-                    showNotif(ctx, notifId, label, "Downloading " + pct + "%", pct);
-                }
+        DownloadItem d = dao.find(item.id, item.mediaType, s, e);
+        if (d != null) {
+            if (d.isActive()) {
+                Toast.makeText(app, "Already downloading", Toast.LENGTH_SHORT).show();
+                return;
             }
-            fos.close(); in.close();
-
-            // Save to DB
-            DownloadItem dl = new DownloadItem();
-            dl.tmdbId = item.id; dl.type = item.mediaType; dl.title = item.displayTitle();
-            dl.posterPath = item.posterPath != null ? item.posterPath : "";
-            dl.season = season; dl.episode = episode;
-            dl.localPath = outFile.getAbsolutePath();
-            dl.status = "completed"; dl.isOfflineReady = true;
-            dl.addedAt = System.currentTimeMillis();
-            AppDatabase.get(ctx).downloadDao().insert(dl);
-            showCompleteNotif(ctx, notifId, label, outFile.getAbsolutePath());
-
-        } catch (Exception e) {
-            outFile.delete();
-            cancelNotif(ctx, notifId);
+            if (DownloadItem.COMPLETED.equals(d.status) && d.localPath != null && new File(d.localPath).isFile()) {
+                Toast.makeText(app, "Already downloaded — find it under More › Offline", Toast.LENGTH_LONG).show();
+                return;
+            }
         }
+        boolean fresh = d == null;
+        if (fresh) d = new DownloadItem();
+        d.tmdbId = item.id;
+        d.type = item.mediaType;
+        d.season = s;
+        d.episode = e;
+        d.title = item.displayTitle();
+        d.posterPath = item.posterPath != null ? item.posterPath : "";
+        d.backdropPath = item.backdropPath != null ? item.backdropPath : "";
+        d.imdbId = item.imdbId != null ? item.imdbId : "";
+        d.overview = item.overview != null ? item.overview : "";
+        d.rating = item.rating;
+        d.status = DownloadItem.QUEUED;
+        d.progress = 0;
+        d.error = null;
+        d.localPath = null;
+        d.totalBytes = 0;
+        d.addedAt = System.currentTimeMillis();
+        if (fresh) d.id = (int) dao.insert(d); else dao.update(d);
+
+        start(app, d.id);
+        Toast.makeText(app, "Download started — progress is in the notification and under More › Downloads",
+            Toast.LENGTH_LONG).show();
     }
 
-    public static boolean isDownloaded(Context ctx, int tmdbId, String type, int s, int e) {
-        DownloadItem dl = AppDatabase.get(ctx).downloadDao().find(tmdbId, type, s, e);
-        return dl != null && "completed".equals(dl.status) && dl.localPath != null
-            && new File(dl.localPath).exists();
+    public static void retry(Context ctx, DownloadItem d) {
+        Context app = ctx.getApplicationContext();
+        DownloadDao dao = AppDatabase.get(app).downloadDao();
+        dao.setState(d.id, DownloadItem.QUEUED, 0, null);
+        start(app, d.id);
     }
-    public static void deleteDownload(Context ctx, DownloadItem item) {
-        exec.execute(() -> {
-            if (item.localPath != null) new File(item.localPath).delete();
-            AppDatabase.get(ctx).downloadDao().delete(item);
-        });
-    }
-    private static String sanitize(String s) { return s.replaceAll("[^a-zA-Z0-9 ]", "").trim(); }
-    private static void setupChannel(Context ctx) {
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel ch = new NotificationChannel(CH, "Downloads", NotificationManager.IMPORTANCE_LOW);
-            ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(ch);
+
+    /** Stop (if running) and remove the download together with its file. */
+    public static void delete(Context ctx, DownloadItem d) {
+        Context app = ctx.getApplicationContext();
+        if (d.isActive()) {
+            Intent i = new Intent(app, DownloadService.class)
+                .setAction(DownloadService.ACTION_CANCEL).putExtra(DownloadService.EXTRA_ID, d.id);
+            try { app.startService(i); } catch (Exception ignored) {}
         }
+        if (d.localPath != null) {
+            File f = new File(d.localPath);
+            f.delete();
+            File dir = f.getParentFile();
+            if (dir != null && !dir.equals(offlineRoot(app))) {
+                String[] left = dir.list();
+                if (left != null && left.length == 0) dir.delete();   // tidy empty show folders
+            }
+        }
+        AppDatabase.get(app).downloadDao().delete(d);
     }
-    private static void showNotif(Context ctx, int id, String title, String text, int pct) {
-        setupChannel(ctx);
-        Notification n = new NotificationCompat.Builder(ctx, CH)
-            .setContentTitle(title).setContentText(text)
-            .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setProgress(100, pct, pct == 0).setOngoing(true).build();
-        ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(id, n);
+
+    private static void start(Context app, int id) {
+        Intent i = new Intent(app, DownloadService.class)
+            .setAction(DownloadService.ACTION_START).putExtra(DownloadService.EXTRA_ID, id);
+        ContextCompat.startForegroundService(app, i);
     }
-    private static void showCompleteNotif(Context ctx, int id, String title, String path) {
-        setupChannel(ctx);
-        Notification n = new NotificationCompat.Builder(ctx, CH)
-            .setContentTitle(title).setContentText("Download complete")
-            .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setAutoCancel(true).build();
-        ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(id, n);
-    }
-    private static void cancelNotif(Context ctx, int id) {
-        ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id);
+
+    /** Movies have no season/episode; TV and anime do. */
+    private static int norm(String type, int v) {
+        return "movie".equals(type) ? 0 : v;
     }
 }

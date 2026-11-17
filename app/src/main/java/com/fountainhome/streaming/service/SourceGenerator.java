@@ -7,6 +7,26 @@ public class SourceGenerator {
         public Source(String u, String l) { url = u; label = l; }
     }
 
+    /** Server names offered for movies and TV (the labels used by getMovieSources / getTVSources). */
+    public static final String[] SERVER_NAMES = {
+        "VidSrc", "VidLink", "VidRock", "VIDEASY", "VidFast", "VidKing", "111Movies", "Peachify",
+        "SuperFlix", "VidNest", "2Embed", "AutoEmbed", "SuperEmbed VIP", "SuperEmbed"
+    };
+
+    /**
+     * The URL to load for a source. When resuming (startSec > 0) the start time is passed to
+     * providers that document a start parameter (VidKing: "progress"). Other providers resume
+     * from the progress they keep themselves.
+     */
+    public static String urlFor(Source src, int startSec) {
+        String u = src.url;
+        if (src.label != null && src.label.startsWith("VidKing")) {
+            u += (u.contains("?") ? "&" : "?") + "autoPlay=true";
+            if (startSec > 0) u += "&progress=" + startSec;
+        }
+        return u;
+    }
+
     public static List<Source> getMovieSources(String imdbId, int tmdbId) {
         List<Source> l = new ArrayList<>();
         boolean has = imdbId != null && !imdbId.isEmpty();

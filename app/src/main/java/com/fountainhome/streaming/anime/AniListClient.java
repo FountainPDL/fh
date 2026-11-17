@@ -82,7 +82,11 @@ public class AniListClient {
         run("query{Page(page:1,perPage:20){media(sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{}", cb);
     }
     public static void getThisSeason(Callback<List<AnimeItem>> cb) {
-        run("query{Page(page:1,perPage:20){media(season:SPRING,seasonYear:2025,type:ANIME,sort:POPULARITY_DESC,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format}}}", "{}", cb);
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        int m = cal.get(java.util.Calendar.MONTH);          // 0 = January
+        String season = m <= 2 ? "WINTER" : m <= 5 ? "SPRING" : m <= 8 ? "SUMMER" : "FALL";
+        int year = cal.get(java.util.Calendar.YEAR);
+        run("query{Page(page:1,perPage:20){media(season:" + season + ",seasonYear:" + year + ",type:ANIME,sort:POPULARITY_DESC,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format}}}", "{}", cb);
     }
     public static void search(String kw, Callback<List<AnimeItem>> cb) {
         String safeKw = kw.replace("\"", "").replace("\\", "");

@@ -13,6 +13,7 @@ public class MainActivity extends AppCompatActivity {
     private int selectedTab=0;
     private int accentColor;
     @Override protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.Theme_FountainHome);
         super.onCreate(savedInstanceState);
         String prev=CrashLogger.read(this);
         if(!prev.equals("No crash log yet.")){
@@ -35,6 +36,23 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.nav_anime).setOnClickListener(v->selectTab(3));
         findViewById(R.id.nav_more).setOnClickListener(v->selectTab(4));
         if(s==null)selectTab(0);else applyTabColors(selectedTab);
+        askNotificationPermission();
+        handleIntent(getIntent());
+    }
+    @Override protected void onNewIntent(android.content.Intent intent){super.onNewIntent(intent);setIntent(intent);handleIntent(intent);}
+    /** Opened from a download notification: jump to More > Offline. */
+    private void handleIntent(android.content.Intent intent){
+        if(intent!=null&&intent.getBooleanExtra("open_offline",false)){
+            intent.removeExtra("open_offline");
+            selectTab(4);
+            try{getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,new OfflineFragment()).addToBackStack(null).commitAllowingStateLoss();}catch(Throwable ignored){}
+        }
+    }
+    /** Android 13+: without this the download notifications are never shown. */
+    private void askNotificationPermission(){
+        if(android.os.Build.VERSION.SDK_INT>=33&&checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},77);
+        }
     }
     public void selectTab(int tab){
         selectedTab=tab;

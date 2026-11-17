@@ -1,129 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="#0A0A0A">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="60dp"
-        android:gravity="center_vertical" android:background="#141414"
-        android:paddingStart="16dp" android:paddingEnd="8dp">
-        <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
-            android:clipChildren="true">
-            <TextView android:id="@+id/app_title"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:text="FOUNTAIN HOME" android:textColor="#BB86FC"
-                android:textSize="20sp" android:textStyle="bold" android:letterSpacing="0.1"/>
-            <View android:id="@+id/title_shimmer"
-                android:layout_width="36dp" android:layout_height="match_parent"
-                android:background="@drawable/shimmer_gradient"/>
-        </FrameLayout>
-        <ImageButton android:id="@+id/search_btn"
-            android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@drawable/ic_search" android:tint="#FFFFFF"
-            android:background="?attr/selectableItemBackground" android:contentDescription="Search"/>
-    </LinearLayout>
-    <SearchView android:id="@+id/search_bar"
-        android:layout_width="match_parent" android:layout_height="52dp"
-        android:queryHint="Search movies, TV, anime..."
-        android:iconifiedByDefault="false" android:background="#1A1A1A" android:visibility="gone"/>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
-        android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="16dp"
-        android:gravity="center_vertical">
-        <TextView android:id="@+id/tab_trending"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Trending" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="#BB86FC" android:paddingEnd="20dp"/>
-        <TextView android:id="@+id/tab_popular"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Popular" android:textSize="14sp" android:textColor="#888888"/>
-    </LinearLayout>
-    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
-        android:overScrollMode="never" android:scrollbars="none">
+    android:background="#000000">
+
+    <androidx.core.widget.NestedScrollView android:id="@+id/home_scroll"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:overScrollMode="never" android:fillViewport="true">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <FrameLayout android:layout_width="match_parent" android:layout_height="360dp">
-                <ImageView android:id="@+id/featured_banner"
+            android:orientation="vertical" android:paddingBottom="24dp">
+
+            <!-- Hero -->
+            <FrameLayout android:layout_width="match_parent" android:layout_height="520dp">
+                <ImageView android:id="@+id/hero_image"
                     android:layout_width="match_parent" android:layout_height="match_parent"
                     android:scaleType="centerCrop" android:background="#111111"/>
                 <View android:layout_width="match_parent" android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_gravity="bottom" android:orientation="vertical"
-                    android:paddingLeft="20dp" android:paddingRight="20dp" android:paddingBottom="20dp">
-                    <TextView android:id="@+id/featured_title"
+                    android:gravity="center_horizontal" android:padding="16dp">
+                    <TextView android:id="@+id/hero_title"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF" android:textSize="24sp" android:textStyle="bold"
-                        android:gravity="center" android:shadowColor="#000" android:shadowRadius="10"/>
-                    <TextView android:id="@+id/featured_genre"
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#CCCCCC" android:textSize="12sp"
-                        android:gravity="center" android:layout_marginBottom="14dp"/>
+                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="30sp"
+                        android:textStyle="bold" android:maxLines="2" android:ellipsize="end"
+                        android:shadowColor="#000000" android:shadowRadius="8"/>
+                    <TextView android:id="@+id/hero_meta"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp" android:textColor="#D0D0D0" android:textSize="13sp"/>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center">
-                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:orientation="vertical" android:gravity="center" android:layout_marginEnd="24dp">
-                            <ImageButton android:id="@+id/detail_btn"
-                                android:layout_width="44dp" android:layout_height="44dp"
-                                android:src="@drawable/ic_info" android:tint="#FFFFFF"
-                                android:background="?attr/selectableItemBackground" android:contentDescription="Info"/>
+                        android:layout_marginTop="16dp" android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <LinearLayout android:id="@+id/hero_mylist"
+                            android:layout_width="64dp" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:gravity="center_horizontal"
+                            android:padding="4dp" android:clickable="true" android:focusable="true">
+                            <ImageView android:id="@+id/hero_mylist_icon"
+                                android:layout_width="26dp" android:layout_height="26dp"
+                                android:src="@drawable/ic_plus" android:tint="#FFFFFF"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Info" android:textColor="#CCCCCC" android:textSize="11sp"/>
+                                android:text="My List" android:textColor="#FFFFFF" android:textSize="11sp"
+                                android:layout_marginTop="2dp"/>
                         </LinearLayout>
-                        <Button android:id="@+id/watch_now_btn"
-                            android:layout_width="160dp" android:layout_height="50dp"
-                            android:text="PLAY NOW" android:textSize="14sp" android:textStyle="bold"
-                            android:textColor="#000000" android:backgroundTint="#BB86FC"/>
-                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:orientation="vertical" android:gravity="center" android:layout_marginStart="24dp">
-                            <TextView android:id="@+id/featured_add"
-                                android:layout_width="44dp" android:layout_height="44dp"
-                                android:gravity="center" android:text="+"
-                                android:textColor="#FFFFFF" android:textSize="26sp"
-                                android:background="?attr/selectableItemBackground"/>
+                        <LinearLayout android:id="@+id/hero_play"
+                            android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
+                            android:layout_marginStart="8dp" android:layout_marginEnd="8dp"
+                            android:background="#FFFFFF" android:gravity="center"
+                            android:clickable="true" android:focusable="true">
+                            <ImageView android:layout_width="22dp" android:layout_height="22dp"
+                                android:src="@drawable/ic_play" android:tint="#000000"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Add" android:textColor="#CCCCCC" android:textSize="11sp"/>
+                                android:text="Play" android:textColor="#000000" android:textSize="16sp"
+                                android:textStyle="bold" android:layout_marginStart="6dp"/>
+                        </LinearLayout>
+                        <LinearLayout android:id="@+id/hero_info"
+                            android:layout_width="64dp" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:gravity="center_horizontal"
+                            android:padding="4dp" android:clickable="true" android:focusable="true">
+                            <ImageView android:layout_width="26dp" android:layout_height="26dp"
+                                android:src="@drawable/ic_info" android:tint="#FFFFFF"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Info" android:textColor="#FFFFFF" android:textSize="11sp"
+                                android:layout_marginTop="2dp"/>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </FrameLayout>
-            <LinearLayout android:id="@+id/continue_section"
+
+            <!-- Offline shortcut -->
+            <TextView android:id="@+id/offline_banner"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:visibility="gone">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="Continue watching" android:textColor="#FFFFFF"
-                    android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
-                <androidx.recyclerview.widget.RecyclerView android:id="@+id/continue_rv"
-                    android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:paddingLeft="8dp" android:paddingRight="8dp" android:nestedScrollingEnabled="false"/>
-            </LinearLayout>
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/trending_rv"
+                android:layout_margin="12dp" android:padding="12dp" android:visibility="gone"
+                android:background="#1F1F1F" android:textColor="#FFFFFF" android:textSize="13sp"
+                android:text="Can't reach the internet. Tap to open your downloads and saved pages."/>
+
+            <LinearLayout android:id="@+id/rows_container"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="8dp"
-                android:nestedScrollingEnabled="false"/>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:paddingLeft="14dp" android:paddingRight="14dp"
-                android:paddingTop="20dp" android:paddingBottom="8dp" android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="Latest Movies" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
-                <TextView android:id="@+id/view_all_movies"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
-            </LinearLayout>
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_movies_rv"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:paddingLeft="8dp" android:paddingRight="8dp" android:nestedScrollingEnabled="false"/>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:paddingLeft="14dp" android:paddingRight="14dp"
-                android:paddingTop="20dp" android:paddingBottom="8dp" android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="Latest TV Series" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
-                <TextView android:id="@+id/view_all_tv"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
-            </LinearLayout>
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/latest_tv_rv"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingBottom="24dp"
-                android:nestedScrollingEnabled="false"/>
+                android:orientation="vertical"/>
         </LinearLayout>
-    </ScrollView>
-</LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Floating top bar -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:layout_gravity="top"
+        android:background="@drawable/gradient_top">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="52dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingStart="16dp" android:paddingEnd="8dp">
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:text="FOUNTAIN" android:textColor="#E50914" android:textSize="24sp"
+                android:textStyle="bold" android:letterSpacing="0.08"/>
+            <ImageButton android:id="@+id/search_btn"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:src="@drawable/ic_search" android:tint="#FFFFFF" android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Search"/>
+        </LinearLayout>
+        <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:scrollbars="none" android:overScrollMode="never">
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:paddingStart="12dp" android:paddingEnd="12dp"
+                android:paddingBottom="8dp">
+                <TextView android:id="@+id/pill_tv" style="@style/HomePill" android:text="TV Shows"/>
+                <TextView android:id="@+id/pill_movies" style="@style/HomePill" android:text="Movies"/>
+                <TextView android:id="@+id/pill_anime" style="@style/HomePill" android:text="Anime"/>
+                <TextView android:id="@+id/pill_offline" style="@style/HomePill" android:text="Offline"/>
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+</FrameLayout>

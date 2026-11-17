@@ -8,6 +8,7 @@ public interface TMDBService {
     @GET("movie/top_rated")   Call<Models.PagedResponse<Models.MovieResult>> getTopRatedMovies(@Query("page") int p);
     @GET("tv/top_rated")      Call<Models.PagedResponse<Models.TVResult>>    getTopRatedTV(@Query("page") int p);
     @GET("tv/on_the_air")     Call<Models.PagedResponse<Models.TVResult>>    getOnAirTV(@Query("page") int p);
+    @GET("trending/{media}/{window}") Call<Models.PagedResponse<Models.SearchResult>> getTrending(@Path("media") String media,@Path("window") String window);
     @GET("search/multi")      Call<Models.PagedResponse<Models.SearchResult>>search(@Query("query") String q,@Query("page") int p);
     @GET("movie/{id}")        Call<Models.MovieDetail> getMovieDetail(@Path("id") int id,@Query("append_to_response") String a);
     @GET("tv/{id}")           Call<Models.TVDetail>    getTVDetail(@Path("id") int id,@Query("append_to_response") String a);

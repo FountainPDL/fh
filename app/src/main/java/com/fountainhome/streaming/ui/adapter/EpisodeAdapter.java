@@ -41,7 +41,7 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.VH> {
             h.overview.setText(ep.overview); h.overview.setVisibility(View.VISIBLE);
         } else h.overview.setVisibility(View.GONE);
         if (ep.runtime > 0) { h.duration.setText(ep.runtime + "m"); h.duration.setVisibility(View.VISIBLE); }
-        Glide.with(ctx).load(SourceGenerator.imageUrl(ep.still_path, "w300"))
+        Glide.with(ctx).load(OfflineStore.image(ctx, ep.still_path, "w300"))
             .placeholder(android.R.color.darker_gray).into(h.thumb);
         boolean downloaded = DownloadManager2.isDownloaded(ctx, tmdbId, type, season, num);
         h.dlIcon.setImageResource(downloaded ? R.drawable.ic_check : R.drawable.ic_download);
@@ -50,12 +50,16 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.VH> {
         h.progress.setVisibility(prog > 0 ? View.VISIBLE : View.GONE);
         // FIXED: click on row plays, click on download icon downloads — no conflict
         h.playArea.setOnClickListener(v -> l.onClick(ep, num));
+        h.dlIcon.setVisibility(dl != null ? View.VISIBLE : View.GONE);
         h.dlIcon.setOnClickListener(v -> {
-            // Consume click so row doesn't open
-            if (dl != null) dl.onDownload(ep, num);
-            else DownloadManager2.quickSave(ctx, tmdbId, type, ep.name != null ? ep.name : "Episode " + num, season, num);
-            h.dlIcon.setImageResource(R.drawable.ic_check);
-            Toast.makeText(ctx, "Saving...", Toast.LENGTH_SHORT).show();
+            if (dl == null) return;
+            if (DownloadManager2.isDownloaded(ctx, tmdbId, type, season, num)) {
+                Toast.makeText(ctx, "Already downloaded \u2014 find it under More > Offline", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dl.onDownload(ep, num);
+            h.dlIcon.setImageResource(R.drawable.ic_download);
+            h.dlIcon.setAlpha(0.3f);
         });
     }
     @Override public int getItemCount() { return eps.size(); }
