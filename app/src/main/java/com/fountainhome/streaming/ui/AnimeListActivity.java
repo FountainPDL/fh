@@ -3,18 +3,19 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.*;
 import com.fountainhome.streaming.anime.*;
 import com.fountainhome.streaming.databinding.ActivityAnimeListBinding;
 import java.util.*;
 import androidx.annotation.NonNull;
-public class AnimeListActivity extends AppCompatActivity {
+public class AnimeListActivity extends BaseActivity {
     private ActivityAnimeListBinding b;
     private AnimeAdapter adapter;
     private final List<AniListClient.AnimeItem> allItems = new ArrayList<>();
     private String category;
-    private boolean loading = false;
+    private boolean loading = false, hasMore = true;
+    private int page = 1;
+    private String query;
 
     @Override protected void onCreate(Bundle s) {
         super.onCreate(s);
@@ -22,7 +23,7 @@ public class AnimeListActivity extends AppCompatActivity {
         setContentView(b.getRoot());
         category = getIntent().getStringExtra("category"); // trending/popular/season/search
         String title = getIntent().getStringExtra("title");
-        String query = getIntent().getStringExtra("query");
+        query = getIntent().getStringExtra("query");
         b.pageTitle.setText(title != null ? title : "Anime");
         b.backBtn.setOnClickListener(v -> finish());
         adapter = new AnimeAdapter(item -> {
@@ -42,22 +43,24 @@ public class AnimeListActivity extends AppCompatActivity {
             @Override public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
                 int total = lm.getItemCount();
                 int last = lm.findLastVisibleItemPosition();
-                if (!loading && last >= total - 6) loadMore();
+                if (!loading && hasMore && last >= total - 6) load();
             }
         });
         load();
     }
     private void load() {
         loading = true; b.progressBar.setVisibility(View.VISIBLE);
+        final int p = page;
         AniListClient.Callback<List<AniListClient.AnimeItem>> cb = new AniListClient.Callback<List<AniListClient.AnimeItem>>() {
             public void onSuccess(List<AniListClient.AnimeItem> r) {
                 loading = false;
                 if (b == null) return;
                 b.progressBar.setVisibility(View.GONE);
-                if (r != null) {
-                    allItems.addAll(r);
-                    adapter.submitList(new ArrayList<>(allItems));
-                }
+                if (r == null || r.isEmpty()) { hasMore = false; return; }
+                page = p + 1;
+                allItems.addAll(r);
+                adapter.submitList(new ArrayList<>(allItems));
+                if (r.size() < 20) hasMore = false;
             }
             public void onError(String e) {
                 loading = false;
@@ -66,14 +69,10 @@ public class AnimeListActivity extends AppCompatActivity {
             }
         };
         switch (category != null ? category : "trending") {
-            case "popular": AniListClient.getPopular(cb); break;
-            case "season":  AniListClient.getThisSeason(cb); break;
-            default:        AniListClient.getTrending(cb); break;
+            case "popular": AniListClient.getPopular(p, cb); break;
+            case "season":  AniListClient.getThisSeason(p, cb); break;
+            case "search":  AniListClient.search(query != null ? query : "", p, cb); break;
+            default:        AniListClient.getTrending(p, cb); break;
         }
-    }
-    private void loadMore() {
-        // AniList pagination — reload with next batch
-        // For now load same endpoint again (AniList returns different results with page param)
-        load();
     }
 }

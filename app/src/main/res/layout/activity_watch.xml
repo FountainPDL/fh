@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent" android:background="#0A0A0A">
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="?attr/fhBg">
     <androidx.core.widget.NestedScrollView android:layout_width="match_parent"
         android:layout_height="match_parent" android:overScrollMode="never">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -8,65 +8,65 @@
             <FrameLayout android:layout_width="match_parent" android:layout_height="220dp">
                 <ImageView android:id="@+id/backdrop_image"
                     android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:scaleType="centerCrop" android:background="#111111"/>
+                    android:scaleType="centerCrop" android:background="?attr/fhSurfaceAlt"/>
                 <View android:layout_width="match_parent" android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
                 <ImageButton android:id="@+id/back_btn"
                     android:layout_width="40dp" android:layout_height="40dp" android:layout_margin="10dp"
-                    android:src="@drawable/ic_close" android:tint="#FFFFFF"
-                    android:background="#88000000" android:contentDescription="Back"/>
+                    android:src="@drawable/ic_close" android:tint="@color/on_image"
+                    android:background="@color/scrim_soft" android:contentDescription="Back"/>
             </FrameLayout>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:padding="12dp">
                 <ImageView android:id="@+id/poster_image"
                     android:layout_width="100dp" android:layout_height="150dp"
-                    android:scaleType="centerCrop" android:background="#1E1E1E" android:layout_marginEnd="12dp"/>
+                    android:scaleType="centerCrop" android:background="?attr/fhSurfaceAlt" android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:id="@+id/title_text"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold"/>
+                        android:textColor="?attr/fhText" android:textSize="18sp" android:textStyle="bold"/>
                     <TextView android:id="@+id/meta_text"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#999999" android:textSize="12sp" android:layout_marginTop="4dp"/>
+                        android:textColor="?attr/fhTextDim" android:textSize="12sp" android:layout_marginTop="4dp"/>
                     <Button android:id="@+id/status_btn"
                         android:layout_width="wrap_content" android:layout_height="32dp"
                         android:layout_marginTop="8dp" android:text="Set Status"
-                        android:textSize="11sp" android:textColor="#888888" android:backgroundTint="#1E1E1E"
+                        android:textSize="11sp" android:textColor="?attr/fhTextDim" android:backgroundTint="?attr/fhSurfaceAlt"
                         android:paddingStart="12dp" android:paddingEnd="12dp"/>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:layout_marginTop="10dp">
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                             android:layout_weight="1" android:orientation="vertical" android:gravity="center">
                             <ImageButton android:id="@+id/favorite_btn" android:layout_width="36dp" android:layout_height="36dp"
-                                android:src="@drawable/ic_favorite" android:tint="#BB86FC"
+                                android:src="@drawable/ic_favorite" android:tint="?attr/fhAccent"
                                 android:background="?attr/selectableItemBackground" android:alpha="0.4"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Favorite" android:textColor="#888888" android:textSize="10sp"/>
+                                android:text="Favorite" android:textColor="?attr/fhTextDim" android:textSize="10sp"/>
                         </LinearLayout>
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                             android:layout_weight="1" android:orientation="vertical" android:gravity="center">
                             <ImageButton android:id="@+id/watchlist_btn" android:layout_width="36dp" android:layout_height="36dp"
-                                android:src="@drawable/ic_watch_later" android:tint="#FFFFFF"
+                                android:src="@drawable/ic_watch_later" android:tint="?attr/fhText"
                                 android:background="?attr/selectableItemBackground" android:alpha="0.4"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Watchlist" android:textColor="#888888" android:textSize="10sp"/>
+                                android:text="Watchlist" android:textColor="?attr/fhTextDim" android:textSize="10sp"/>
                         </LinearLayout>
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                             android:layout_weight="1" android:orientation="vertical" android:gravity="center">
                             <ImageButton android:id="@+id/download_btn" android:layout_width="36dp" android:layout_height="36dp"
-                                android:src="@drawable/ic_download" android:tint="#FFFFFF"
+                                android:src="@drawable/ic_download" android:tint="?attr/fhText"
                                 android:background="?attr/selectableItemBackground"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Save" android:textColor="#888888" android:textSize="10sp"/>
+                                android:text="Save" android:textColor="?attr/fhTextDim" android:textSize="10sp"/>
                         </LinearLayout>
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                             android:layout_weight="1" android:orientation="vertical" android:gravity="center">
                             <ImageButton android:id="@+id/share_btn" android:layout_width="36dp" android:layout_height="36dp"
-                                android:src="@drawable/ic_share" android:tint="#FFFFFF"
+                                android:src="@drawable/ic_share" android:tint="?attr/fhText"
                                 android:background="?attr/selectableItemBackground"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Share" android:textColor="#888888" android:textSize="10sp"/>
+                                android:text="Share" android:textColor="?attr/fhTextDim" android:textSize="10sp"/>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -78,15 +78,15 @@
                     <Button android:id="@+id/play_btn"
                         android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
                         android:text="PLAY" android:textSize="14sp" android:textStyle="bold"
-                        android:textColor="#000000" android:backgroundTint="#BB86FC" android:layout_marginEnd="8dp"/>
+                        android:textColor="?attr/fhOnAccent" android:backgroundTint="?attr/fhAccent" android:layout_marginEnd="8dp"/>
                     <Button android:id="@+id/resume_btn"
                         android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
-                        android:text="RESUME" android:textSize="13sp" android:textColor="#BB86FC"
-                        android:backgroundTint="#22BB86FC" android:visibility="gone"/>
+                        android:text="RESUME" android:textSize="13sp" android:textColor="?attr/fhAccent"
+                        android:backgroundTint="?attr/fhAccentSoft" android:visibility="gone"/>
                     <ImageButton android:id="@+id/download_movie_btn"
                         android:layout_width="48dp" android:layout_height="48dp"
-                        android:src="@drawable/ic_download" android:tint="#FFFFFF"
-                        android:background="#1E1E1E" android:padding="12dp"
+                        android:src="@drawable/ic_download" android:tint="?attr/fhText"
+                        android:background="?attr/fhSurfaceAlt" android:padding="12dp"
                         android:layout_marginStart="8dp"
                         android:contentDescription="Download video"/>
                 </LinearLayout>
@@ -97,14 +97,23 @@
                         android:background="@drawable/spinner_bg" android:layout_marginEnd="8dp"/>
                     <Button android:id="@+id/episode_menu_btn"
                         android:layout_width="wrap_content" android:layout_height="44dp"
-                        android:text="Episodes" android:textSize="12sp" android:textColor="#BB86FC"
-                        android:backgroundTint="#22BB86FC" android:visibility="gone"/>
+                        android:text="Episodes" android:textSize="12sp" android:textColor="?attr/fhAccent"
+                        android:backgroundTint="?attr/fhAccentSoft" android:visibility="gone"/>
                 </LinearLayout>
             </LinearLayout>
             <TextView android:id="@+id/overview_text"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:textColor="#BBBBBB" android:textSize="13sp" android:lineSpacingExtra="3dp"
+                android:textColor="?attr/fhTextDim" android:textSize="13sp" android:lineSpacingExtra="3dp"
                 android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="12dp" android:visibility="gone"/>
+            <LinearLayout android:id="@+id/dubsub_row"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:paddingBottom="8dp" android:visibility="gone">
+                <TextView android:id="@+id/sub_chip" style="@style/HomePill" android:text="Subbed"
+                    android:textColor="?attr/fhText" android:background="@drawable/chip_bg"/>
+                <TextView android:id="@+id/dub_chip" style="@style/HomePill" android:text="Dubbed"
+                    android:textColor="?attr/fhText" android:background="@drawable/chip_bg"/>
+            </LinearLayout>
             <LinearLayout android:id="@+id/tv_section"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:visibility="gone">
@@ -116,8 +125,8 @@
                 <EditText android:id="@+id/ep_search_bar"
                     android:layout_width="match_parent" android:layout_height="44dp"
                     android:hint="Search episode number or name..."
-                    android:textColorHint="#555555" android:textColor="#FFFFFF"
-                    android:background="#1A1A1A" android:paddingStart="14dp" android:paddingEnd="14dp"
+                    android:textColorHint="?attr/fhTextFaint" android:textColor="?attr/fhText"
+                    android:background="?attr/fhSurfaceAlt" android:paddingStart="14dp" android:paddingEnd="14dp"
                     android:inputType="text" android:imeOptions="actionSearch"
                     android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
                     android:layout_marginBottom="8dp" android:visibility="gone"/>
@@ -129,7 +138,7 @@
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:visibility="gone">
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="More Like This" android:textColor="#FFFFFF"
+                    android:text="More Like This" android:textColor="?attr/fhText"
                     android:textSize="15sp" android:textStyle="bold" android:padding="14dp"/>
                 <androidx.recyclerview.widget.RecyclerView android:id="@+id/similar_rv"
                     android:layout_width="match_parent" android:layout_height="wrap_content"

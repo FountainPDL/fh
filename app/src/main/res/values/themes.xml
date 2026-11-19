@@ -1,24 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.NoActionBar.Bridge">
-        <item name="colorPrimary">#BB86FC</item>
-        <item name="colorPrimaryVariant">#9B59FC</item>
-        <item name="colorOnPrimary">#000000</item>
-        <item name="colorSecondary">#BB86FC</item>
-        <item name="colorSecondaryVariant">#9B59FC</item>
-        <item name="colorOnSecondary">#000000</item>
-        <item name="colorError">#CF6679</item>
-        <item name="colorOnError">#FFFFFF</item>
-        <item name="colorSurface">#141414</item>
-        <item name="colorOnSurface">#FFFFFF</item>
-        <item name="android:colorBackground">#0A0A0A</item>
-        <item name="colorOnBackground">#FFFFFF</item>
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:textColorSecondary">#AAAAAA</item>
-        <item name="android:windowBackground">#0A0A0A</item>
-        <item name="android:statusBarColor">#0A0A0A</item>
-        <item name="android:navigationBarColor">#141414</item>
-        <item name="android:windowLightStatusBar">false</item>
+    <style name="Theme.FountainHome" parent="Theme.MaterialComponents.DayNight.NoActionBar.Bridge">
+        <item name="fhBg">@color/bg</item>
+        <item name="fhBgClear">@color/bg_clear</item>
+        <item name="fhSurface">@color/surface</item>
+        <item name="fhSurfaceAlt">@color/surface_alt</item>
+        <item name="fhText">@color/text</item>
+        <item name="fhTextDim">@color/text_dim</item>
+        <item name="fhTextFaint">@color/text_faint</item>
+        <item name="fhDivider">@color/divider</item>
+        <item name="fhAccent">@color/accent_purple</item>
+        <item name="fhAccentSoft">@color/accent_purple_soft</item>
+        <item name="fhOnAccent">@color/accent_on</item>
+        <item name="fhDanger">@color/danger</item>
+        <item name="fhSuccess">@color/success</item>
+        <item name="fhInfo">@color/info</item>
+        <item name="fhWarning">@color/warning</item>
+
+        <item name="colorPrimary">?attr/fhAccent</item>
+        <item name="colorPrimaryVariant">?attr/fhAccent</item>
+        <item name="colorOnPrimary">?attr/fhOnAccent</item>
+        <item name="colorSecondary">?attr/fhAccent</item>
+        <item name="colorSecondaryVariant">?attr/fhAccent</item>
+        <item name="colorOnSecondary">?attr/fhOnAccent</item>
+        <item name="colorError">?attr/fhDanger</item>
+        <item name="colorSurface">?attr/fhSurface</item>
+        <item name="colorOnSurface">?attr/fhText</item>
+        <item name="android:colorBackground">?attr/fhBg</item>
+        <item name="colorOnBackground">?attr/fhText</item>
+        <item name="android:textColorPrimary">?attr/fhText</item>
+        <item name="android:textColorSecondary">?attr/fhTextDim</item>
+        <item name="android:windowBackground">?attr/fhBg</item>
+        <item name="android:statusBarColor">?attr/fhBg</item>
+        <item name="android:navigationBarColor">?attr/fhSurface</item>
+    </style>
+    <!-- Launch theme: dark window with the logo centred. Switched to the normal theme in MainActivity. -->
+    <style name="Theme.FountainHome.Splash" parent="Theme.FountainHome">
+        <item name="android:windowBackground">@drawable/splash_window</item>
+    </style>
+    <style name="ThemeOverlay.Amoled" parent="">
+        <item name="fhBg">@color/amoled_bg</item>
+        <item name="fhBgClear">@color/amoled_bg_clear</item>
+        <item name="fhSurface">@color/amoled_surface</item>
+        <item name="fhSurfaceAlt">@color/amoled_alt</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Purple" parent="">
+        <item name="fhAccent">@color/accent_purple</item>
+        <item name="fhAccentSoft">@color/accent_purple_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Blue" parent="">
+        <item name="fhAccent">@color/accent_blue</item>
+        <item name="fhAccentSoft">@color/accent_blue_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Red" parent="">
+        <item name="fhAccent">@color/accent_red</item>
+        <item name="fhAccentSoft">@color/accent_red_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Green" parent="">
+        <item name="fhAccent">@color/accent_green</item>
+        <item name="fhAccentSoft">@color/accent_green_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Orange" parent="">
+        <item name="fhAccent">@color/accent_orange</item>
+        <item name="fhAccentSoft">@color/accent_orange_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Pink" parent="">
+        <item name="fhAccent">@color/accent_pink</item>
+        <item name="fhAccentSoft">@color/accent_pink_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Teal" parent="">
+        <item name="fhAccent">@color/accent_teal</item>
+        <item name="fhAccentSoft">@color/accent_teal_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Gold" parent="">
+        <item name="fhAccent">@color/accent_gold</item>
+        <item name="fhAccentSoft">@color/accent_gold_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Crimson" parent="">
+        <item name="fhAccent">@color/accent_crimson</item>
+        <item name="fhAccentSoft">@color/accent_crimson_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Mint" parent="">
+        <item name="fhAccent">@color/accent_mint</item>
+        <item name="fhAccentSoft">@color/accent_mint_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Slate" parent="">
+        <item name="fhAccent">@color/accent_slate</item>
+        <item name="fhAccentSoft">@color/accent_slate_soft</item>
+    </style>
+    <style name="ThemeOverlay.Accent.Dynamic" parent="">
+        <item name="fhAccent">@color/accent_dynamic</item>
+        <item name="fhAccentSoft">@color/accent_dynamic_soft</item>
     </style>
     <style name="HomePill">
         <item name="android:layout_width">wrap_content</item>
@@ -29,11 +101,7 @@
         <item name="android:paddingTop">6dp</item>
         <item name="android:paddingBottom">6dp</item>
         <item name="android:background">@drawable/pill_bg</item>
-        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColor">@color/on_image</item>
         <item name="android:textSize">13sp</item>
-    </style>
-    <!-- Launch theme: dark window with the logo centred, so nothing white ever shows. Switched to the normal theme in MainActivity. -->
-    <style name="Theme.FountainHome.Splash" parent="Theme.FountainHome">
-        <item name="android:windowBackground">@drawable/splash_window</item>
     </style>
 </resources>

@@ -75,22 +75,26 @@ public class AniListClient {
             } catch (Exception e) { mh.post(() -> cb.onError(e.getMessage())); }
         });
     }
-    public static void getTrending(Callback<List<AnimeItem>> cb) {
-        run("query{Page(page:1,perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}bannerImage description episodes averageScore status season seasonYear format genres}}}", "{}", cb);
+    public static void getTrending(Callback<List<AnimeItem>> cb) { getTrending(1, cb); }
+    public static void getTrending(int page, Callback<List<AnimeItem>> cb) {
+        run("query{Page(page:" + page + ",perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}bannerImage description episodes averageScore status season seasonYear format genres}}}", "{}", cb);
     }
-    public static void getPopular(Callback<List<AnimeItem>> cb) {
-        run("query{Page(page:1,perPage:20){media(sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{}", cb);
+    public static void getPopular(Callback<List<AnimeItem>> cb) { getPopular(1, cb); }
+    public static void getPopular(int page, Callback<List<AnimeItem>> cb) {
+        run("query{Page(page:" + page + ",perPage:20){media(sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{}", cb);
     }
-    public static void getThisSeason(Callback<List<AnimeItem>> cb) {
+    public static void getThisSeason(Callback<List<AnimeItem>> cb) { getThisSeason(1, cb); }
+    public static void getThisSeason(int page, Callback<List<AnimeItem>> cb) {
         java.util.Calendar cal = java.util.Calendar.getInstance();
         int m = cal.get(java.util.Calendar.MONTH);          // 0 = January
         String season = m <= 2 ? "WINTER" : m <= 5 ? "SPRING" : m <= 8 ? "SUMMER" : "FALL";
         int year = cal.get(java.util.Calendar.YEAR);
-        run("query{Page(page:1,perPage:20){media(season:" + season + ",seasonYear:" + year + ",type:ANIME,sort:POPULARITY_DESC,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format}}}", "{}", cb);
+        run("query{Page(page:" + page + ",perPage:20){media(season:" + season + ",seasonYear:" + year + ",type:ANIME,sort:POPULARITY_DESC,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format}}}", "{}", cb);
     }
-    public static void search(String kw, Callback<List<AnimeItem>> cb) {
+    public static void search(String kw, Callback<List<AnimeItem>> cb) { search(kw, 1, cb); }
+    public static void search(String kw, int page, Callback<List<AnimeItem>> cb) {
         String safeKw = kw.replace("\"", "").replace("\\", "");
-        run("query($s:String){Page(page:1,perPage:20){media(search:$s,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{\"s\":\"" + safeKw + "\"}", cb);
+        run("query($s:String){Page(page:" + page + ",perPage:20){media(search:$s,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{\"s\":\"" + safeKw + "\"}", cb);
     }
     // Async version — hops back to the main thread for the callback (used from UI code).
     public static void getMalId(int anilistId, IntCallback cb) {

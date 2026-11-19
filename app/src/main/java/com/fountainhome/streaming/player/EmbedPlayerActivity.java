@@ -1,5 +1,9 @@
 package com.fountainhome.streaming.player;
 
+import com.fountainhome.streaming.ui.theme.ThemeManager;
+
+import com.fountainhome.streaming.R;
+
 import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -21,7 +25,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.fountainhome.streaming.ui.BaseActivity;
 
 import com.fountainhome.streaming.anime.AniListClient;
 import com.fountainhome.streaming.databinding.ActivityEmbedPlayerBinding;
@@ -43,7 +47,7 @@ import java.util.List;
  *  - finish() / onDestroy() destroy the WebView immediately.
  *  - onStop() unloads the page unless the user turned on "Background playback".
  */
-public class EmbedPlayerActivity extends AppCompatActivity implements EmbedWebPlayer.Listener {
+public class EmbedPlayerActivity extends BaseActivity implements EmbedWebPlayer.Listener {
 
     private static final int MENU_RELOAD = 1, MENU_NEXT_SERVER = 2, MENU_DIRECT = 3,
         MENU_PIP = 4, MENU_DOWNLOAD = 5, MENU_SHARE = 6;
@@ -394,9 +398,9 @@ public class EmbedPlayerActivity extends AppCompatActivity implements EmbedWebPl
             boolean sel = i == currentIdx;
             GradientDrawable g = new GradientDrawable();
             g.setCornerRadius(dp(20));
-            g.setColor(sel ? accent : 0xFF1E1E1E);
+            g.setColor(sel ? accent : ThemeManager.color(this, R.attr.fhSurfaceAlt));
             t.setBackground(g);
-            t.setTextColor(sel ? Color.BLACK : Color.WHITE);
+            t.setTextColor(sel ? ThemeManager.color(this, R.attr.fhOnAccent) : ThemeManager.color(this, R.attr.fhText));
         }
     }
 

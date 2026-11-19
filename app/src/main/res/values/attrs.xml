@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="fhBg" format="color|reference"/>
+    <attr name="fhSurface" format="color|reference"/>
+    <attr name="fhSurfaceAlt" format="color|reference"/>
+    <attr name="fhText" format="color|reference"/>
+    <attr name="fhTextDim" format="color|reference"/>
+    <attr name="fhTextFaint" format="color|reference"/>
+    <attr name="fhDivider" format="color|reference"/>
+    <attr name="fhAccent" format="color|reference"/>
+    <attr name="fhAccentSoft" format="color|reference"/>
+    <attr name="fhOnAccent" format="color|reference"/>
+    <attr name="fhDanger" format="color|reference"/>
+    <attr name="fhSuccess" format="color|reference"/>
+    <attr name="fhInfo" format="color|reference"/>
+    <attr name="fhWarning" format="color|reference"/>
+    <attr name="fhBgClear" format="color|reference"/>
+</resources>

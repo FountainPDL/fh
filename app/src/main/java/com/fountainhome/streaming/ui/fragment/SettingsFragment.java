@@ -1,173 +1,305 @@
 package com.fountainhome.streaming.ui.fragment;
-import android.graphics.Color;
+
+import android.content.Context;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.*;
-import androidx.annotation.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import com.fountainhome.streaming.R;
 import com.fountainhome.streaming.databinding.FragmentSettingsBinding;
-import com.fountainhome.streaming.service.*;
-import com.fountainhome.streaming.ui.MainActivity;
+import com.fountainhome.streaming.download.AppDatabase;
+import com.fountainhome.streaming.download.DownloadItem;
+import com.fountainhome.streaming.download.DownloadManager2;
+import com.fountainhome.streaming.service.AppPreferences;
+import com.fountainhome.streaming.service.LibraryManager;
+import com.fountainhome.streaming.service.OfflineStore;
+import com.fountainhome.streaming.service.SourceGenerator;
+import com.fountainhome.streaming.ui.theme.ThemeManager;
+
 import java.io.File;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+
+/** Settings are built from small rows so every option is one line of code and always themed. */
 public class SettingsFragment extends Fragment {
     private FragmentSettingsBinding b;
+    private LinearLayout box;
+    private TextView downloadsInfo, cacheInfo;
+
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater i, @Nullable ViewGroup c, @Nullable Bundle s) {
-        b = FragmentSettingsBinding.inflate(i, c, false); return b.getRoot();
+        b = FragmentSettingsBinding.inflate(i, c, false);
+        return b.getRoot();
     }
+
     @Override public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
         super.onViewCreated(v, s);
-        b.backBtn.setOnClickListener(x -> requireActivity().onBackPressed());
-        setupAccent(); setupSource(); setupPlayer(); setupGestures(); setupSubtitles();
-        setupAnime(); setupDownloads(); setupUi(); setupStorage();
+        b.backBtn.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        box = b.settingsContainer;
+        build();
     }
-    private void setupAccent() {
-        String[][] cols = {{AppPreferences.COLOR_PURPLE},{AppPreferences.COLOR_BLUE},{AppPreferences.COLOR_RED},{AppPreferences.COLOR_GREEN},{AppPreferences.COLOR_ORANGE},{AppPreferences.COLOR_PINK},{AppPreferences.COLOR_TEAL}};
-        View[] sw = {b.colorPurple, b.colorBlue, b.colorRed, b.colorGreen, b.colorOrange, b.colorPink, b.colorTeal};
-        String cur = AppPreferences.getAccent(requireContext());
-        for (int i = 0; i < sw.length; i++) {
-            final String hex = cols[i][0];
-            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-            gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-            gd.setColor(Color.parseColor(hex));
-            sw[i].setBackground(gd);
-            boolean sel = hex.equalsIgnoreCase(cur);
-            sw[i].setAlpha(sel ? 1f : 0.4f); sw[i].setScaleX(sel ? 1.25f : 1f); sw[i].setScaleY(sel ? 1.25f : 1f);
-            sw[i].setOnClickListener(vv -> {
-                AppPreferences.setAccent(requireContext(), hex);
-                for (View s2 : sw) { s2.setAlpha(0.4f); s2.setScaleX(1f); s2.setScaleY(1f); }
-                vv.setAlpha(1f); vv.setScaleX(1.25f); vv.setScaleY(1.25f);
-                if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).applyAccent();
-                Toast.makeText(getContext(), "Accent updated", Toast.LENGTH_SHORT).show();
-            });
-        }
-    }
-    private void setupSource() {
-        String[] srcs = {"VidSrc","VidLink","VidRock","VIDEASY","VidFast","VidKing","111Movies","Peachify","SuperFlix","VidNest","2Embed","AutoEmbed","SuperEmbed VIP","SuperEmbed"};
-        ArrayAdapter<String> a = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, srcs);
-        a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        b.sourceSpinner.setAdapter(a);
-        String cur = AppPreferences.getSource(requireContext());
-        for (int i = 0; i < srcs.length; i++) if (srcs[i].equals(cur)) { b.sourceSpinner.setSelection(i); break; }
-        b.sourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setSource(requireContext(), srcs[pos]); }
-            public void onNothingSelected(AdapterView<?> p) {}
-        });
-    }
-    private void setupPlayer() {
-        b.autoplaySwitch.setChecked(AppPreferences.getAutoplay(requireContext()));
-        b.autoplaySwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setAutoplay(requireContext(), c));
-        b.pipSwitch.setChecked(AppPreferences.getPiP(requireContext()));
-        b.pipSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setPiP(requireContext(), c));
-        // These options belonged to the old native player; the provider's own web player handles them now.
-        for (View dead : new View[]{b.hwAccelSwitch, b.speedSpinner, b.gestureSwitch, b.dtSeekSpinner,
-                b.showSkipIntroSwitch, b.autoSkipIntroSwitch, b.subEnabledSwitch, b.subLangSpinner})
-            if (dead.getParent() instanceof View) ((View) dead.getParent()).setVisibility(View.GONE);
-        b.hwAccelSwitch.setChecked(AppPreferences.getHwAccel(requireContext()));
-        b.hwAccelSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setHwAccel(requireContext(), c));
-        b.keepScreenSwitch.setChecked(AppPreferences.getKeepScreenOn(requireContext()));
-        b.keepScreenSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setKeepScreenOn(requireContext(), c));
-        String[] speeds = {"0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "2.0x"};
-        float[] speedVals = {0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
-        ArrayAdapter<String> sp = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, speeds);
-        sp.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        b.speedSpinner.setAdapter(sp);
-        float cur = AppPreferences.getPlaybackSpeed(requireContext());
-        for (int i = 0; i < speedVals.length; i++) if (speedVals[i] == cur) { b.speedSpinner.setSelection(i); break; }
-        b.speedSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setPlaybackSpeed(requireContext(), speedVals[pos]); }
-            public void onNothingSelected(AdapterView<?> p) {}
-        });
-    }
-    private void setupGestures() {
-        b.gestureSwitch.setChecked(AppPreferences.getGestureControls(requireContext()));
-        b.gestureSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setGestureControls(requireContext(), c));
-        String[] dt = {"5s", "10s", "15s", "30s"};
-        int[] dtVals = {5, 10, 15, 30};
-        ArrayAdapter<String> dta = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, dt);
-        dta.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        b.dtSeekSpinner.setAdapter(dta);
-        int curDt = AppPreferences.getDoubleTapSeek(requireContext());
-        for (int i = 0; i < dtVals.length; i++) if (dtVals[i] == curDt) { b.dtSeekSpinner.setSelection(i); break; }
-        b.dtSeekSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setDoubleTapSeek(requireContext(), dtVals[pos]); }
-            public void onNothingSelected(AdapterView<?> p) {}
-        });
-        b.showSkipIntroSwitch.setChecked(AppPreferences.getShowSkipIntro(requireContext()));
-        b.showSkipIntroSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowSkipIntro(requireContext(), c));
-        b.autoSkipIntroSwitch.setChecked(AppPreferences.getAutoSkipIntro(requireContext()));
-        b.autoSkipIntroSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setAutoSkipIntro(requireContext(), c));
-        b.bgPlaybackSwitch.setChecked(AppPreferences.getBackgroundPlayback(requireContext()));
-        b.bgPlaybackSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setBackgroundPlayback(requireContext(), c));
-    }
-    private void setupSubtitles() {
-        b.subEnabledSwitch.setChecked(AppPreferences.getSubEnabled(requireContext()));
-        b.subEnabledSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setSubEnabled(requireContext(), c));
-        String[] langs = {"English", "Spanish", "French", "German", "Japanese", "Korean", "Arabic"};
-        String[] codes = {"en", "es", "fr", "de", "ja", "ko", "ar"};
-        ArrayAdapter<String> la = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, langs);
-        la.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        b.subLangSpinner.setAdapter(la);
-        String cl = AppPreferences.getSubLang(requireContext());
-        for (int i = 0; i < codes.length; i++) if (codes[i].equals(cl)) { b.subLangSpinner.setSelection(i); break; }
-        b.subLangSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setSubLang(requireContext(), codes[pos]); }
-            public void onNothingSelected(AdapterView<?> p) {}
-        });
-    }
-    private void setupAnime() {
-        String[] ds = {"Sub (Subbed)", "Dub (Dubbed)"};
-        ArrayAdapter<String> da = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, ds);
-        da.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        b.dubSubSpinner.setAdapter(da);
-        b.dubSubSpinner.setSelection("dub".equals(AppPreferences.getAnimeDubSub(requireContext())) ? 1 : 0);
-        b.dubSubSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setAnimeDubSub(requireContext(), pos == 1 ? "dub" : "sub"); }
-            public void onNothingSelected(AdapterView<?> p) {}
-        });
-    }
-    private void setupDownloads() {
-        b.wifiOnlySwitch.setChecked(AppPreferences.getWifiOnly(requireContext()));
-        b.wifiOnlySwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setWifiOnly(requireContext(), c));
-        b.dlSubSwitch.setChecked(AppPreferences.getSubWithDownload(requireContext()));
-        b.dlSubSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setSubWithDownload(requireContext(), c));
-        String[] qs = {"360p", "480p", "720p", "1080p"};
-        ArrayAdapter<String> qa = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, qs);
-        qa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        b.qualitySpinner.setAdapter(qa);
-        String cq = AppPreferences.getDlQuality(requireContext());
-        for (int i = 0; i < qs.length; i++) if (qs[i].equals(cq)) { b.qualitySpinner.setSelection(i); break; }
-        b.qualitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setDlQuality(requireContext(), qs[pos]); }
-            public void onNothingSelected(AdapterView<?> p) {}
-        });
-    }
-    private void setupUi() {
-        String[] cols = {"2", "3", "4"};
-        ArrayAdapter<String> ca = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, cols);
-        ca.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        b.gridColsSpinner.setAdapter(ca);
-        int curCols = AppPreferences.getGridColumns(requireContext());
-        for (int i = 0; i < cols.length; i++) if (Integer.parseInt(cols[i]) == curCols) { b.gridColsSpinner.setSelection(i); break; }
-        b.gridColsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { AppPreferences.setGridColumns(requireContext(), Integer.parseInt(cols[pos])); }
-            public void onNothingSelected(AdapterView<?> p) {}
-        });
 
-        b.showRatingSwitch.setChecked(AppPreferences.getShowRating(requireContext()));
-        b.showRatingSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowRating(requireContext(), c));
-        b.showContinueSwitch.setChecked(AppPreferences.getShowContinue(requireContext()));
-        b.showContinueSwitch.setOnCheckedChangeListener((v, c) -> AppPreferences.setShowContinue(requireContext(), c));
-    }
-    private void setupStorage() {
-        long sz = ds(requireContext().getCacheDir());
-        b.storageText.setText("Cache: " + fmt(sz));
-        b.clearCacheBtn.setOnClickListener(v -> { cd(requireContext().getCacheDir()); b.storageText.setText("Cache: 0 B"); Toast.makeText(getContext(), "Cache cleared", Toast.LENGTH_SHORT).show(); });
-        b.clearHistoryBtn.setOnClickListener(v -> { LibraryManager.clearList(requireContext(), LibraryManager.CONTINUE); Toast.makeText(getContext(), "History cleared", Toast.LENGTH_SHORT).show(); });
-        b.clearAllBtn.setOnClickListener(v -> { LibraryManager.clearList(requireContext(), LibraryManager.FAVORITES); LibraryManager.clearList(requireContext(), LibraryManager.WATCHLIST); LibraryManager.clearList(requireContext(), LibraryManager.CONTINUE); AppPreferences.clearAll(requireContext()); Toast.makeText(getContext(), "All cleared", Toast.LENGTH_SHORT).show(); });
-    }
-    private void cd(File d) { if (d!=null&&d.isDirectory()){File[]fs=d.listFiles();if(fs!=null)for(File f:fs)cd(f);}if(d!=null)d.delete(); }
-    private long ds(File d) { long s=0;if(d!=null&&d.isDirectory()){File[]fs=d.listFiles();if(fs!=null)for(File f:fs)s+=f.length();}return s; }
-    private String fmt(long bv) { if(bv<1024)return bv+" B";if(bv<1048576)return(bv/1024)+" KB";return(bv/1048576)+" MB"; }
     @Override public void onDestroyView() { super.onDestroyView(); b = null; }
+
+    private Context ctx() { return requireContext(); }
+
+    // ------------------------------------------------------------------ content
+
+    private void build() {
+        Context c = ctx();
+
+        section("APPEARANCE");
+        choice("Theme", "Light, dark, or match your phone", ThemeManager.MODE_LABELS,
+            indexOf(ThemeManager.MODES, AppPreferences.getThemeMode(c)), i -> {
+                AppPreferences.setThemeMode(ctx(), ThemeManager.MODES[i]);
+                ThemeManager.applyNightMode(ctx());
+                requireActivity().recreate();
+            });
+        swatches();
+        choice("Start screen", "What opens when you launch the app", new String[]{"Home", "Movies", "TV Shows", "Anime"},
+            AppPreferences.getStartTab(c), i -> AppPreferences.setStartTab(ctx(), i));
+        choice("Poster grid columns", "Used in lists and search", new String[]{"2", "3", "4"},
+            AppPreferences.getGridColumns(c) - 2, i -> AppPreferences.setGridColumns(ctx(), i + 2));
+        toggle("Show ratings on posters", null, AppPreferences.getShowRating(c), v -> AppPreferences.setShowRating(ctx(), v));
+
+        section("HOME");
+        toggle("Continue Watching row", "Pick up where you left off", AppPreferences.getShowContinue(c), v -> AppPreferences.setShowContinue(ctx(), v));
+        toggle("Top 10 row", "The numbered trending row", AppPreferences.getShowTop10(c), v -> AppPreferences.setShowTop10(ctx(), v));
+        toggle("My List row", null, AppPreferences.getShowMyList(c), v -> AppPreferences.setShowMyList(ctx(), v));
+
+        section("STREAMING");
+        choice("Default server (movies and TV)", "The server that is tried first", SourceGenerator.SERVER_NAMES,
+            indexOf(SourceGenerator.SERVER_NAMES, AppPreferences.getSource(c)), i -> AppPreferences.setSource(ctx(), SourceGenerator.SERVER_NAMES[i]));
+        String[] animeServers = {"VidLink", "VIDEASY", "SuperFlix", "AutoEmbed", "2Anime", "Yugen"};
+        choice("Default server (anime)", "The server that is tried first for anime", animeServers,
+            indexOf(animeServers, AppPreferences.getAnimeSource(c)), i -> AppPreferences.setAnimeSource(ctx(), animeServers[i]));
+        choice("Anime language", "Subtitled or dubbed, where the server offers both", new String[]{"Subbed", "Dubbed"},
+            "dub".equals(AppPreferences.getAnimeDubSub(c)) ? 1 : 0, i -> AppPreferences.setAnimeDubSub(ctx(), i == 1 ? "dub" : "sub"));
+        toggle("Autoplay", "Start playing as soon as a server loads", AppPreferences.getAutoplay(c), v -> AppPreferences.setAutoplay(ctx(), v));
+        toggle("Picture-in-picture", "Keep watching in a small window when you leave the app", AppPreferences.getPiP(c), v -> AppPreferences.setPiP(ctx(), v));
+        toggle("Keep screen on while watching", null, AppPreferences.getKeepScreenOn(c), v -> AppPreferences.setKeepScreenOn(ctx(), v));
+        toggle("Play in background", "Keep the sound going when the screen is off", AppPreferences.getBackgroundPlayback(c), v -> AppPreferences.setBackgroundPlayback(ctx(), v));
+        toggle("Compatibility mode", "Load the server page directly. Turn on if a server shows a blank player.", AppPreferences.getEmbedDirect(c), v -> AppPreferences.setEmbedDirect(ctx(), v));
+
+        section("OFFLINE PLAYER");
+        int[] skips = {5, 10, 15, 30};
+        choice("Double-tap skip", "Seconds to jump when you double-tap or press skip", new String[]{"5 seconds", "10 seconds", "15 seconds", "30 seconds"},
+            indexOf(skips, AppPreferences.getDoubleTapSeek(c)), i -> AppPreferences.setDoubleTapSeek(ctx(), skips[i]));
+        toggle("Swipe gestures", "Left side brightness, right side volume, hold for fast speed", AppPreferences.getGestureControls(c), v -> AppPreferences.setGestureControls(ctx(), v));
+        toggle("Swipe to seek", "Drag left or right to scrub through the video", AppPreferences.getSwipeSeek(c), v -> AppPreferences.setSwipeSeek(ctx(), v));
+        float[] speeds = {0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f};
+        String[] speedNames = {"0.5x", "0.75x", "Normal", "1.25x", "1.5x", "1.75x", "2x"};
+        choice("Default playback speed", null, speedNames, indexOf(speeds, AppPreferences.getPlaybackSpeed(c)), i -> AppPreferences.setPlaybackSpeed(ctx(), speeds[i]));
+        float[] holds = {1.5f, 2f, 3f};
+        choice("Hold-to-speed-up", "Speed while you press and hold the screen", new String[]{"1.5x", "2x", "3x"},
+            indexOf(holds, AppPreferences.getHoldSpeed(c)), i -> AppPreferences.setHoldSpeed(ctx(), holds[i]));
+        String[] resizes = {"fit", "fill", "zoom"};
+        choice("Default picture size", "Fit shows everything, Crop fills the screen", new String[]{"Fit", "Stretch", "Crop"},
+            indexOf(resizes, AppPreferences.getResizeMode(c)), i -> AppPreferences.setResizeMode(ctx(), resizes[i]));
+        int[] hides = {2, 4, 6, 10};
+        choice("Hide controls after", null, new String[]{"2 seconds", "4 seconds", "6 seconds", "10 seconds"},
+            indexOf(hides, AppPreferences.getControlsTimeout(c)), i -> AppPreferences.setControlsTimeout(ctx(), hides[i]));
+        toggle("Resume where I stopped", null, AppPreferences.getResumePlayback(c), v -> AppPreferences.setResumePlayback(ctx(), v));
+        toggle("Play next downloaded episode", "Continue automatically when an episode ends", AppPreferences.getAutoPlayNext(c), v -> AppPreferences.setAutoPlayNext(ctx(), v));
+
+        section("DOWNLOADS");
+        toggle("Wi-Fi only", "Do not download over mobile data", AppPreferences.getWifiOnly(c), v -> AppPreferences.setWifiOnly(ctx(), v));
+        String[] quals = {"360p", "480p", "720p", "1080p"};
+        choice("Download quality", "Higher quality uses more storage", quals,
+            indexOf(quals, AppPreferences.getDlQuality(c)), i -> AppPreferences.setDlQuality(ctx(), quals[i]));
+        downloadsInfo = action("Downloaded videos", "Computing…", false, null);
+        action("Delete all downloads", "Removes every downloaded video from this phone", true, this::confirmDeleteDownloads);
+        action("Delete all saved pages", "Removes pages saved for offline viewing", true, this::confirmDeleteSavedPages);
+        refreshStorage();
+
+        section("DATA");
+        cacheInfo = action("Clear cache", "Frees space used by temporary files", false, this::clearCache);
+        action("Clear watch history", "Empties Continue Watching", false, () -> {
+            LibraryManager.clearList(ctx(), LibraryManager.CONTINUE);
+            toast("History cleared");
+        });
+        action("Clear My List and Favorites", null, true, () -> confirm("Clear your list and favorites?", () -> {
+            LibraryManager.clearList(ctx(), LibraryManager.FAVORITES);
+            LibraryManager.clearList(ctx(), LibraryManager.WATCHLIST);
+            toast("Cleared");
+        }));
+        action("Reset all settings", "Puts every option back to its default", true, () -> confirm("Reset all settings?", () -> {
+            AppPreferences.clearAll(ctx());
+            ThemeManager.applyNightMode(ctx());
+            requireActivity().recreate();
+        }));
+    }
+
+    // ------------------------------------------------------------------ row builders
+
+    private View inflate(int layout) { return LayoutInflater.from(ctx()).inflate(layout, box, false); }
+
+    private void section(String name) {
+        TextView t = (TextView) inflate(R.layout.row_section);
+        t.setText(name);
+        box.addView(t);
+    }
+
+    private void toggle(String title, @Nullable String summary, boolean value, Consumer<Boolean> on) {
+        View r = inflate(R.layout.row_switch);
+        ((TextView) r.findViewById(R.id.title)).setText(title);
+        TextView sum = r.findViewById(R.id.summary);
+        if (summary == null) sum.setVisibility(View.GONE); else sum.setText(summary);
+        SwitchCompat sw = r.findViewById(R.id.sw);
+        sw.setChecked(value);
+        sw.setOnCheckedChangeListener((v, checked) -> on.accept(checked));
+        r.findViewById(R.id.row).setOnClickListener(v -> sw.toggle());
+        box.addView(r);
+    }
+
+    private void choice(String title, @Nullable String summary, String[] labels, int selected, IntConsumer onPick) {
+        View r = inflate(R.layout.row_choice);
+        ((TextView) r.findViewById(R.id.title)).setText(title);
+        TextView sum = r.findViewById(R.id.summary);
+        if (summary == null) sum.setVisibility(View.GONE); else sum.setText(summary);
+        TextView value = r.findViewById(R.id.value);
+        final int[] cur = {Math.max(0, Math.min(labels.length - 1, selected))};
+        value.setText(labels[cur[0]]);
+        r.findViewById(R.id.row).setOnClickListener(v -> new AlertDialog.Builder(ctx())
+            .setTitle(title)
+            .setSingleChoiceItems(labels, cur[0], (d, which) -> {
+                cur[0] = which;
+                value.setText(labels[which]);
+                onPick.accept(which);
+                d.dismiss();
+            })
+            .setNegativeButton("Cancel", null).show());
+        box.addView(r);
+    }
+
+    /** A tappable row. Returns the summary TextView so callers can update it. */
+    private TextView action(String title, @Nullable String summary, boolean danger, @Nullable Runnable run) {
+        View r = inflate(R.layout.row_choice);
+        TextView t = r.findViewById(R.id.title);
+        t.setText(title);
+        if (danger) t.setTextColor(ThemeManager.color(ctx(), R.attr.fhDanger));
+        TextView sum = r.findViewById(R.id.summary);
+        if (summary == null) sum.setVisibility(View.GONE); else sum.setText(summary);
+        r.findViewById(R.id.value).setVisibility(View.GONE);
+        if (run != null) r.findViewById(R.id.row).setOnClickListener(v -> run.run());
+        box.addView(r);
+        return sum;
+    }
+
+    private void swatches() {
+        View r = inflate(R.layout.row_swatches);
+        ((TextView) r.findViewById(R.id.title)).setText("Accent color");
+        ((TextView) r.findViewById(R.id.summary)).setText("Pick a palette for buttons, highlights and progress bars");
+        LinearLayout row = r.findViewById(R.id.swatches);
+        String cur = AppPreferences.getThemeAccent(ctx());
+        int d = (int) (44 * getResources().getDisplayMetrics().density);
+        int m = (int) (6 * getResources().getDisplayMetrics().density);
+        int ring = (int) (3 * getResources().getDisplayMetrics().density);
+        for (int i = 0; i < ThemeManager.ACCENTS.length; i++) {
+            final String name = ThemeManager.ACCENTS[i];
+            View sw = new View(ctx());
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(d, d);
+            lp.setMargins(m, m, m, m);
+            sw.setLayoutParams(lp);
+            GradientDrawable g = new GradientDrawable();
+            g.setShape(GradientDrawable.OVAL);
+            g.setColor(ContextCompat.getColor(ctx(), ThemeManager.swatchFor(name)));
+            if (name.equals(cur)) g.setStroke(ring, ThemeManager.color(ctx(), R.attr.fhText));
+            sw.setBackground(g);
+            sw.setContentDescription(ThemeManager.ACCENT_LABELS[i]);
+            sw.setOnClickListener(v -> {
+                AppPreferences.setThemeAccent(ctx(), name);
+                requireActivity().recreate();
+            });
+            row.addView(sw);
+        }
+        box.addView(r);
+    }
+
+    // ------------------------------------------------------------------ actions
+
+    private void refreshStorage() {
+        final Context app = ctx().getApplicationContext();
+        new Thread(() -> {
+            long size = size(DownloadManager2.offlineRoot(app));
+            List<DownloadItem> done = AppDatabase.get(app).downloadDao().getCompletedNow();
+            String text = done.size() + " videos  ·  " + fmt(size);
+            if (getActivity() != null) requireActivity().runOnUiThread(() -> { if (downloadsInfo != null) downloadsInfo.setText(text); });
+        }, "fh-settings-storage").start();
+        if (cacheInfo != null) cacheInfo.setText("Frees space used by temporary files  ·  " + fmt(size(ctx().getCacheDir())));
+    }
+
+    private void confirmDeleteDownloads() {
+        confirm("Delete every downloaded video?", () -> {
+            final Context app = ctx().getApplicationContext();
+            new Thread(() -> {
+                for (DownloadItem d : AppDatabase.get(app).downloadDao().getCompletedNow()) DownloadManager2.delete(app, d);
+                if (getActivity() != null) requireActivity().runOnUiThread(() -> { toast("Downloads deleted"); refreshStorage(); });
+            }, "fh-delete-downloads").start();
+        });
+    }
+
+    private void confirmDeleteSavedPages() {
+        confirm("Delete all saved pages?", () -> {
+            final Context app = ctx().getApplicationContext();
+            new Thread(() -> {
+                for (OfflineStore.Saved s : OfflineStore.list(app)) OfflineStore.remove(app, s.item.mediaType, s.item.id);
+                if (getActivity() != null) requireActivity().runOnUiThread(() -> toast("Saved pages deleted"));
+            }, "fh-delete-pages").start();
+        });
+    }
+
+    private void clearCache() {
+        delete(ctx().getCacheDir(), false);
+        toast("Cache cleared");
+        refreshStorage();
+    }
+
+    private void confirm(String message, Runnable yes) {
+        new AlertDialog.Builder(ctx()).setMessage(message)
+            .setPositiveButton("Yes", (d, w) -> yes.run()).setNegativeButton("Cancel", null).show();
+    }
+
+    private void toast(String m) { Toast.makeText(ctx(), m, Toast.LENGTH_SHORT).show(); }
+
+    private static void delete(File d, boolean self) {
+        if (d == null) return;
+        File[] fs = d.listFiles();
+        if (fs != null) for (File f : fs) delete(f, true);
+        if (self) //noinspection ResultOfMethodCallIgnored
+            d.delete();
+    }
+
+    private static long size(File d) {
+        if (d == null) return 0;
+        if (d.isFile()) return d.length();
+        long s = 0;
+        File[] fs = d.listFiles();
+        if (fs != null) for (File f : fs) s += size(f);
+        return s;
+    }
+
+    private static String fmt(long v) {
+        if (v < 1024) return v + " B";
+        if (v < 1048576) return (v / 1024) + " KB";
+        if (v < 1073741824L) return (v / 1048576) + " MB";
+        return String.format(java.util.Locale.US, "%.1f GB", v / 1073741824.0);
+    }
+
+    private static int indexOf(String[] a, String v) { for (int i = 0; i < a.length; i++) if (a[i].equalsIgnoreCase(v)) return i; return 0; }
+    private static int indexOf(int[] a, int v) { for (int i = 0; i < a.length; i++) if (a[i] == v) return i; return 0; }
+    private static int indexOf(float[] a, float v) { for (int i = 0; i < a.length; i++) if (Math.abs(a[i] - v) < 0.01f) return i; return 2; }
 }

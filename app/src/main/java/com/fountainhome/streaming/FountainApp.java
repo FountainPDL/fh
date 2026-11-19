@@ -1,13 +1,13 @@
 package com.fountainhome.streaming;
 
 import android.app.Application;
-import androidx.appcompat.app.AppCompatDelegate;
+import com.fountainhome.streaming.ui.theme.ThemeManager;
 import com.fountainhome.streaming.download.AppDatabase;
 
 public class FountainApp extends Application {
     @Override public void onCreate() {
         super.onCreate();
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        ThemeManager.applyNightMode(this);
         // Was never called before, so the in-app crash report screen could not work.
         CrashLogger.init(this);
         // A download that was running when the process died is not running any more.

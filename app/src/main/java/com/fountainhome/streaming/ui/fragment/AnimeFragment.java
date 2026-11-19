@@ -1,101 +1,130 @@
 package com.fountainhome.streaming.ui.fragment;
+
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.SearchView;
-import androidx.annotation.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
-import com.fountainhome.streaming.anime.*;
-import com.fountainhome.streaming.databinding.FragmentAnimeBinding;
-import com.fountainhome.streaming.service.AppPreferences;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.fountainhome.streaming.R;
+import com.fountainhome.streaming.anime.AniListClient;
+import com.fountainhome.streaming.anime.AnimeAdapter;
+import com.fountainhome.streaming.databinding.FragmentBrowseBinding;
 import com.fountainhome.streaming.ui.AnimeDetailActivity;
 import com.fountainhome.streaming.ui.AnimeListActivity;
+import com.fountainhome.streaming.ui.theme.ThemeManager;
+
+import java.util.ArrayList;
 import java.util.List;
+
+/** Anime tab. Same layout and behaviour as the Movies and TV tabs: tabs on top, endless poster grid. */
 public class AnimeFragment extends Fragment {
-    private FragmentAnimeBinding b;
-    private AnimeAdapter tA, pA, sA;
+    private FragmentBrowseBinding b;
+    private AnimeAdapter adapter;
+    private String tab = "trending";
+    private int page = 1;
+    private boolean loading = false, hasMore = true;
+    private final List<AniListClient.AnimeItem> all = new ArrayList<>();
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater i, @Nullable ViewGroup c, @Nullable Bundle s) {
-        b = FragmentAnimeBinding.inflate(i, c, false); return b.getRoot();
+        b = FragmentBrowseBinding.inflate(i, c, false);
+        return b.getRoot();
     }
+
     @Override public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
         super.onViewCreated(v, s);
-        tA = new AnimeAdapter(this::open);
-        b.trendingRv.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        b.trendingRv.setAdapter(tA);
-        pA = new AnimeAdapter(this::open);
-        b.popularRv.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        b.popularRv.setAdapter(pA);
-        sA = new AnimeAdapter(this::open);
-        b.seasonRv.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        b.seasonRv.setAdapter(sA);
-        loadAll();
-        b.tabTrending.setOnClickListener(x -> { setTab(0); AniListClient.getTrending(new AniListClient.Callback<List<AniListClient.AnimeItem>>() { public void onSuccess(List<AniListClient.AnimeItem> r) { if (b != null) { b.trendingTitle.setText("Trending"); tA.submitList(r); if (!r.isEmpty()) loadHero(r.get(0)); } } public void onError(String e) {} }); });
-        b.tabPopular.setOnClickListener(x -> { setTab(1); AniListClient.getPopular(new AniListClient.Callback<List<AniListClient.AnimeItem>>() { public void onSuccess(List<AniListClient.AnimeItem> r) { if (b != null) { tA.submitList(r); if (!r.isEmpty()) loadHero(r.get(0)); } } public void onError(String e) {} }); });
-        b.tabSeason.setOnClickListener(x -> { setTab(2); AniListClient.getThisSeason(new AniListClient.Callback<List<AniListClient.AnimeItem>>() { public void onSuccess(List<AniListClient.AnimeItem> r) { if (b != null) { tA.submitList(r); if (!r.isEmpty()) loadHero(r.get(0)); } } public void onError(String e) {} }); });
-        b.searchBtn.setOnClickListener(x -> b.searchBar.setVisibility(b.searchBar.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
-        b.searchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            public boolean onQueryTextSubmit(String q) { search(q); return true; }
-            public boolean onQueryTextChange(String q) { if (q != null && q.length() >= 2) search(q); return false; }
-        });
-        b.animeHeroBanner.setOnClickListener(x -> { Object tag = b.animeHeroBanner.getTag(); if (tag instanceof AniListClient.AnimeItem) open((AniListClient.AnimeItem) tag); });
-        b.animeHeroPlay.setOnClickListener(x -> { Object tag = b.animeHeroBanner.getTag(); if (tag instanceof AniListClient.AnimeItem) open((AniListClient.AnimeItem) tag); });
-        // View All buttons
-        b.viewAllTrending.setOnClickListener(x -> viewAll("trending", "Trending Anime"));
-        b.viewAllPopular.setOnClickListener(x -> viewAll("popular", "Most Popular"));
-        b.viewAllSeason.setOnClickListener(x -> viewAll("season", "This Season"));
-    }
-    private void viewAll(String cat, String title) {
-        Intent i = new Intent(getContext(), AnimeListActivity.class);
-        i.putExtra("category", cat); i.putExtra("title", title);
-        startActivity(i);
-    }
-    private void loadHero(AniListClient.AnimeItem item) {
-        if (b == null) return;
-        b.animeHeroBanner.setTag(item);
-        b.animeHeroSection.setVisibility(View.VISIBLE);
-        Glide.with(this).load(item.bannerImage != null && !item.bannerImage.isEmpty() ? item.bannerImage : item.coverImage)
-            .transition(DrawableTransitionOptions.withCrossFade(600)).centerCrop().into(b.animeHeroBanner);
-        b.animeHeroTitle.setText(item.displayTitle());
-        b.animeHeroMeta.setText((item.averageScore > 0 ? String.format("\u2605%.1f", item.averageScore) + "  \u00b7  " : "")
-            + (item.episodes > 0 ? item.episodes + " eps  \u00b7  " : "")
-            + (item.status != null ? item.status : ""));
-    }
-    private void loadAll() {
-        b.progressBar.setVisibility(View.VISIBLE);
-        AniListClient.getTrending(new AniListClient.Callback<List<AniListClient.AnimeItem>>() {
-            public void onSuccess(List<AniListClient.AnimeItem> r) { if (b != null) { b.progressBar.setVisibility(View.GONE); tA.submitList(r); if (!r.isEmpty()) loadHero(r.get(0)); } }
-            public void onError(String e) { if (b != null) b.progressBar.setVisibility(View.GONE); }
-        });
-        AniListClient.getPopular(new AniListClient.Callback<List<AniListClient.AnimeItem>>() {
-            public void onSuccess(List<AniListClient.AnimeItem> r) { if (b != null) pA.submitList(r); }
-            public void onError(String e) {}
-        });
-        AniListClient.getThisSeason(new AniListClient.Callback<List<AniListClient.AnimeItem>>() {
-            public void onSuccess(List<AniListClient.AnimeItem> r) { if (b != null) sA.submitList(r); }
-            public void onError(String e) {}
-        });
-    }
-    private void search(String q) {
-        b.progressBar.setVisibility(View.VISIBLE);
-        AniListClient.search(q, new AniListClient.Callback<List<AniListClient.AnimeItem>>() {
-            public void onSuccess(List<AniListClient.AnimeItem> r) {
-                if (b != null) { b.progressBar.setVisibility(View.GONE); b.trendingTitle.setText("Results: " + q); tA.submitList(r); if (!r.isEmpty()) loadHero(r.get(0)); }
+        b.pageTitle.setText("Anime");
+        b.backBtn.setVisibility(View.GONE);
+        b.filterBtn.setVisibility(View.GONE);
+        b.tabLatest.setText("Trending");
+        b.tabTrending.setText("Popular");
+        b.tabPopular.setText("This Season");
+
+        adapter = new AnimeAdapter(this::open);
+        GridLayoutManager lm = new GridLayoutManager(getContext(), 3);
+        b.contentRv.setLayoutManager(lm);
+        b.contentRv.setAdapter(adapter);
+        b.contentRv.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                if (!loading && hasMore && lm.findLastVisibleItemPosition() >= lm.getItemCount() - 6) load(page + 1);
             }
-            public void onError(String e) { if (b != null) b.progressBar.setVisibility(View.GONE); }
         });
+        b.tabLatest.setOnClickListener(x -> { setTab(0); reset("trending"); });
+        b.tabTrending.setOnClickListener(x -> { setTab(1); reset("popular"); });
+        b.tabPopular.setOnClickListener(x -> { setTab(2); reset("season"); });
+        b.searchBtn.setOnClickListener(x -> askSearch());
+        setTab(0);
+        reset("trending");
     }
+
+    private void askSearch() {
+        final EditText input = new EditText(requireContext());
+        input.setHint("Search anime");
+        input.setSingleLine(true);
+        new AlertDialog.Builder(requireContext()).setTitle("Search anime").setView(input)
+            .setPositiveButton("Search", (d, w) -> {
+                String q = input.getText().toString().trim();
+                if (q.length() < 2) return;
+                Intent i = new Intent(requireContext(), AnimeListActivity.class);
+                i.putExtra("category", "search");
+                i.putExtra("query", q);
+                i.putExtra("title", "Results: " + q);
+                startActivity(i);
+            }).setNegativeButton("Cancel", null).show();
+    }
+
+    private void reset(String t) {
+        tab = t; page = 1; hasMore = true; loading = false;
+        all.clear();
+        adapter.submitList(null);
+        load(1);
+    }
+
+    private void load(int p) {
+        loading = true;
+        b.progressBar.setVisibility(View.VISIBLE);
+        AniListClient.Callback<List<AniListClient.AnimeItem>> cb = new AniListClient.Callback<List<AniListClient.AnimeItem>>() {
+            public void onSuccess(List<AniListClient.AnimeItem> r) {
+                loading = false;
+                if (b == null) return;
+                b.progressBar.setVisibility(View.GONE);
+                if (r == null || r.isEmpty()) { hasMore = false; return; }
+                page = p;
+                all.addAll(r);
+                adapter.submitList(new ArrayList<>(all));
+                if (r.size() < 20) hasMore = false;
+            }
+            public void onError(String e) {
+                loading = false;
+                if (b != null) b.progressBar.setVisibility(View.GONE);
+                if (getContext() != null && p == 1) Toast.makeText(getContext(), "Could not load anime", Toast.LENGTH_SHORT).show();
+            }
+        };
+        switch (tab) {
+            case "popular": AniListClient.getPopular(p, cb); break;
+            case "season": AniListClient.getThisSeason(p, cb); break;
+            default: AniListClient.getTrending(p, cb); break;
+        }
+    }
+
     private void setTab(int a) {
         if (b == null) return;
-        int g = AppPreferences.getAccentColor(requireContext()), gr = 0xFF888888;
-        b.tabTrending.setTextColor(a == 0 ? g : gr);
-        b.tabPopular.setTextColor(a == 1 ? g : gr);
-        b.tabSeason.setTextColor(a == 2 ? g : gr);
+        int g = ThemeManager.accent(requireContext()), gr = ThemeManager.color(requireContext(), R.attr.fhTextDim);
+        b.tabLatest.setTextColor(a == 0 ? g : gr);
+        b.tabTrending.setTextColor(a == 1 ? g : gr);
+        b.tabPopular.setTextColor(a == 2 ? g : gr);
     }
+
     private void open(AniListClient.AnimeItem item) {
         Intent i = new Intent(getContext(), AnimeDetailActivity.class);
         i.putExtra("anime_id", item.id); i.putExtra("title", item.displayTitle());
@@ -105,5 +134,6 @@ public class AnimeFragment extends Fragment {
         i.putExtra("format", item.format);
         startActivity(i);
     }
+
     @Override public void onDestroyView() { super.onDestroyView(); b = null; }
 }

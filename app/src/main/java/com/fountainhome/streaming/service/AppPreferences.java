@@ -1,17 +1,16 @@
 package com.fountainhome.streaming.service;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 public class AppPreferences {
     private static final String PREFS = "fh_prefs";
-    public static final String COLOR_PURPLE="#BB86FC", COLOR_BLUE="#2196F3", COLOR_RED="#CF6679";
-    public static final String COLOR_GREEN="#4CAF50", COLOR_ORANGE="#FF9800", COLOR_PINK="#E91E8C", COLOR_TEAL="#03DAC6";
     public static final String STATUS_NONE="none", STATUS_PLAN="planning", STATUS_WATCH="watching",
         STATUS_DONE="watched", STATUS_DROP="dropped";
     private static SharedPreferences p(Context c) { return c.getSharedPreferences(PREFS, 0); }
-    public static String  getAccent(Context c)                { return p(c).getString("accent", COLOR_PURPLE); }
-    public static void    setAccent(Context c, String v)      { p(c).edit().putString("accent", v).apply(); }
-    public static int     getAccentColor(Context c)           { try { return Color.parseColor(getAccent(c)); } catch (Exception e) { return Color.parseColor(COLOR_PURPLE); } }
+    public static String  getThemeMode(Context c)             { return p(c).getString("theme_mode", "system"); }
+    public static void    setThemeMode(Context c, String v)   { p(c).edit().putString("theme_mode", v).apply(); }
+    public static String  getThemeAccent(Context c)           { return p(c).getString("theme_accent", "purple"); }
+    public static void    setThemeAccent(Context c, String v) { p(c).edit().putString("theme_accent", v).apply(); }
+    public static int     getAccentColor(Context c)           { return com.fountainhome.streaming.ui.theme.ThemeManager.accent(c); }
     public static String  getSource(Context c)                { return p(c).getString("source", "VidSrc"); }
     public static void    setSource(Context c, String v)      { p(c).edit().putString("source", v).apply(); }
     public static String  getAnimeSource(Context c)           { return p(c).getString("anime_source", "VidLink"); }
@@ -58,9 +57,28 @@ public class AppPreferences {
     // --- Embed player: load the provider page directly instead of inside the wrapper iframe ---
     public static boolean getEmbedDirect(Context c)           { return p(c).getBoolean("embed_direct", false); }
     public static void    setEmbedDirect(Context c, boolean v){ p(c).edit().putBoolean("embed_direct", v).apply(); }
+    // --- Offline player ---
+    public static boolean getAutoPlayNext(Context c)          { return p(c).getBoolean("auto_next", true); }
+    public static void    setAutoPlayNext(Context c, boolean v){ p(c).edit().putBoolean("auto_next", v).apply(); }
+    public static String  getResizeMode(Context c)            { return p(c).getString("resize_mode", "fit"); }
+    public static void    setResizeMode(Context c, String v)  { p(c).edit().putString("resize_mode", v).apply(); }
+    public static boolean getSwipeSeek(Context c)             { return p(c).getBoolean("swipe_seek", true); }
+    public static void    setSwipeSeek(Context c, boolean v)  { p(c).edit().putBoolean("swipe_seek", v).apply(); }
+    public static float   getHoldSpeed(Context c)             { return p(c).getFloat("hold_speed", 2.0f); }
+    public static void    setHoldSpeed(Context c, float v)    { p(c).edit().putFloat("hold_speed", v).apply(); }
+    public static int     getControlsTimeout(Context c)       { return p(c).getInt("controls_timeout", 4); }
+    public static void    setControlsTimeout(Context c, int v){ p(c).edit().putInt("controls_timeout", v).apply(); }
+    public static boolean getResumePlayback(Context c)        { return p(c).getBoolean("resume_playback", true); }
+    public static void    setResumePlayback(Context c, boolean v){ p(c).edit().putBoolean("resume_playback", v).apply(); }
+    // --- Home / general ---
+    public static int     getStartTab(Context c)              { return p(c).getInt("start_tab", 0); }
+    public static void    setStartTab(Context c, int v)       { p(c).edit().putInt("start_tab", v).apply(); }
+    public static boolean getShowTop10(Context c)             { return p(c).getBoolean("show_top10", true); }
+    public static void    setShowTop10(Context c, boolean v)  { p(c).edit().putBoolean("show_top10", v).apply(); }
+    public static boolean getShowMyList(Context c)            { return p(c).getBoolean("show_mylist", true); }
+    public static void    setShowMyList(Context c, boolean v) { p(c).edit().putBoolean("show_mylist", v).apply(); }
     // --- Status ---
     public static String  getItemStatus(Context c, int id, String type) { return p(c).getString("status_" + type + "_" + id, STATUS_NONE); }
     public static void    setItemStatus(Context c, int id, String type, String status) { p(c).edit().putString("status_" + type + "_" + id, status).apply(); }
     public static void    clearAll(Context c) { p(c).edit().clear().apply(); }
-    public static int     getSurfaceColor(Context c) { return Color.parseColor("#141414"); }
 }

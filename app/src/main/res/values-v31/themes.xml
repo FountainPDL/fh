@@ -3,6 +3,6 @@
     <style name="Theme.FountainHome.Splash" parent="Theme.FountainHome">
         <item name="android:windowSplashScreenBackground">@color/splash_bg</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/scrim_clear</item>
     </style>
 </resources>

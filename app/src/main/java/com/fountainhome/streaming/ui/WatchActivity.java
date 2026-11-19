@@ -1,4 +1,6 @@
 package com.fountainhome.streaming.ui;
+
+import com.fountainhome.streaming.ui.theme.ThemeManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
@@ -7,7 +9,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.*;
 import android.widget.*;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.*;
 import com.bumptech.glide.Glide;
@@ -23,7 +24,7 @@ import com.fountainhome.streaming.player.EmbedPlayerActivity;
 import com.fountainhome.streaming.ui.viewmodel.*;
 import java.util.ArrayList;
 import java.util.List;
-public class WatchActivity extends AppCompatActivity {
+public class WatchActivity extends BaseActivity {
     private ActivityWatchBinding b;private WatchViewModel vm;private ContentItem item;
     private boolean offline=false,userSaved=false;private String type;private int tmdbId,selSeason=1,selEpisode=1;
     private List<Models.Episode> eps=new ArrayList<>(),filteredEps=new ArrayList<>();
@@ -77,8 +78,8 @@ public class WatchActivity extends AppCompatActivity {
     }
     private void filterEps(String q){filteredEps.clear();if(q.isEmpty()){filteredEps.addAll(eps);}else{try{int n=Integer.parseInt(q.trim());for(Models.Episode ep:eps)if(ep.episode_number==n||String.valueOf(ep.episode_number).contains(q.trim()))filteredEps.add(ep);}catch(Exception e){for(Models.Episode ep:eps)if(ep.name!=null&&ep.name.toLowerCase().contains(q.toLowerCase()))filteredEps.add(ep);}}populateEps(filteredEps);}
     private void showStatusDialog(ContentItem ci){String[]opts={"Planning to Watch","Watching","Watched","Dropped","Remove Status"};new AlertDialog.Builder(this).setTitle("Set Status").setItems(opts,(d,w)->{String[]keys={AppPreferences.STATUS_PLAN,AppPreferences.STATUS_WATCH,AppPreferences.STATUS_DONE,AppPreferences.STATUS_DROP,AppPreferences.STATUS_NONE};AppPreferences.setItemStatus(this,ci.id,ci.mediaType,keys[w]);updateStatusBadge(ci);if(w==0)LibraryManager.add(this,ci,LibraryManager.WATCHLIST);Toast.makeText(this,"Status: "+opts[w],Toast.LENGTH_SHORT).show();}).show();}
-    private void updateStatusBadge(ContentItem ci){String status=AppPreferences.getItemStatus(this,ci.id,ci.mediaType);String label;int color;switch(status){case AppPreferences.STATUS_PLAN:label="Planning";color=0xFF2196F3;break;case AppPreferences.STATUS_WATCH:label="Watching";color=0xFF4CAF50;break;case AppPreferences.STATUS_DONE:label="Watched";color=0xFFBB86FC;break;case AppPreferences.STATUS_DROP:label="Dropped";color=0xFFCF6679;break;default:label="Set Status";color=0xFF888888;}b.statusBtn.setText(label);b.statusBtn.setTextColor(color);}
-    private void setupSeasons(int count){final int total=count<=0?1:count;b.seasonButtonsContainer.removeAllViews();int ac=AppPreferences.getAccentColor(this);for(int i=1;i<=total;i++){final int sn=i;TextView btn=new TextView(this);btn.setText("S"+i);btn.setPadding(28,14,28,14);btn.setTextColor(i==selSeason?ac:0xFFAAAAAA);btn.setTextSize(13);btn.setOnClickListener(v->{selSeason=sn;selEpisode=1;vm.loadSeason(tmdbId,sn);setupSeasons(total);});b.seasonButtonsContainer.addView(btn);}}
+    private void updateStatusBadge(ContentItem ci){String status=AppPreferences.getItemStatus(this,ci.id,ci.mediaType);b.statusBtn.setText(ThemeManager.statusLabel(status));b.statusBtn.setTextColor(ThemeManager.statusColor(this,status));}
+    private void setupSeasons(int count){final int total=count<=0?1:count;b.seasonButtonsContainer.removeAllViews();int ac=AppPreferences.getAccentColor(this);for(int i=1;i<=total;i++){final int sn=i;TextView btn=new TextView(this);btn.setText("S"+i);btn.setPadding(28,14,28,14);btn.setTextColor(i==selSeason?ac:ThemeManager.color(this, R.attr.fhTextDim));btn.setTextSize(13);btn.setOnClickListener(v->{selSeason=sn;selEpisode=1;vm.loadSeason(tmdbId,sn);setupSeasons(total);});b.seasonButtonsContainer.addView(btn);}}
     private void populateEps(List<Models.Episode>list){EpisodeAdapter a=new EpisodeAdapter(list,(ep,num)->{selEpisode=num;openPlayer(item);},(ep,num)->startDownload(item,selSeason,num),tmdbId,type,selSeason,this);b.episodeListRv.setLayoutManager(new LinearLayoutManager(this));b.episodeListRv.setAdapter(a);}
     private void showMenu(ContentItem ci){Dialog d=new Dialog(this,R.style.Theme_FountainHome);d.requestWindowFeature(Window.FEATURE_NO_TITLE);d.setContentView(R.layout.dialog_episode_menu);if(d.getWindow()!=null)d.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);RecyclerView rv=d.findViewById(R.id.episodes_rv);rv.setLayoutManager(new LinearLayoutManager(this));EpisodeAdapter a=new EpisodeAdapter(eps,(ep,num)->{selEpisode=num;openPlayer(ci);d.dismiss();},(ep,num)->startDownload(ci,selSeason,num),tmdbId,type,selSeason,this);rv.setAdapter(a);((TextView)d.findViewById(R.id.dialog_title)).setText(ci.displayTitle()+" — S"+selSeason);d.show();}
     private void startDownload(ContentItem ci,int season,int episode){

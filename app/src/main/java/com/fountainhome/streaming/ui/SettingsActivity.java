@@ -1,6 +1,5 @@
 package com.fountainhome.streaming.ui;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends BaseActivity {
     @Override protected void onCreate(Bundle s){super.onCreate(s);finish();}
 }

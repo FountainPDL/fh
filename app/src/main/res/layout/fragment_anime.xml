@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="#0A0A0A">
+    android:orientation="vertical" android:background="?attr/fhBg">
     <LinearLayout android:layout_width="match_parent" android:layout_height="56dp"
-        android:gravity="center_vertical" android:background="#141414"
+        android:gravity="center_vertical" android:background="?attr/fhSurface"
         android:paddingStart="16dp" android:paddingEnd="8dp">
         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="ANIME" android:textColor="#BB86FC" android:textSize="20sp" android:textStyle="bold"/>
+            android:text="ANIME" android:textColor="?attr/fhAccent" android:textSize="20sp" android:textStyle="bold"/>
         <ImageButton android:id="@+id/search_btn"
             android:layout_width="44dp" android:layout_height="44dp"
-            android:src="@drawable/ic_search" android:tint="#FFFFFF"
+            android:src="@drawable/ic_search" android:tint="?attr/fhText"
             android:background="?attr/selectableItemBackground" android:contentDescription="Search"/>
     </LinearLayout>
     <SearchView android:id="@+id/search_bar"
         android:layout_width="match_parent" android:layout_height="52dp"
         android:queryHint="Search anime..." android:iconifiedByDefault="false"
-        android:background="#1A1A1A" android:visibility="gone"/>
+        android:background="?attr/fhSurfaceAlt" android:visibility="gone"/>
     <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
         android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
         android:gravity="center_vertical">
         <TextView android:id="@+id/tab_trending"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Trending" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="#BB86FC" android:paddingEnd="20dp"/>
+            android:textColor="?attr/fhAccent" android:paddingEnd="20dp"/>
         <TextView android:id="@+id/tab_popular"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Popular" android:textSize="14sp" android:textColor="#888888" android:paddingEnd="20dp"/>
+            android:text="Popular" android:textSize="14sp" android:textColor="?attr/fhTextDim" android:paddingEnd="20dp"/>
         <TextView android:id="@+id/tab_season"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="This Season" android:textSize="14sp" android:textColor="#888888"/>
+            android:text="This Season" android:textSize="14sp" android:textColor="?attr/fhTextDim"/>
     </LinearLayout>
     <ProgressBar android:id="@+id/progress_bar"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
                 android:layout_width="match_parent" android:layout_height="260dp" android:visibility="gone">
                 <ImageView android:id="@+id/anime_hero_banner"
                     android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:scaleType="centerCrop" android:background="#111111"/>
+                    android:scaleType="centerCrop" android:background="?attr/fhSurfaceAlt"/>
                 <View android:layout_width="match_parent" android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -50,14 +50,14 @@
                     android:paddingStart="20dp" android:paddingEnd="20dp" android:paddingBottom="16dp">
                     <TextView android:id="@+id/anime_hero_title"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold"/>
+                        android:textColor="?attr/fhText" android:textSize="22sp" android:textStyle="bold"/>
                     <TextView android:id="@+id/anime_hero_meta"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="#CCCCCC" android:textSize="12sp" android:layout_marginBottom="12dp"/>
+                        android:textColor="?attr/fhText" android:textSize="12sp" android:layout_marginBottom="12dp"/>
                     <Button android:id="@+id/anime_hero_play"
                         android:layout_width="140dp" android:layout_height="44dp"
                         android:text="WATCH" android:textSize="13sp" android:textStyle="bold"
-                        android:textColor="#000000" android:backgroundTint="#BB86FC"/>
+                        android:textColor="@color/scrim_full" android:backgroundTint="?attr/fhAccent"/>
                 </LinearLayout>
             </FrameLayout>
             <!-- Trending row -->
@@ -66,11 +66,11 @@
                 android:paddingTop="14dp" android:paddingBottom="8dp" android:gravity="center_vertical">
                 <TextView android:id="@+id/trending_title"
                     android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="Trending" android:textColor="#FFFFFF"
+                    android:text="Trending" android:textColor="?attr/fhText"
                     android:textSize="15sp" android:textStyle="bold"/>
                 <TextView android:id="@+id/view_all_trending"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+                    android:text="View all" android:textColor="?attr/fhAccent" android:textSize="12sp"/>
             </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/trending_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -80,11 +80,11 @@
                 android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
                 android:paddingTop="14dp" android:paddingBottom="8dp" android:gravity="center_vertical">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="Most Popular" android:textColor="#FFFFFF"
+                    android:text="Most Popular" android:textColor="?attr/fhText"
                     android:textSize="15sp" android:textStyle="bold"/>
                 <TextView android:id="@+id/view_all_popular"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+                    android:text="View all" android:textColor="?attr/fhAccent" android:textSize="12sp"/>
             </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/popular_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -94,11 +94,11 @@
                 android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
                 android:paddingTop="14dp" android:paddingBottom="8dp" android:gravity="center_vertical">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="This Season" android:textColor="#FFFFFF"
+                    android:text="This Season" android:textColor="?attr/fhText"
                     android:textSize="15sp" android:textStyle="bold"/>
                 <TextView android:id="@+id/view_all_season"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="View all" android:textColor="#BB86FC" android:textSize="12sp"/>
+                    android:text="View all" android:textColor="?attr/fhAccent" android:textSize="12sp"/>
             </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/season_rv"
                 android:layout_width="match_parent" android:layout_height="wrap_content"

@@ -5,23 +5,23 @@
     android:background="@drawable/card_bg" android:padding="10dp"
     android:layout_marginBottom="8dp" android:foreground="?attr/selectableItemBackground">
     <ImageView android:id="@+id/thumb" android:layout_width="104dp" android:layout_height="60dp"
-        android:scaleType="centerCrop" android:background="#1E1E1E"/>
+        android:scaleType="centerCrop" android:background="?attr/fhSurfaceAlt"/>
     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
         android:orientation="vertical" android:layout_marginStart="12dp">
         <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="?attr/fhText" android:textSize="14sp" android:textStyle="bold"
             android:maxLines="1" android:ellipsize="end"/>
         <TextView android:id="@+id/subtitle" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textColor="#9A9A9A" android:textSize="12sp" android:layout_marginTop="2dp"
+            android:textColor="?attr/fhTextDim" android:textSize="12sp" android:layout_marginTop="2dp"
             android:maxLines="2" android:ellipsize="end"/>
         <ProgressBar android:id="@+id/progress" style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent" android:layout_height="4dp"
             android:layout_marginTop="6dp" android:max="100" android:visibility="gone"/>
     </LinearLayout>
     <ImageButton android:id="@+id/action1" android:layout_width="40dp" android:layout_height="40dp"
-        android:padding="9dp" android:tint="#FFFFFF" android:visibility="gone"
+        android:padding="9dp" android:tint="?attr/fhText" android:visibility="gone"
         android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Action"/>
     <ImageButton android:id="@+id/action2" android:layout_width="40dp" android:layout_height="40dp"
-        android:padding="9dp" android:tint="#CF6679" android:src="@drawable/ic_delete"
+        android:padding="9dp" android:tint="?attr/fhDanger" android:src="@drawable/ic_delete"
         android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Delete"/>
 </LinearLayout>

@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/player_root"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="?attr/fhBg">
 
     <LinearLayout android:id="@+id/content_column"
         android:layout_width="match_parent" android:layout_height="match_parent"
@@ -11,32 +11,32 @@
         <!-- Portrait top bar -->
         <LinearLayout android:id="@+id/top_bar"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center_vertical" android:background="#0A0A0A"
+            android:gravity="center_vertical" android:background="?attr/fhBg"
             android:paddingStart="4dp" android:paddingEnd="4dp">
             <ImageButton android:id="@+id/back_btn"
                 android:layout_width="44dp" android:layout_height="44dp"
-                android:src="@drawable/ic_back" android:tint="#FFFFFF"
+                android:src="@drawable/ic_back" android:tint="?attr/fhText"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Back"/>
             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="6dp">
                 <TextView android:id="@+id/title_text"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"
+                    android:textColor="?attr/fhText" android:textSize="15sp" android:textStyle="bold"
                     android:maxLines="1" android:ellipsize="end"/>
                 <TextView android:id="@+id/subtitle_text"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:textColor="#999999" android:textSize="11sp"
+                    android:textColor="?attr/fhTextDim" android:textSize="11sp"
                     android:maxLines="1" android:ellipsize="end"/>
             </LinearLayout>
             <ImageButton android:id="@+id/server_btn"
                 android:layout_width="44dp" android:layout_height="44dp"
-                android:src="@drawable/ic_dns" android:tint="#FFFFFF" android:padding="10dp"
+                android:src="@drawable/ic_dns" android:tint="?attr/fhText" android:padding="10dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Servers"/>
             <ImageButton android:id="@+id/more_btn"
                 android:layout_width="44dp" android:layout_height="44dp"
-                android:src="@drawable/ic_more" android:tint="#FFFFFF" android:padding="10dp"
+                android:src="@drawable/ic_more" android:tint="?attr/fhText" android:padding="10dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="More"/>
         </LinearLayout>
@@ -44,19 +44,19 @@
         <!-- The player. Height is set to 16:9 in portrait and MATCH_PARENT in landscape. -->
         <FrameLayout android:id="@+id/player_holder"
             android:layout_width="match_parent" android:layout_height="220dp"
-            android:background="#000000">
+            android:background="@color/video_black">
             <FrameLayout android:id="@+id/web_container"
                 android:layout_width="match_parent" android:layout_height="match_parent"/>
 
             <LinearLayout android:id="@+id/loading_overlay"
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:orientation="vertical" android:gravity="center"
-                android:background="#000000" android:clickable="true">
+                android:background="@color/video_black" android:clickable="true">
                 <ProgressBar android:id="@+id/load_bar"
                     android:layout_width="36dp" android:layout_height="36dp"/>
                 <TextView android:id="@+id/load_text"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp" android:textColor="#BBBBBB" android:textSize="13sp"/>
+                    android:layout_marginTop="12dp" android:textColor="@color/on_image_dim" android:textSize="13sp"/>
             </LinearLayout>
 
             <LinearLayout android:id="@+id/slow_hint"
@@ -67,11 +67,11 @@
                 android:paddingStart="14dp" android:paddingEnd="6dp"
                 android:visibility="gone">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Taking a while?" android:textColor="#DDDDDD" android:textSize="12sp"/>
+                    android:text="Taking a while?" android:textColor="@color/on_image" android:textSize="12sp"/>
                 <Button android:id="@+id/slow_hint_btn"
                     style="?android:attr/borderlessButtonStyle"
                     android:layout_width="wrap_content" android:layout_height="36dp"
-                    android:text="Try next server" android:textSize="12sp" android:textColor="#BB86FC"
+                    android:text="Try next server" android:textSize="12sp" android:textColor="?attr/fhAccent"
                     android:minWidth="0dp"/>
             </LinearLayout>
 
@@ -87,17 +87,17 @@
                 android:padding="2dp" android:visibility="gone">
                 <ImageButton android:id="@+id/float_back"
                     android:layout_width="40dp" android:layout_height="40dp"
-                    android:src="@drawable/ic_back" android:tint="#FFFFFF" android:padding="9dp"
+                    android:src="@drawable/ic_back" android:tint="@color/on_image" android:padding="9dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Back"/>
                 <ImageButton android:id="@+id/float_server"
                     android:layout_width="40dp" android:layout_height="40dp"
-                    android:src="@drawable/ic_dns" android:tint="#FFFFFF" android:padding="9dp"
+                    android:src="@drawable/ic_dns" android:tint="@color/on_image" android:padding="9dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Servers"/>
                 <ImageButton android:id="@+id/float_more"
                     android:layout_width="40dp" android:layout_height="40dp"
-                    android:src="@drawable/ic_more" android:tint="#FFFFFF" android:padding="9dp"
+                    android:src="@drawable/ic_more" android:tint="@color/on_image" android:padding="9dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="More"/>
             </LinearLayout>
@@ -106,7 +106,7 @@
         <!-- Portrait panel below the player -->
         <ScrollView android:id="@+id/info_panel"
             android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
-            android:background="#0A0A0A" android:overScrollMode="never">
+            android:background="?attr/fhBg" android:overScrollMode="never">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:padding="16dp">
 
@@ -116,20 +116,20 @@
                     android:visibility="gone" android:layout_marginBottom="14dp">
                     <ImageButton android:id="@+id/prev_btn"
                         android:layout_width="48dp" android:layout_height="48dp"
-                        android:src="@drawable/ic_skip_prev" android:tint="#FFFFFF" android:padding="11dp"
+                        android:src="@drawable/ic_skip_prev" android:tint="?attr/fhText" android:padding="11dp"
                         android:background="@drawable/spinner_bg" android:contentDescription="Previous episode"/>
                     <TextView android:id="@+id/ep_label"
                         android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="15sp"
+                        android:gravity="center" android:textColor="?attr/fhText" android:textSize="15sp"
                         android:textStyle="bold"/>
                     <ImageButton android:id="@+id/next_btn"
                         android:layout_width="48dp" android:layout_height="48dp"
-                        android:src="@drawable/ic_skip_next" android:tint="#FFFFFF" android:padding="11dp"
+                        android:src="@drawable/ic_skip_next" android:tint="?attr/fhText" android:padding="11dp"
                         android:background="@drawable/spinner_bg" android:contentDescription="Next episode"/>
                 </LinearLayout>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="SERVERS" android:textColor="#BB86FC" android:textSize="11sp"
+                    android:text="SERVERS" android:textColor="?attr/fhAccent" android:textSize="11sp"
                     android:layout_marginBottom="8dp"/>
                 <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:scrollbars="none" android:overScrollMode="never">
@@ -140,14 +140,14 @@
 
                 <TextView android:id="@+id/help_text"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp" android:textColor="#777777" android:textSize="12sp"
+                    android:layout_marginTop="14dp" android:textColor="?attr/fhTextFaint" android:textSize="12sp"
                     android:lineSpacingExtra="3dp"
                     android:text="Video not showing or stuck? Pick another server above. Some servers need a few seconds to start. Use the player's own fullscreen button for fullscreen."/>
 
                 <Button android:id="@+id/panel_download_btn"
                     android:layout_width="match_parent" android:layout_height="46dp"
                     android:layout_marginTop="18dp" android:text="Download for offline"
-                    android:textColor="#BB86FC" android:backgroundTint="#22BB86FC"/>
+                    android:textColor="?attr/fhAccent" android:backgroundTint="?attr/fhAccentSoft"/>
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
@@ -155,5 +155,5 @@
     <!-- Holds the WebView's own HTML5 fullscreen view -->
     <FrameLayout android:id="@+id/fullscreen_host"
         android:layout_width="match_parent" android:layout_height="match_parent"
-        android:background="#000000" android:visibility="gone"/>
+        android:background="@color/video_black" android:visibility="gone"/>
 </FrameLayout>

@@ -91,7 +91,7 @@ public class HomeFragment extends Fragment {
         });
 
         vm.getHero().observe(getViewLifecycleOwner(), this::showHero);
-        vm.getTop10().observe(getViewLifecycleOwner(), l -> top10Row.set(l));
+        vm.getTop10().observe(getViewLifecycleOwner(), l -> top10Row.set(AppPreferences.getShowTop10(requireContext()) ? l : null));
         vm.getTrending().observe(getViewLifecycleOwner(), l -> trendingRow.set(l));
         vm.getPopularTV().observe(getViewLifecycleOwner(), l -> tvRow.set(l));
         vm.getNewReleases().observe(getViewLifecycleOwner(), l -> newRow.set(l));
@@ -109,7 +109,7 @@ public class HomeFragment extends Fragment {
         Context c = requireContext();
         if (AppPreferences.getShowContinue(c)) continueRow.set(LibraryManager.get(c, LibraryManager.CONTINUE));
         else continueRow.set(null);
-        listRow.set(LibraryManager.get(c, LibraryManager.WATCHLIST));
+        listRow.set(AppPreferences.getShowMyList(c) ? LibraryManager.get(c, LibraryManager.WATCHLIST) : null);
         refreshMyListIcon();
     }
 

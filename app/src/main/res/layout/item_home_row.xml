@@ -5,7 +5,7 @@
     <TextView android:id="@+id/row_title"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:paddingStart="14dp" android:paddingTop="18dp" android:paddingBottom="8dp"
-        android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
+        android:textColor="?attr/fhText" android:textSize="17sp" android:textStyle="bold"/>
     <androidx.recyclerview.widget.RecyclerView android:id="@+id/row_rv"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="horizontal" android:clipToPadding="false"

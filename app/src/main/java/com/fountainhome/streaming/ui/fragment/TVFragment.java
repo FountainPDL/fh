@@ -1,4 +1,8 @@
 package com.fountainhome.streaming.ui.fragment;
+
+import com.fountainhome.streaming.ui.theme.ThemeManager;
+
+import com.fountainhome.streaming.R;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.*;
@@ -92,7 +96,7 @@ public class TVFragment extends Fragment {
     }
     private void setTab(int a) {
         if (b == null) return;
-        int g = AppPreferences.getAccentColor(requireContext()), gr = 0xFF888888;
+        int g = AppPreferences.getAccentColor(requireContext()), gr = ThemeManager.color(requireContext(), R.attr.fhTextDim);
         b.tabLatest.setTextColor(a == 0 ? g : gr);
         b.tabTrending.setTextColor(a == 1 ? g : gr);
         b.tabPopular.setTextColor(a == 2 ? g : gr);

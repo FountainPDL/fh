@@ -163,7 +163,7 @@ public class EmbedWebPlayer {
     private void ensureWebView() {
         if (web != null) return;
         WebView w = new WebView(activity);
-        w.setBackgroundColor(Color.BLACK);
+        w.setBackgroundColor(androidx.core.content.ContextCompat.getColor(activity, com.fountainhome.streaming.R.color.video_black));
         w.setLayoutParams(new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 

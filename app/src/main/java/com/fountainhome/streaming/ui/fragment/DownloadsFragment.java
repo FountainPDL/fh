@@ -1,5 +1,7 @@
 package com.fountainhome.streaming.ui.fragment;
 
+import com.fountainhome.streaming.ui.theme.ThemeManager;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -86,7 +88,7 @@ public class DownloadsFragment extends Fragment {
             else if (DownloadItem.RESOLVING.equals(d.status)) sub = "Finding a source…";
             else sub = "Downloading  " + d.progress + "%";
             x.subtitle.setText(sub);
-            x.subtitle.setTextColor(failed ? 0xFFCF6679 : 0xFF9A9A9A);
+            x.subtitle.setTextColor(failed ? ThemeManager.color(x.subtitle.getContext(), R.attr.fhDanger) : ThemeManager.color(x.subtitle.getContext(), R.attr.fhTextDim));
 
             boolean showBar = DownloadItem.DOWNLOADING.equals(d.status);
             x.progress.setVisibility(showBar ? View.VISIBLE : View.GONE);

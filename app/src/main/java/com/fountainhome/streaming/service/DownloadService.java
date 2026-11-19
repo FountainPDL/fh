@@ -25,6 +25,7 @@ import com.fountainhome.streaming.download.DownloadDao;
 import com.fountainhome.streaming.download.DownloadItem;
 import com.fountainhome.streaming.download.DownloadManager2;
 import com.fountainhome.streaming.download.HlsDownloader;
+import com.fountainhome.streaming.download.Remuxer;
 import com.fountainhome.streaming.download.StreamResolver;
 import com.fountainhome.streaming.ui.MainActivity;
 
@@ -154,6 +155,9 @@ public class DownloadService extends Service {
                         }
                         @Override public boolean isCancelled() { return cancelled.contains(id); }
                     });
+                // Raw .ts has no seek index: convert to .mp4 (no re-encode) so seeking works.
+                notifyProgress(label, "Preparing for playback\u2026", 100, false);
+                out = Remuxer.makeSeekable(out, null);
                 it.localPath = out.getAbsolutePath();
                 it.totalBytes = out.length();
                 it.status = DownloadItem.COMPLETED;

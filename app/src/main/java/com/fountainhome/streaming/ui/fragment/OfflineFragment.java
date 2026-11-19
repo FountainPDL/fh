@@ -1,5 +1,7 @@
 package com.fountainhome.streaming.ui.fragment;
 
+import com.fountainhome.streaming.ui.theme.ThemeManager;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -78,8 +80,8 @@ public class OfflineFragment extends Fragment {
 
     private void render() {
         if (b == null) return;
-        b.tabVideos.setTextColor(showVideos ? 0xFFFFFFFF : 0xFF888888);
-        b.tabPages.setTextColor(showVideos ? 0xFF888888 : 0xFFFFFFFF);
+        b.tabVideos.setTextColor(showVideos ? ThemeManager.color(requireContext(), R.attr.fhText) : ThemeManager.color(requireContext(), R.attr.fhTextDim));
+        b.tabPages.setTextColor(showVideos ? ThemeManager.color(requireContext(), R.attr.fhTextDim) : ThemeManager.color(requireContext(), R.attr.fhText));
         boolean empty = showVideos ? videos.isEmpty() : pages.isEmpty();
         b.emptyText.setVisibility(empty ? View.VISIBLE : View.GONE);
         b.emptyText.setText(showVideos
@@ -118,6 +120,10 @@ public class OfflineFragment extends Fragment {
             x.subtitle.setText((movie ? "Movie" : "Episode") + (mb > 0 ? "  ·  " + mb + " MB" : ""));
             Glide.with(x.thumb).load(OfflineStore.image(x.thumb.getContext(),
                 d.backdropPath != null ? d.backdropPath : d.posterPath, "w300")).into(x.thumb);
+            x.action1.setVisibility(View.VISIBLE);
+            x.action1.setImageResource(R.drawable.ic_share);
+            x.action1.setContentDescription("Share");
+            x.action1.setOnClickListener(v -> com.fountainhome.streaming.download.ShareHelper.shareVideo(v.getContext(), d));
             x.getRoot().setOnClickListener(v -> {
                 Intent i = new Intent(v.getContext(), OfflinePlayerActivity.class);
                 i.putExtra(OfflinePlayerActivity.EXTRA_DOWNLOAD_ID, d.id);

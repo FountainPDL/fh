@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="?attr/fhBg">
 
     <androidx.core.widget.NestedScrollView android:id="@+id/home_scroll"
         android:layout_width="match_parent" android:layout_height="match_parent"
@@ -13,7 +13,7 @@
             <FrameLayout android:layout_width="match_parent" android:layout_height="520dp">
                 <ImageView android:id="@+id/hero_image"
                     android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:scaleType="centerCrop" android:background="#111111"/>
+                    android:scaleType="centerCrop" android:background="?attr/fhSurfaceAlt"/>
                 <View android:layout_width="match_parent" android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -21,12 +21,12 @@
                     android:gravity="center_horizontal" android:padding="16dp">
                     <TextView android:id="@+id/hero_title"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:gravity="center" android:textColor="#FFFFFF" android:textSize="30sp"
+                        android:gravity="center" android:textColor="@color/on_image" android:textSize="30sp"
                         android:textStyle="bold" android:maxLines="2" android:ellipsize="end"
-                        android:shadowColor="#000000" android:shadowRadius="8"/>
+                        android:shadowColor="@color/scrim_full" android:shadowRadius="8"/>
                     <TextView android:id="@+id/hero_meta"
                         android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp" android:textColor="#D0D0D0" android:textSize="13sp"/>
+                        android:layout_marginTop="6dp" android:textColor="@color/on_image" android:textSize="13sp"/>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="16dp" android:orientation="horizontal"
                         android:gravity="center_vertical">
@@ -36,20 +36,20 @@
                             android:padding="4dp" android:clickable="true" android:focusable="true">
                             <ImageView android:id="@+id/hero_mylist_icon"
                                 android:layout_width="26dp" android:layout_height="26dp"
-                                android:src="@drawable/ic_plus" android:tint="#FFFFFF"/>
+                                android:src="@drawable/ic_plus" android:tint="@color/on_image"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="My List" android:textColor="#FFFFFF" android:textSize="11sp"
+                                android:text="My List" android:textColor="@color/on_image" android:textSize="11sp"
                                 android:layout_marginTop="2dp"/>
                         </LinearLayout>
                         <LinearLayout android:id="@+id/hero_play"
                             android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
                             android:layout_marginStart="8dp" android:layout_marginEnd="8dp"
-                            android:background="#FFFFFF" android:gravity="center"
+                            android:background="@color/on_image" android:gravity="center"
                             android:clickable="true" android:focusable="true">
                             <ImageView android:layout_width="22dp" android:layout_height="22dp"
-                                android:src="@drawable/ic_play" android:tint="#000000"/>
+                                android:src="@drawable/ic_play" android:tint="@color/on_image_inverse"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Play" android:textColor="#000000" android:textSize="16sp"
+                                android:text="Play" android:textColor="@color/on_image_inverse" android:textSize="16sp"
                                 android:textStyle="bold" android:layout_marginStart="6dp"/>
                         </LinearLayout>
                         <LinearLayout android:id="@+id/hero_info"
@@ -57,9 +57,9 @@
                             android:orientation="vertical" android:gravity="center_horizontal"
                             android:padding="4dp" android:clickable="true" android:focusable="true">
                             <ImageView android:layout_width="26dp" android:layout_height="26dp"
-                                android:src="@drawable/ic_info" android:tint="#FFFFFF"/>
+                                android:src="@drawable/ic_info" android:tint="@color/on_image"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                android:text="Info" android:textColor="#FFFFFF" android:textSize="11sp"
+                                android:text="Info" android:textColor="@color/on_image" android:textSize="11sp"
                                 android:layout_marginTop="2dp"/>
                         </LinearLayout>
                     </LinearLayout>
@@ -70,7 +70,7 @@
             <TextView android:id="@+id/offline_banner"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_margin="12dp" android:padding="12dp" android:visibility="gone"
-                android:background="#1F1F1F" android:textColor="#FFFFFF" android:textSize="13sp"
+                android:background="?attr/fhSurface" android:textColor="?attr/fhText" android:textSize="13sp"
                 android:text="Can't reach the internet. Tap to open your downloads and saved pages."/>
 
             <LinearLayout android:id="@+id/rows_container"
@@ -87,11 +87,11 @@
             android:orientation="horizontal" android:gravity="center_vertical"
             android:paddingStart="16dp" android:paddingEnd="8dp">
             <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-                android:text="FOUNTAIN" android:textColor="#E50914" android:textSize="24sp"
+                android:text="FOUNTAIN" android:textColor="?attr/fhAccent" android:textSize="24sp"
                 android:textStyle="bold" android:letterSpacing="0.08"/>
             <ImageButton android:id="@+id/search_btn"
                 android:layout_width="44dp" android:layout_height="44dp"
-                android:src="@drawable/ic_search" android:tint="#FFFFFF" android:padding="10dp"
+                android:src="@drawable/ic_search" android:tint="@color/on_image" android:padding="10dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Search"/>
         </LinearLayout>
