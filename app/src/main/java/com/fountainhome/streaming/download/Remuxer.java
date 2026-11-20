@@ -32,10 +32,26 @@ public final class Remuxer {
         return in;
     }
 
+    /** Converts every leftover .ts under a folder. Returns the number converted. */
+    public static int convertAll(File root, Progress each) {
+        int n = 0;
+        File[] kids = root == null ? null : root.listFiles();
+        if (kids == null) return 0;
+        for (File f : kids) {
+            if (f.isDirectory()) n += convertAll(f, each);
+            else if (f.getName().toLowerCase().endsWith(".ts") && f.length() > 0) {
+                File r = makeSeekable(f, each);
+                if (r != f) n++;
+            }
+        }
+        return n;
+    }
+
     private static boolean copy(File in, File out, Progress progress) {
         MediaExtractor ex = new MediaExtractor();
         MediaMuxer mux = null;
         boolean started = false;
+        boolean unsupportedAudio = false;
         try {
             ex.setDataSource(in.getAbsolutePath());
             int n = ex.getTrackCount();
@@ -52,17 +68,19 @@ public final class Remuxer {
                 if ((video && haveVideo) || (audio && haveAudio) || (!video && !audio)) continue;
                 // MP4 can hold H.264/H.265 and AAC/MP3; anything else is left as a .ts.
                 if (video && !(mime.equals("video/avc") || mime.equals("video/hevc"))) return false;
-                if (audio && !(mime.equals("audio/mp4a-latm") || mime.equals("audio/mpeg"))) continue;
+                if (audio && !(mime.equals("audio/mp4a-latm") || mime.equals("audio/mpeg"))) { unsupportedAudio = true; continue; }
                 map[i] = mux.addTrack(f);
                 ex.selectTrack(i);
                 if (video) haveVideo = true; else haveAudio = true;
                 if (f.containsKey(MediaFormat.KEY_DURATION)) duration = Math.max(duration, f.getLong(MediaFormat.KEY_DURATION));
             }
             if (!haveVideo) return false;
+            // Never produce a silent video: if the only audio can't go into an MP4, keep the original.
+            if (unsupportedAudio && !haveAudio) return false;
             mux.start();
             started = true;
 
-            ByteBuffer buf = ByteBuffer.allocate(4 * 1024 * 1024);
+            ByteBuffer buf = ByteBuffer.allocate(8 * 1024 * 1024);
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             long base = -1;
             int lastPct = -1;

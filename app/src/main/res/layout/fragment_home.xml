@@ -11,9 +11,9 @@
 
             <!-- Hero -->
             <FrameLayout android:layout_width="match_parent" android:layout_height="520dp">
-                <ImageView android:id="@+id/hero_image"
+                <androidx.viewpager2.widget.ViewPager2 android:id="@+id/hero_pager"
                     android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:scaleType="centerCrop" android:background="?attr/fhSurfaceAlt"/>
+                    android:background="?attr/fhSurfaceAlt"/>
                 <View android:layout_width="match_parent" android:layout_height="match_parent"
                     android:background="@drawable/gradient_hero"/>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -63,6 +63,10 @@
                                 android:layout_marginTop="2dp"/>
                         </LinearLayout>
                     </LinearLayout>
+                    <LinearLayout android:id="@+id/hero_dots"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp" android:orientation="horizontal"
+                        android:gravity="center"/>
                 </LinearLayout>
             </FrameLayout>
 

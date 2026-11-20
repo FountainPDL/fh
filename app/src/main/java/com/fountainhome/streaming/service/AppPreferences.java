@@ -37,6 +37,11 @@ public class AppPreferences {
     public static void    setWifiOnly(Context c, boolean v)   { p(c).edit().putBoolean("wifi_only", v).apply(); }
     public static String  getDlQuality(Context c)             { return p(c).getString("dl_quality", "720p"); }
     public static void    setDlQuality(Context c, String v)   { p(c).edit().putString("dl_quality", v).apply(); }
+    /** Absolute path of the folder downloads are saved in; empty = the app's own folder. */
+    public static String  getDownloadDir(Context c)           { return p(c).getString("dl_dir", ""); }
+    public static void    setDownloadDir(Context c, String v) { p(c).edit().putString("dl_dir", v == null ? "" : v).apply(); }
+    public static int     getImageCacheMb(Context c)          { return p(c).getInt("img_cache_mb", 250); }
+    public static void    setImageCacheMb(Context c, int v)   { p(c).edit().putInt("img_cache_mb", v).apply(); }
     public static boolean getSubWithDownload(Context c)       { return p(c).getBoolean("dl_sub", true); }
     public static void    setSubWithDownload(Context c, boolean v){ p(c).edit().putBoolean("dl_sub", v).apply(); }
     public static boolean getShowContinue(Context c)          { return p(c).getBoolean("show_continue", true); }

@@ -3,6 +3,7 @@ import android.os.Handler;
 import android.os.Looper;
 import com.google.gson.*;
 import okhttp3.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -23,16 +24,63 @@ public class AniListClient {
             return titleEnglish != null && !titleEnglish.isEmpty() ? titleEnglish : (titleRomaji != null ? titleRomaji : "");
         }
     }
+    // ---- disk cache: fresh for 30 min, served as a fallback for up to 7 days if the network fails
+    private static final long FRESH_MS = 30L * 60 * 1000, STALE_MS = 7L * 24 * 60 * 60 * 1000;
+    private static File cacheDir;
+
+    public static synchronized void init(android.content.Context ctx) {
+        if (cacheDir == null) {
+            cacheDir = new File(ctx.getApplicationContext().getCacheDir(), "anilist_http");
+            //noinspection ResultOfMethodCallIgnored
+            cacheDir.mkdirs();
+        }
+    }
+
+    public static void clearCache() {
+        File[] f = cacheDir == null ? null : cacheDir.listFiles();
+        if (f != null) for (File x : f) //noinspection ResultOfMethodCallIgnored
+            x.delete();
+    }
+
+    private static File cacheFile(String body) {
+        if (cacheDir == null) return null;
+        return new File(cacheDir, Integer.toHexString(body.hashCode()) + "_" + body.length() + ".json");
+    }
+
+    private static String readFile(File f) {
+        try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+            java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[8192]; int n;
+            while ((n = in.read(buf)) > 0) o.write(buf, 0, n);
+            return o.toString("UTF-8");
+        } catch (Exception e) { return null; }
+    }
+
     private static String query(String gql, String vars) throws IOException {
         String q = gql.replace("\n", " ");
         String body = "{\"query\":\"" + q + "\",\"variables\":" + vars + "}";
-        Request req = new Request.Builder().url(URL)
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Accept", "application/json")
-            .post(RequestBody.create(body, MediaType.parse("application/json"))).build();
-        try (Response res = client.newCall(req).execute()) {
-            if (res.body() != null) return res.body().string();
+        File cf = cacheFile(body);
+        long age = cf != null && cf.exists() ? System.currentTimeMillis() - cf.lastModified() : Long.MAX_VALUE;
+        if (age < FRESH_MS) { String c = readFile(cf); if (c != null && c.contains("\"data\"")) return c; }
+        try {
+            Request req = new Request.Builder().url(URL)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Accept", "application/json")
+                .post(RequestBody.create(body, MediaType.parse("application/json"))).build();
+            try (Response res = client.newCall(req).execute()) {
+                if (res.isSuccessful() && res.body() != null) {
+                    String text = res.body().string();
+                    if (cf != null && text.contains("\"data\"")) {
+                        try (java.io.FileOutputStream o = new java.io.FileOutputStream(cf)) { o.write(text.getBytes("UTF-8")); }
+                    }
+                    return text;
+                }
+            }
+        } catch (IOException e) {
+            if (age < STALE_MS) { String c = readFile(cf); if (c != null) return c; }
+            throw e;
         }
+        if (age < STALE_MS) { String c = readFile(cf); if (c != null) return c; }
         return "{}";
     }
     private static List<AnimeItem> parse(JsonArray arr) {
@@ -49,6 +97,11 @@ public class AniListClient {
                 a.bannerImage = gs(o, "bannerImage");
                 a.description = gs(o, "description");
                 a.episodes = gi(o, "episodes", 0);
+                // Airing shows: only the episodes that are already out.
+                if (o.has("nextAiringEpisode") && !o.get("nextAiringEpisode").isJsonNull()) {
+                    int next = gi(o.getAsJsonObject("nextAiringEpisode"), "episode", 0);
+                    if (next > 0) a.episodes = next - 1;
+                }
                 double sc = gd(o, "averageScore");
                 a.averageScore = sc > 0 ? sc / 10.0 : 0;
                 a.status = gs(o, "status");
@@ -77,11 +130,11 @@ public class AniListClient {
     }
     public static void getTrending(Callback<List<AnimeItem>> cb) { getTrending(1, cb); }
     public static void getTrending(int page, Callback<List<AnimeItem>> cb) {
-        run("query{Page(page:" + page + ",perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}bannerImage description episodes averageScore status season seasonYear format genres}}}", "{}", cb);
+        run("query{Page(page:" + page + ",perPage:20){media(sort:TRENDING_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}bannerImage description episodes nextAiringEpisode{episode} averageScore status season seasonYear format genres}}}", "{}", cb);
     }
     public static void getPopular(Callback<List<AnimeItem>> cb) { getPopular(1, cb); }
     public static void getPopular(int page, Callback<List<AnimeItem>> cb) {
-        run("query{Page(page:" + page + ",perPage:20){media(sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{}", cb);
+        run("query{Page(page:" + page + ",perPage:20){media(sort:POPULARITY_DESC,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes nextAiringEpisode{episode} averageScore status format genres}}}", "{}", cb);
     }
     public static void getThisSeason(Callback<List<AnimeItem>> cb) { getThisSeason(1, cb); }
     public static void getThisSeason(int page, Callback<List<AnimeItem>> cb) {
@@ -89,12 +142,12 @@ public class AniListClient {
         int m = cal.get(java.util.Calendar.MONTH);          // 0 = January
         String season = m <= 2 ? "WINTER" : m <= 5 ? "SPRING" : m <= 8 ? "SUMMER" : "FALL";
         int year = cal.get(java.util.Calendar.YEAR);
-        run("query{Page(page:" + page + ",perPage:20){media(season:" + season + ",seasonYear:" + year + ",type:ANIME,sort:POPULARITY_DESC,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format}}}", "{}", cb);
+        run("query{Page(page:" + page + ",perPage:20){media(season:" + season + ",seasonYear:" + year + ",type:ANIME,sort:POPULARITY_DESC,isAdult:false){id title{english romaji}coverImage{large}episodes nextAiringEpisode{episode} averageScore status format}}}", "{}", cb);
     }
     public static void search(String kw, Callback<List<AnimeItem>> cb) { search(kw, 1, cb); }
     public static void search(String kw, int page, Callback<List<AnimeItem>> cb) {
         String safeKw = kw.replace("\"", "").replace("\\", "");
-        run("query($s:String){Page(page:" + page + ",perPage:20){media(search:$s,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes averageScore status format genres}}}", "{\"s\":\"" + safeKw + "\"}", cb);
+        run("query($s:String){Page(page:" + page + ",perPage:20){media(search:$s,type:ANIME,isAdult:false){id title{english romaji}coverImage{large}episodes nextAiringEpisode{episode} averageScore status format genres}}}", "{\"s\":\"" + safeKw + "\"}", cb);
     }
     // Async version — hops back to the main thread for the callback (used from UI code).
     public static void getMalId(int anilistId, IntCallback cb) {

@@ -233,14 +233,19 @@ public final class HlsDownloader {
 
     // ------------------------------------------------------------------ playlist helpers
 
-    /** Pick the variant whose height is closest to (not above) the wanted quality. */
+    /**
+     * Pick the variant matching the wanted quality: the best one not above it, or the lowest one
+     * if every variant is above it. Height is judged by the larger of the real height and the
+     * 16:9-equivalent of the width (so 1920x800 counts as 1080p). Variants without a RESOLUTION are
+     * ranked by BANDWIDTH against typical bitrates for each tier.
+     */
     private static String pickVariant(String base, String master, String quality) throws IOException {
         int want = 720;
         try { want = Integer.parseInt(quality.replaceAll("[^0-9]", "")); } catch (Exception ignored) {}
+        long wantBw = want <= 360 ? 1_000_000L : want <= 480 ? 1_800_000L : want <= 720 ? 3_500_000L : Long.MAX_VALUE;
         String[] lines = master.split("\n");
         String bestUrl = null, lowestUrl = null;
-        int bestH = -1, lowestH = Integer.MAX_VALUE;
-        long bestBw = -1;
+        long bestKey = -1, lowestKey = Long.MAX_VALUE;
         Pattern res = Pattern.compile("RESOLUTION=(\\d+)x(\\d+)");
         for (int i = 0; i < lines.length; i++) {
             String l = lines[i].trim();
@@ -253,13 +258,24 @@ public final class HlsDownloader {
                 break;
             }
             if (uri == null) continue;
-            int h = 0;
+            long bw = parseLong(attr(l, "AVERAGE-BANDWIDTH"), 0);
+            if (bw <= 0) bw = parseLong(attr(l, "BANDWIDTH"), 0);
             Matcher m = res.matcher(l);
-            if (m.find()) h = Integer.parseInt(m.group(2));
-            long bw = parseLong(attr(l, "BANDWIDTH"), 0);
+            boolean hasRes = m.find();
+            long key;       // comparable "size" of the variant
+            boolean fits;
+            if (hasRes) {
+                int w = Integer.parseInt(m.group(1)), h = Integer.parseInt(m.group(2));
+                int eff = Math.max(h, Math.round(w * 9f / 16f));
+                key = eff * 100_000_000L + bw / 1000;
+                fits = eff <= want + 8;
+            } else {
+                key = bw;
+                fits = bw <= wantBw;
+            }
             String abs = resolve(base, uri);
-            if (h <= want && (h > bestH || (h == bestH && bw > bestBw))) { bestH = h; bestBw = bw; bestUrl = abs; }
-            if (h < lowestH) { lowestH = h; lowestUrl = abs; }
+            if (fits && key > bestKey) { bestKey = key; bestUrl = abs; }
+            if (key < lowestKey) { lowestKey = key; lowestUrl = abs; }
         }
         String pick = bestUrl != null ? bestUrl : lowestUrl;
         if (pick == null) throw new IOException("No video variants in playlist");

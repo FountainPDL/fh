@@ -81,8 +81,40 @@ public class WatchViewModel extends AndroidViewModel {
                 if (r.isSuccessful()) sd = r.body();
             } catch (Exception ignored) { }
             if (sd == null && saved != null) sd = saved.seasons.get(sn);
-            if (sd != null) season.postValue(sd);
+            if (sd != null) season.postValue(released(sd));
         });
+    }
+
+    // ------------------------------------------------------------------ release filtering
+
+    private static String today() {
+        return new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
+    }
+
+    /** Season numbers that are out; older saved copies without the list fall back to 1..N. */
+    public static List<Integer> releasedSeasons(ContentItem ci) {
+        if (ci.seasonNumbers != null && !ci.seasonNumbers.isEmpty()) return ci.seasonNumbers;
+        List<Integer> l = new ArrayList<>();
+        for (int i = 1; i <= Math.max(1, ci.numberOfSeasons); i++) l.add(i);
+        return l;
+    }
+
+    /** Drops episodes that have not aired yet (future date, or no date while the season is still airing). */
+    static Models.SeasonDetail released(Models.SeasonDetail sd) {
+        if (sd == null || sd.episodes == null) return sd;
+        String today = today();
+        boolean airing = false;
+        for (Models.Episode e : sd.episodes)
+            if (e.air_date != null && e.air_date.compareTo(today) > 0) { airing = true; break; }
+        List<Models.Episode> out = new ArrayList<>();
+        for (Models.Episode e : sd.episodes) {
+            boolean noDate = e.air_date == null || e.air_date.isEmpty();
+            if (noDate ? airing : e.air_date.compareTo(today) > 0) continue;
+            out.add(e);
+        }
+        Models.SeasonDetail r = new Models.SeasonDetail();
+        r.season_number = sd.season_number; r.name = sd.name; r.episodes = out;
+        return r;
     }
 
     // ------------------------------------------------------------------ offline copy
@@ -99,10 +131,9 @@ public class WatchViewModel extends AndroidViewModel {
                 s.similar = new ArrayList<>(lastSimilar);
                 s.seasons = new TreeMap<>();
                 if ("tv".equals(ci.mediaType)) {
-                    int n = Math.max(1, ci.numberOfSeasons);
-                    for (int sn = 1; sn <= n; sn++) {
+                    for (int sn : releasedSeasons(ci)) {
                         Response<Models.SeasonDetail> r = TMDBClient.get().getSeason(ci.id, sn).execute();
-                        if (r.isSuccessful() && r.body() != null) s.seasons.put(sn, r.body());
+                        if (r.isSuccessful() && r.body() != null) s.seasons.put(sn, released(r.body()));
                     }
                     if (s.seasons.isEmpty()) throw new java.io.IOException("No season data");
                 }
@@ -146,7 +177,19 @@ public class WatchViewModel extends AndroidViewModel {
         ci.id = d.id; ci.name = d.name;
         ci.posterPath = d.poster_path; ci.backdropPath = d.backdrop_path;
         ci.rating = d.vote_average; ci.overview = d.overview;
-        ci.releaseDate = d.first_air_date; ci.numberOfSeasons = d.number_of_seasons;
+        ci.releaseDate = d.first_air_date;
+        // Only seasons that are already out (air date today or earlier) are shown.
+        ci.seasonNumbers = new ArrayList<>();
+        if (d.seasons != null) {
+            String today = today();
+            for (Models.Season se : d.seasons)
+                if (se.season_number >= 1 && se.air_date != null && !se.air_date.isEmpty() && se.air_date.compareTo(today) <= 0)
+                    ci.seasonNumbers.add(se.season_number);
+            java.util.Collections.sort(ci.seasonNumbers);
+        }
+        if (ci.seasonNumbers.isEmpty() && d.seasons == null)
+            for (int i = 1; i <= Math.max(1, d.number_of_seasons); i++) ci.seasonNumbers.add(i);
+        ci.numberOfSeasons = ci.seasonNumbers.size();
         ci.imdbId = d.external_ids != null ? d.external_ids.imdb_id : null;
         ci.mediaType = "tv";
         return ci;

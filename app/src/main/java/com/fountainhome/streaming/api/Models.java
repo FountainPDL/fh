@@ -10,5 +10,5 @@ public class Models {
     public static class ExternalIds{public String imdb_id;}
     public static class SeasonDetail{public int season_number;public String name;public List<Episode>episodes;}
     public static class Episode{public int episode_number,runtime;public String name,overview,still_path,air_date;public double vote_average;}
-    public static class Season{public int season_number,episode_count;public String name,poster_path;}
+    public static class Season{public int season_number,episode_count;public String name,poster_path,air_date;}
 }

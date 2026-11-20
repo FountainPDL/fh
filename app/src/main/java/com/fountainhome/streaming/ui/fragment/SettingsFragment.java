@@ -10,6 +10,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.content.Intent;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -21,6 +24,7 @@ import com.fountainhome.streaming.R;
 import com.fountainhome.streaming.databinding.FragmentSettingsBinding;
 import com.fountainhome.streaming.download.AppDatabase;
 import com.fountainhome.streaming.download.DownloadItem;
+import com.fountainhome.streaming.download.DownloadFolder;
 import com.fountainhome.streaming.download.DownloadManager2;
 import com.fountainhome.streaming.service.AppPreferences;
 import com.fountainhome.streaming.service.LibraryManager;
@@ -37,7 +41,19 @@ import java.util.function.IntConsumer;
 public class SettingsFragment extends Fragment {
     private FragmentSettingsBinding b;
     private LinearLayout box;
-    private TextView downloadsInfo, cacheInfo;
+    private TextView downloadsInfo, cacheInfo, folderInfo;
+
+    private final ActivityResultLauncher<android.net.Uri> treePicker =
+        registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
+            if (uri == null || !isAdded()) return;
+            String path = DownloadFolder.pathFromTree(uri);
+            if (path == null) { toast("That location can't be used. Pick a folder on this phone or SD card."); return; }
+            AppPreferences.setDownloadDir(ctx(), path);
+            askFileAccessIfNeeded();
+            refreshFolderInfo();
+        });
+    private final ActivityResultLauncher<String> legacyPermission =
+        registerForActivityResult(new ActivityResultContracts.RequestPermission(), ok -> { if (isAdded()) refreshFolderInfo(); });
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater i, @Nullable ViewGroup c, @Nullable Bundle s) {
@@ -120,13 +136,19 @@ public class SettingsFragment extends Fragment {
         String[] quals = {"360p", "480p", "720p", "1080p"};
         choice("Download quality", "Higher quality uses more storage", quals,
             indexOf(quals, AppPreferences.getDlQuality(c)), i -> AppPreferences.setDlQuality(ctx(), quals[i]));
+        folderInfo = action("Download folder", DownloadFolder.describe(c), false, this::pickFolder);
+        refreshFolderInfo();
         downloadsInfo = action("Downloaded videos", "Computing…", false, null);
         action("Delete all downloads", "Removes every downloaded video from this phone", true, this::confirmDeleteDownloads);
         action("Delete all saved pages", "Removes pages saved for offline viewing", true, this::confirmDeleteSavedPages);
         refreshStorage();
 
         section("DATA");
-        cacheInfo = action("Clear cache", "Frees space used by temporary files", false, this::clearCache);
+        int[] imgMb = {100, 250, 500, 1000};
+        choice("Image cache size", "Posters and backdrops kept on this phone (applies after restart)",
+            new String[]{"100 MB", "250 MB", "500 MB", "1 GB"}, indexOf(imgMb, AppPreferences.getImageCacheMb(c)),
+            i -> AppPreferences.setImageCacheMb(ctx(), imgMb[i]));
+        cacheInfo = action("Clear cache", "Frees space used by saved images and info", false, this::clearCache);
         action("Clear watch history", "Empties Continue Watching", false, () -> {
             LibraryManager.clearList(ctx(), LibraryManager.CONTINUE);
             toast("History cleared");
@@ -234,12 +256,13 @@ public class SettingsFragment extends Fragment {
     private void refreshStorage() {
         final Context app = ctx().getApplicationContext();
         new Thread(() -> {
-            long size = size(DownloadManager2.offlineRoot(app));
             List<DownloadItem> done = AppDatabase.get(app).downloadDao().getCompletedNow();
+            long size = 0;
+            for (DownloadItem d : done) if (d.localPath != null) size += new File(d.localPath).length();
             String text = done.size() + " videos  ·  " + fmt(size);
             if (getActivity() != null) requireActivity().runOnUiThread(() -> { if (downloadsInfo != null) downloadsInfo.setText(text); });
         }, "fh-settings-storage").start();
-        if (cacheInfo != null) cacheInfo.setText("Frees space used by temporary files  ·  " + fmt(size(ctx().getCacheDir())));
+        if (cacheInfo != null) cacheInfo.setText("Frees space used by saved images and info  ·  " + fmt(size(ctx().getCacheDir())));
     }
 
     private void confirmDeleteDownloads() {
@@ -263,9 +286,60 @@ public class SettingsFragment extends Fragment {
     }
 
     private void clearCache() {
-        delete(ctx().getCacheDir(), false);
-        toast("Cache cleared");
-        refreshStorage();
+        final Context app = ctx().getApplicationContext();
+        new Thread(() -> {
+            try { com.bumptech.glide.Glide.get(app).clearDiskCache(); } catch (Throwable ignored) {}
+            com.fountainhome.streaming.api.TMDBClient.clearCache();
+            com.fountainhome.streaming.anime.AniListClient.clearCache();
+            if (getActivity() != null) requireActivity().runOnUiThread(() -> {
+                try { com.bumptech.glide.Glide.get(app).clearMemory(); } catch (Throwable ignored) {}
+                toast("Cache cleared");
+                refreshStorage();
+            });
+        }, "fh-clear-cache").start();
+    }
+
+    // ------------------------------------------------------------------ download folder
+
+    private void refreshFolderInfo() {
+        if (folderInfo == null) return;
+        String t = DownloadFolder.describe(ctx());
+        if (DownloadFolder.customUnavailable(ctx())) t += "  ·  waiting for file access, using app storage for now";
+        folderInfo.setText(t);
+    }
+
+    @Override public void onResume() { super.onResume(); refreshFolderInfo(); }
+
+    private void pickFolder() {
+        final java.util.List<String> names = new java.util.ArrayList<>();
+        final java.util.List<Runnable> acts = new java.util.ArrayList<>();
+        names.add("App storage (default)");
+        acts.add(() -> { AppPreferences.setDownloadDir(ctx(), ""); refreshFolderInfo(); });
+        File[] vols = DownloadFolder.appVolumes(ctx());
+        for (int i = 1; i < vols.length; i++) {
+            final File v = vols[i];
+            names.add("SD card / external volume");
+            acts.add(() -> { AppPreferences.setDownloadDir(ctx(), v.getAbsolutePath()); refreshFolderInfo(); });
+        }
+        names.add("Choose a folder\u2026");
+        acts.add(() -> treePicker.launch(null));
+        new AlertDialog.Builder(ctx()).setTitle("Download folder")
+            .setItems(names.toArray(new String[0]), (d, which) -> acts.get(which).run())
+            .setNegativeButton("Cancel", null).show();
+    }
+
+    /** Folders outside the app's own storage need the "All files access" permission. */
+    private void askFileAccessIfNeeded() {
+        if (DownloadFolder.hasAllFilesAccess(ctx())) return;
+        new AlertDialog.Builder(ctx())
+            .setTitle("Allow file access")
+            .setMessage("To save downloads in a folder you picked, Fountain Home needs permission to manage files. Until you allow it, downloads go to app storage.")
+            .setPositiveButton("Allow", (d, w) -> {
+                Intent i = DownloadFolder.allFilesAccessIntent(ctx());
+                if (i != null) { try { startActivity(i); } catch (Exception e) { toast("Open Settings > Apps > Fountain Home > Permissions"); } }
+                else legacyPermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            })
+            .setNegativeButton("Not now", null).show();
     }
 
     private void confirm(String message, Runnable yes) {

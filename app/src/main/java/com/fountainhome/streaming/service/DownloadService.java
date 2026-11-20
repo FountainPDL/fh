@@ -113,6 +113,7 @@ public class DownloadService extends Service {
         final DownloadDao dao = AppDatabase.get(this).downloadDao();
         final DownloadItem it = dao.byId(id);
         if (it == null) return;
+        repairOldTs(dao);
         if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
 
         if (AppPreferences.getWifiOnly(this) && !onUnmeteredNetwork()) {
@@ -156,8 +157,9 @@ public class DownloadService extends Service {
                         @Override public boolean isCancelled() { return cancelled.contains(id); }
                     });
                 // Raw .ts has no seek index: convert to .mp4 (no re-encode) so seeking works.
-                notifyProgress(label, "Preparing for playback\u2026", 100, false);
-                out = Remuxer.makeSeekable(out, null);
+                dao.setProgress(id, 100);
+                notifyProgress(label, "Converting to MP4\u2026", 0, false);
+                out = Remuxer.makeSeekable(out, pct -> notifyProgress(label, "Converting to MP4 " + pct + "%", pct, false));
                 it.localPath = out.getAbsolutePath();
                 it.totalBytes = out.length();
                 it.status = DownloadItem.COMPLETED;
@@ -174,6 +176,19 @@ public class DownloadService extends Service {
             }
         }
         fail(dao, it, lastError);
+    }
+
+    /** Old downloads that are still raw .ts get converted to .mp4 and their records updated. */
+    private void repairOldTs(DownloadDao dao) {
+        try {
+            for (DownloadItem d : dao.getCompletedNow()) {
+                if (d.localPath == null || !d.localPath.toLowerCase().endsWith(".ts")) continue;
+                File f = new File(d.localPath);
+                if (!f.exists()) continue;
+                File r = Remuxer.makeSeekable(f, null);
+                if (r != f) { d.localPath = r.getAbsolutePath(); d.totalBytes = r.length(); dao.update(d); }
+            }
+        } catch (Throwable ignored) {}
     }
 
     /** Runs the resolver on the main thread and waits for its answer on this worker thread. */

@@ -8,7 +8,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.core.content.ContextCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +32,7 @@ import com.fountainhome.streaming.ui.adapter.HomeRowAdapter;
 import com.fountainhome.streaming.ui.viewmodel.ContentItem;
 import com.fountainhome.streaming.ui.viewmodel.HomeViewModel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Netflix-style home: full-bleed hero, category pills, and horizontal rows. */
@@ -90,7 +93,15 @@ public class HomeFragment extends Fragment {
             refreshMyListIcon();
         });
 
-        vm.getHero().observe(getViewLifecycleOwner(), this::showHero);
+        b.heroPager.setOffscreenPageLimit(1);
+        b.heroPager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            @Override public void onPageSelected(int pos) { if (pos < heroes.size()) showHero(heroes.get(pos), pos); scheduleAdvance(); }
+            @Override public void onPageScrollStateChanged(int st) {
+                if (st == androidx.viewpager2.widget.ViewPager2.SCROLL_STATE_DRAGGING) auto.removeCallbacks(advance);
+                else if (st == androidx.viewpager2.widget.ViewPager2.SCROLL_STATE_IDLE) scheduleAdvance();
+            }
+        });
+        vm.getHeroes().observe(getViewLifecycleOwner(), this::setHeroes);
         vm.getTop10().observe(getViewLifecycleOwner(), l -> top10Row.set(AppPreferences.getShowTop10(requireContext()) ? l : null));
         vm.getTrending().observe(getViewLifecycleOwner(), l -> trendingRow.set(l));
         vm.getPopularTV().observe(getViewLifecycleOwner(), l -> tvRow.set(l));
@@ -117,15 +128,85 @@ public class HomeFragment extends Fragment {
 
     // ------------------------------------------------------------------
 
-    private void showHero(ContentItem c) {
+    // ---- hero carousel
+    private final List<ContentItem> heroes = new ArrayList<>();
+    private final android.os.Handler auto = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable advance = () -> {
+        if (b == null || heroes.size() < 2 || !isResumed() || isHidden()) return;
+        int next = (b.heroPager.getCurrentItem() + 1) % heroes.size();
+        b.heroPager.setCurrentItem(next, true);
+    };
+
+    private void scheduleAdvance() {
+        auto.removeCallbacks(advance);
+        if (heroes.size() > 1 && isResumed() && !isHidden()) auto.postDelayed(advance, 6000);
+    }
+
+    @Override public void onPause() { super.onPause(); auto.removeCallbacks(advance); }
+
+    @Override public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (hidden) auto.removeCallbacks(advance); else scheduleAdvance();
+    }
+
+    private void setHeroes(List<ContentItem> list) {
+        if (b == null || list == null || list.isEmpty()) return;
+        heroes.clear();
+        heroes.addAll(list);
+        final androidx.fragment.app.Fragment self = this;
+        b.heroPager.setAdapter(new androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
+            @NonNull @Override public androidx.recyclerview.widget.RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int t) {
+                android.widget.ImageView iv = new android.widget.ImageView(p.getContext());
+                iv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                return new androidx.recyclerview.widget.RecyclerView.ViewHolder(iv) { };
+            }
+            @Override public void onBindViewHolder(@NonNull androidx.recyclerview.widget.RecyclerView.ViewHolder h, int pos) {
+                Glide.with(self).load(OfflineStore.image(h.itemView.getContext(), heroes.get(pos).backdropPath, "w1280"))
+                    .centerCrop().into((android.widget.ImageView) h.itemView);
+            }
+            @Override public int getItemCount() { return heroes.size(); }
+        });
+        buildDots();
+        showHero(heroes.get(0), 0);
+        scheduleAdvance();
+    }
+
+    private void buildDots() {
+        b.heroDots.removeAllViews();
+        float d = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < heroes.size(); i++) {
+            View dot = new View(requireContext());
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams((int) (8 * d), (int) (8 * d));
+            lp.setMargins((int) (3 * d), 0, (int) (3 * d), 0);
+            dot.setLayoutParams(lp);
+            b.heroDots.addView(dot);
+        }
+    }
+
+    private void paintDots(int active) {
+        float d = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < b.heroDots.getChildCount(); i++) {
+            View dot = b.heroDots.getChildAt(i);
+            android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+            g.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            g.setColor(ContextCompat.getColor(requireContext(), i == active ? R.color.on_image : R.color.on_image_dim));
+            dot.setBackground(g);
+            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) dot.getLayoutParams();
+            lp.width = (int) ((i == active ? 20 : 8) * d);
+            dot.setLayoutParams(lp);
+        }
+    }
+
+    private void showHero(ContentItem c, int pos) {
         if (c == null || b == null) return;
         hero = c;
-        Glide.with(this).load(OfflineStore.image(requireContext(), c.backdropPath, "w1280")).centerCrop().into(b.heroImage);
         b.heroTitle.setText(c.displayTitle());
         StringBuilder m = new StringBuilder("tv".equals(c.mediaType) ? "TV Series" : "Movie");
-        if (!c.year().isEmpty()) m.append("  ·  ").append(c.year());
-        if (c.rating > 0) m.append("  ·  ★ ").append(String.format("%.1f", c.rating));
+        if (!c.year().isEmpty()) m.append("  \u00b7  ").append(c.year());
+        if (c.rating > 0) m.append("  \u00b7  \u2605 ").append(String.format("%.1f", c.rating));
         b.heroMeta.setText(m);
+        paintDots(pos);
         refreshMyListIcon();
     }
 

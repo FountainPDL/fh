@@ -55,12 +55,26 @@ public class MainActivity extends BaseActivity {
             requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},77);
         }
     }
+    /** Tabs are kept alive (shown/hidden, not rebuilt) so lists, scroll position and loaded data survive switching. */
     public void selectTab(int tab){
         selectedTab=tab;
-        Fragment f;
-        switch(tab){case 1:f=new MoviesFragment();break;case 2:f=new TVFragment();break;case 3:f=new AnimeFragment();break;case 4:f=new MoreFragment();break;default:f=new HomeFragment();break;}
-        try{getSupportFragmentManager().beginTransaction().setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out).replace(R.id.fragment_container,f).commitAllowingStateLoss();}
-        catch(Throwable t){Toast.makeText(this,"Error: "+t.getMessage(),Toast.LENGTH_LONG).show();}
+        try{
+            androidx.fragment.app.FragmentManager fm=getSupportFragmentManager();
+            // leave any sub-page (Offline, Settings...) that was pushed on top of a tab
+            fm.popBackStackImmediate(null,androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            androidx.fragment.app.FragmentTransaction t=fm.beginTransaction().setReorderingAllowed(true);
+            String want="tab"+tab;
+            Fragment target=fm.findFragmentByTag(want);
+            for(int i=0;i<5;i++){
+                Fragment f=fm.findFragmentByTag("tab"+i);
+                if(f!=null&&i!=tab)t.hide(f);
+            }
+            if(target==null){
+                switch(tab){case 1:target=new MoviesFragment();break;case 2:target=new TVFragment();break;case 3:target=new AnimeFragment();break;case 4:target=new MoreFragment();break;default:target=new HomeFragment();break;}
+                t.add(R.id.fragment_container,target,want);
+            }else t.show(target);
+            t.commitAllowingStateLoss();
+        }catch(Throwable t){Toast.makeText(this,"Error: "+t.getMessage(),Toast.LENGTH_LONG).show();}
         applyTabColors(tab);
     }
     public void applyAccent(){accentColor=AppPreferences.getAccentColor(this);applyTabColors(selectedTab);}

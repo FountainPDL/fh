@@ -18,13 +18,9 @@ import java.io.File;
 public class DownloadManager2 {
     private DownloadManager2() {}
 
-    /** The app's Offline folder (private to the app, no storage permission needed). */
+    /** The folder downloads are saved in (see {@link DownloadFolder}). */
     public static File offlineRoot(Context c) {
-        File base = c.getExternalFilesDir(null);
-        if (base == null) base = c.getFilesDir();
-        File d = new File(base, "Offline");
-        if (!d.exists()) d.mkdirs();
-        return d;
+        return DownloadFolder.resolve(c);
     }
 
     public static String safeName(String s) {

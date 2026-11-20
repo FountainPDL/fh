@@ -19,7 +19,7 @@ import retrofit2.Response;
 
 /** Data for the Netflix-style home: a hero title and several rows, each loaded independently. */
 public class HomeViewModel extends AndroidViewModel {
-    private final MutableLiveData<ContentItem> hero = new MutableLiveData<>();
+    private final MutableLiveData<List<ContentItem>> heroes = new MutableLiveData<>();
     private final MutableLiveData<List<ContentItem>> top10 = new MutableLiveData<>();
     private final MutableLiveData<List<ContentItem>> trending = new MutableLiveData<>();
     private final MutableLiveData<List<ContentItem>> popularTV = new MutableLiveData<>();
@@ -45,7 +45,12 @@ public class HomeViewModel extends AndroidViewModel {
                 if (all.isEmpty()) { failed.postValue(true); return; }
                 List<ContentItem> ten = new ArrayList<>(all.subList(0, Math.min(10, all.size())));
                 top10.postValue(ten);
-                for (ContentItem c : all) if (c.backdropPath != null && c.overview != null) { hero.postValue(c); break; }
+                List<ContentItem> hs = new ArrayList<>();
+                for (ContentItem c : all) {
+                    if (c.backdropPath != null && c.overview != null && !c.overview.isEmpty()) hs.add(c);
+                    if (hs.size() >= 6) break;
+                }
+                if (!hs.isEmpty()) heroes.postValue(hs);
                 trending.postValue(all);
             } catch (Exception e) { failed.postValue(true); }
         });
@@ -101,7 +106,7 @@ public class HomeViewModel extends AndroidViewModel {
 
     @Override protected void onCleared() { io.shutdown(); }
 
-    public LiveData<ContentItem> getHero() { return hero; }
+    public LiveData<List<ContentItem>> getHeroes() { return heroes; }
     public LiveData<List<ContentItem>> getTop10() { return top10; }
     public LiveData<List<ContentItem>> getTrending() { return trending; }
     public LiveData<List<ContentItem>> getPopularTV() { return popularTV; }
