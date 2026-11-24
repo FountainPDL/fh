@@ -73,11 +73,21 @@ public class AppPreferences {
     public static void    setHoldSpeed(Context c, float v)    { p(c).edit().putFloat("hold_speed", v).apply(); }
     public static int     getControlsTimeout(Context c)       { return p(c).getInt("controls_timeout", 4); }
     public static void    setControlsTimeout(Context c, int v){ p(c).edit().putInt("controls_timeout", v).apply(); }
-    /** Where offline videos open: "builtin", "fountainplay" or "chooser" (pick any installed player). */
-    public static String  getOfflinePlayer(Context c)          { return p(c).getString("offline_player", "builtin"); }
+    /** Where offline videos open: "builtin", "external" (one chosen app) or "ask" (system list). */
+    public static String  getOfflinePlayer(Context c) {
+        String v = p(c).getString("offline_player", "builtin");
+        if ("fountainplay".equals(v)) return "external";   // older builds
+        if ("chooser".equals(v)) return "ask";
+        return v;
+    }
+    /** Package of the external video app chosen in Settings (empty = none chosen yet). */
+    public static String  getExternalPlayerPkg(Context c) {
+        String v = p(c).getString("external_player_pkg", "");
+        if (v.isEmpty() && "fountainplay".equals(p(c).getString("offline_player", ""))) return "com.fountainpdl.fountainplay";
+        return v;
+    }
+    public static void    setExternalPlayerPkg(Context c, String v){ p(c).edit().putString("external_player_pkg", v).apply(); }
     public static void    setOfflinePlayer(Context c, String v){ p(c).edit().putString("offline_player", v).apply(); }
-    public static boolean getOfflinePlayerAsked(Context c)     { return p(c).getBoolean("offline_player_asked", false); }
-    public static void    setOfflinePlayerAsked(Context c)     { p(c).edit().putBoolean("offline_player_asked", true).apply(); }
     public static boolean getAutoPip(Context c)                { return p(c).getBoolean("auto_pip", false); }
     public static void    setAutoPip(Context c, boolean v)     { p(c).edit().putBoolean("auto_pip", v).apply(); }
     public static boolean getResumePlayback(Context c)        { return p(c).getBoolean("resume_playback", true); }

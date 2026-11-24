@@ -282,7 +282,7 @@ public final class HlsDownloader {
         return pick;
     }
 
-    private static String attr(String line, String name) {
+    static String attr(String line, String name) {
         Matcher m = Pattern.compile("(?:^|[:,])" + name + "=(\"[^\"]*\"|[^,]*)").matcher(line);
         if (!m.find()) return null;
         String v = m.group(1);
@@ -290,7 +290,7 @@ public final class HlsDownloader {
         return v;
     }
 
-    private static String resolve(String base, String ref) throws IOException {
+    static String resolve(String base, String ref) throws IOException {
         HttpUrl b = HttpUrl.parse(base);
         HttpUrl r = b != null ? b.resolve(ref) : null;
         if (r == null) throw new IOException("Bad playlist URL: " + ref);
@@ -326,7 +326,7 @@ public final class HlsDownloader {
         return rb.build();
     }
 
-    private static byte[] getBytes(OkHttpClient http, String url, Map<String, String> headers) throws IOException {
+    static byte[] getBytes(OkHttpClient http, String url, Map<String, String> headers) throws IOException {
         try (Response r = http.newCall(request(url, headers)).execute()) {
             if (!r.isSuccessful() || r.body() == null) throw new IOException("Server answered HTTP " + r.code());
             return r.body().bytes();

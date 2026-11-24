@@ -41,7 +41,7 @@ import java.util.function.IntConsumer;
 public class SettingsFragment extends Fragment {
     private FragmentSettingsBinding b;
     private LinearLayout box;
-    private TextView downloadsInfo, cacheInfo, folderInfo;
+    private TextView downloadsInfo, cacheInfo, folderInfo, extInfo;
 
     private final ActivityResultLauncher<android.net.Uri> treePicker =
         registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
@@ -111,14 +111,14 @@ public class SettingsFragment extends Fragment {
         toggle("Compatibility mode", "Load the server page directly. Turn on if a server shows a blank player.", AppPreferences.getEmbedDirect(c), v -> AppPreferences.setEmbedDirect(ctx(), v));
 
         section("OFFLINE PLAYER");
-        final boolean fp = com.fountainhome.streaming.download.ExternalPlayers.fountainPlayInstalled(c);
-        final String[] playerVals = {"builtin", "fountainplay", "chooser"};
-        final String[] playerNames = {"Built-in player",
-            fp ? "Fountain Play (recommended)" : "Fountain Play (not installed)", "Ask which app each time"};
-        choice("Play downloads in", fp ? "Fountain Play is installed on this phone. Pick where offline videos open."
-                : "Open offline videos in the built-in player or any video app on your phone",
-            playerNames, indexOf(playerVals, AppPreferences.getOfflinePlayer(c)),
-            i -> AppPreferences.setOfflinePlayer(ctx(), playerVals[i]));
+        final String[] playerVals = {"builtin", "external", "ask"};
+        choice("Play downloads in", "Built-in player, one external app you choose once, or pick an app every time",
+            new String[]{"Built-in player", "External player", "Ask every time"},
+            indexOf(playerVals, AppPreferences.getOfflinePlayer(c)), i -> {
+                AppPreferences.setOfflinePlayer(ctx(), playerVals[i]);
+                if (i == 1 && AppPreferences.getExternalPlayerPkg(ctx()).isEmpty()) pickExternalApp();
+            });
+        extInfo = action("External player app", externalSummary(), false, this::pickExternalApp);
         toggle("Auto picture-in-picture", "Keep the built-in player floating when you leave the app", AppPreferences.getAutoPip(c), v -> AppPreferences.setAutoPip(ctx(), v));
         int[] skips = {5, 10, 15, 30};
         choice("Double-tap skip", "Seconds to jump when you double-tap or press skip", new String[]{"5 seconds", "10 seconds", "15 seconds", "30 seconds"},
@@ -176,7 +176,12 @@ public class SettingsFragment extends Fragment {
 
     // ------------------------------------------------------------------ row builders
 
-    private View inflate(int layout) { return LayoutInflater.from(ctx()).inflate(layout, box, false); }
+    private View inflate(int layout) {
+        View v = LayoutInflater.from(ctx()).inflate(layout, box, false);
+        // Rows share view ids; letting Android "restore" their state after a theme change made every switch copy one value.
+        v.setSaveFromParentEnabled(false);
+        return v;
+    }
 
     private void section(String name) {
         TextView t = (TextView) inflate(R.layout.row_section);
@@ -306,6 +311,30 @@ public class SettingsFragment extends Fragment {
                 refreshStorage();
             });
         }, "fh-clear-cache").start();
+    }
+
+    // ------------------------------------------------------------------ external player
+
+    private String externalSummary() {
+        String pkg = AppPreferences.getExternalPlayerPkg(ctx());
+        if (pkg.isEmpty() || !com.fountainhome.streaming.download.ExternalPlayers.isInstalled(ctx(), pkg))
+            return "Not chosen yet. Tap to pick the app used by \"External player\"";
+        return com.fountainhome.streaming.download.ExternalPlayers.labelOf(ctx(), pkg) + "  \u00b7  tap to change";
+    }
+
+    private void pickExternalApp() {
+        final java.util.List<android.content.pm.ResolveInfo> apps =
+            com.fountainhome.streaming.download.ExternalPlayers.installedPlayers(ctx());
+        if (apps.isEmpty()) { toast("No other video player is installed on this phone"); return; }
+        final android.content.pm.PackageManager pm = ctx().getPackageManager();
+        String[] names = new String[apps.size()];
+        for (int i = 0; i < names.length; i++) names[i] = String.valueOf(apps.get(i).loadLabel(pm));
+        new AlertDialog.Builder(ctx()).setTitle("External player")
+            .setItems(names, (d, which) -> {
+                AppPreferences.setExternalPlayerPkg(ctx(), apps.get(which).activityInfo.packageName);
+                if (extInfo != null) extInfo.setText(externalSummary());
+                toast("Downloads will open in " + names[which]);
+            }).setNegativeButton("Cancel", null).show();
     }
 
     // ------------------------------------------------------------------ download folder

@@ -160,6 +160,11 @@ public class DownloadService extends Service {
                 dao.setProgress(id, 100);
                 notifyProgress(label, "Converting to MP4\u2026", 0, false);
                 out = Remuxer.makeSeekable(out, pct -> notifyProgress(label, "Converting to MP4 " + pct + "%", pct, false));
+                notifyProgress(label, "Getting English subtitles\u2026", -1, true);
+                try {
+                    com.fountainhome.streaming.download.SubtitleFetcher.fetch(http, found.url, found.headers,
+                        it.type, it.tmdbId, it.season, it.episode, out);
+                } catch (Throwable ignored) { }
                 it.localPath = out.getAbsolutePath();
                 it.totalBytes = out.length();
                 it.status = DownloadItem.COMPLETED;
@@ -182,9 +187,9 @@ public class DownloadService extends Service {
     private void repairOldTs(DownloadDao dao) {
         try {
             for (DownloadItem d : dao.getCompletedNow()) {
-                if (d.localPath == null || !d.localPath.toLowerCase().endsWith(".ts")) continue;
+                if (d.localPath == null) continue;
                 File f = new File(d.localPath);
-                if (!f.exists()) continue;
+                if (!Remuxer.needsRemux(f)) continue;
                 File r = Remuxer.makeSeekable(f, null);
                 if (r != f) { d.localPath = r.getAbsolutePath(); d.totalBytes = r.length(); dao.update(d); }
             }

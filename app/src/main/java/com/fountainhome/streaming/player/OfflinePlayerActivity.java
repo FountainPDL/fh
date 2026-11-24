@@ -171,7 +171,7 @@ public class OfflinePlayerActivity extends BaseActivity {
         b.titleText.setText(label(d));
         findNeighbours();
         File f = new File(d.localPath);
-        if (f.getName().toLowerCase(Locale.ROOT).endsWith(".ts")) {
+        if (Remuxer.needsRemux(f)) {
             remuxing = true;
             b.preparePanel.setVisibility(View.VISIBLE);
             b.prepareBar.setProgress(0);
@@ -215,7 +215,17 @@ public class OfflinePlayerActivity extends BaseActivity {
     private void play() {
         ended = false;
         if (player == null) {
-            player = new ExoPlayer.Builder(this)
+            // Broad format support: any container/codec the phone can decode, with fallback decoders,
+            // and TS quirks (streams without clean keyframes) tolerated.
+            androidx.media3.extractor.DefaultExtractorsFactory extractors = new androidx.media3.extractor.DefaultExtractorsFactory()
+                .setTsExtractorFlags(androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
+                    | androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS)
+                .setConstantBitrateSeekingEnabled(true);
+            androidx.media3.exoplayer.DefaultRenderersFactory renderers = new androidx.media3.exoplayer.DefaultRenderersFactory(this)
+                .setEnableDecoderFallback(true)
+                .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
+            player = new ExoPlayer.Builder(this, renderers,
+                    new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this, extractors))
                 .setSeekBackIncrementMs(seekStepMs)
                 .setSeekForwardIncrementMs(seekStepMs)
                 .setHandleAudioBecomingNoisy(true)
@@ -242,7 +252,12 @@ public class OfflinePlayerActivity extends BaseActivity {
             });
         }
         player.setPlaybackParameters(new androidx.media3.common.PlaybackParameters(speed));
-        player.setMediaItem(MediaItem.fromUri(Uri.fromFile(new File(item.localPath))));
+        MediaItem.Builder mi = new MediaItem.Builder().setUri(Uri.fromFile(new File(item.localPath)));
+        File sub = com.fountainhome.streaming.download.SubtitleFetcher.find(new File(item.localPath));
+        if (sub != null) {
+            mi.setSubtitleConfigurations(java.util.Collections.singletonList(subtitleConfig(Uri.fromFile(sub), sub.getName(), true)));
+        }
+        player.setMediaItem(mi.build());
         player.prepare();
         long resume = AppPreferences.getResumePlayback(this)
             ? WatchProgress.get(this, item.tmdbId, item.type, item.season, item.episode) : 0;
@@ -267,10 +282,7 @@ public class OfflinePlayerActivity extends BaseActivity {
             .setMessage("The file could not be played (" + e.getErrorCodeName() + "). "
                 + "It may be incomplete. You can try again, or delete it and download it again.")
             .setPositiveButton("Try again", (d, w) -> { if (player != null) { player.prepare(); player.play(); } })
-            .setNeutralButton("Delete", (d, w) -> {
-                DownloadManager2.delete(getApplicationContext(), item);
-                finish();
-            })
+            .setNeutralButton("Open in another app", (d, w) -> playElsewhere())
             .setNegativeButton("Close", (d, w) -> finish())
             .show();
     }
@@ -394,25 +406,64 @@ public class OfflinePlayerActivity extends BaseActivity {
         new TrackSelectionDialogBuilder(this, title, player, type).setAllowAdaptiveSelections(false).build().show();
     }
 
-    private void attachSubtitle(Uri sub) {
-        if (player == null) return;
-        MediaItem cur = player.getCurrentMediaItem();
-        if (cur == null) return;
-        String name = sub.getLastPathSegment() == null ? "" : sub.getLastPathSegment().toLowerCase(Locale.ROOT);
-        String mime = MimeTypes.APPLICATION_SUBRIP;
-        if (name.endsWith(".vtt")) mime = MimeTypes.TEXT_VTT;
-        else if (name.endsWith(".ass") || name.endsWith(".ssa")) mime = MimeTypes.TEXT_SSA;
-        else if (name.endsWith(".ttml") || name.endsWith(".xml") || name.endsWith(".dfxp")) mime = MimeTypes.APPLICATION_TTML;
-        MediaItem.SubtitleConfiguration cfg = new MediaItem.SubtitleConfiguration.Builder(sub)
-            .setMimeType(mime).setLanguage("und").setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build();
+    /** Detects the subtitle format from the file's own text, not from its (often missing) extension. */
+    private static String sniffMime(File f, String name) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+            byte[] head = new byte[2048];
+            int n = in.read(head);
+            String t = n > 0 ? new String(head, 0, n, java.nio.charset.StandardCharsets.UTF_8) : "";
+            if (t.contains("WEBVTT")) return MimeTypes.TEXT_VTT;
+            if (t.contains("[Script Info]") || t.contains("[V4+ Styles]") || t.contains("[V4 Styles]")) return MimeTypes.TEXT_SSA;
+            if (t.contains("<tt")) return MimeTypes.APPLICATION_TTML;
+        } catch (Exception ignored) { }
+        if (lower.endsWith(".vtt")) return MimeTypes.TEXT_VTT;
+        if (lower.endsWith(".ass") || lower.endsWith(".ssa")) return MimeTypes.TEXT_SSA;
+        return MimeTypes.APPLICATION_SUBRIP;
+    }
+
+    private MediaItem.SubtitleConfiguration subtitleConfig(Uri uri, String name, boolean makeDefault) {
+        String mime = sniffMime(new File(uri.getPath()), name);
+        return new MediaItem.SubtitleConfiguration.Builder(uri)
+            .setMimeType(mime).setLanguage("en").setLabel("English")
+            .setSelectionFlags(makeDefault ? C.SELECTION_FLAG_DEFAULT : 0).build();
+    }
+
+    /** Copies the chosen file next to the video (so it is remembered), then plays it with the video. */
+    private void attachSubtitle(Uri picked) {
+        if (player == null || item == null) return;
+        File video = new File(item.localPath);
+        String stem = video.getName().contains(".") ? video.getName().substring(0, video.getName().lastIndexOf('.')) : video.getName();
+        File tmp = new File(video.getParentFile(), stem + ".user.tmp");
+        try (java.io.InputStream in = getContentResolver().openInputStream(picked);
+             java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
+            if (in == null) throw new java.io.IOException("unreadable");
+            byte[] buf = new byte[16 * 1024]; int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+        } catch (Exception e) {
+            //noinspection ResultOfMethodCallIgnored
+            tmp.delete();
+            Toast.makeText(this, "Couldn't read that subtitle file", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String mime = sniffMime(tmp, "");
+        String ext = MimeTypes.TEXT_VTT.equals(mime) ? ".vtt" : MimeTypes.TEXT_SSA.equals(mime) ? ".ass" : ".srt";
+        if (MimeTypes.APPLICATION_TTML.equals(mime)) ext = ".srt";   // keep the sidecar names predictable
+        File dest = new File(video.getParentFile(), stem + ".user" + ext);
+        for (String e : new String[]{".user.srt", ".user.vtt", ".user.ass"}) //noinspection ResultOfMethodCallIgnored
+            new File(video.getParentFile(), stem + e).delete();
+        if (!tmp.renameTo(dest)) { Toast.makeText(this, "Couldn't save the subtitle", Toast.LENGTH_SHORT).show(); return; }
+
         long pos = player.getCurrentPosition();
         boolean wasPlaying = player.getPlayWhenReady();
         player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
-            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).build());
-        player.replaceMediaItem(0, cur.buildUpon().setSubtitleConfigurations(java.util.Collections.singletonList(cfg)).build());
-        player.seekTo(0, pos);
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setPreferredTextLanguage("en").build());
+        MediaItem next = new MediaItem.Builder().setUri(Uri.fromFile(video))
+            .setSubtitleConfigurations(java.util.Collections.singletonList(subtitleConfig(Uri.fromFile(dest), dest.getName(), true))).build();
+        player.setMediaItem(next, pos);
+        player.prepare();
         player.setPlayWhenReady(wasPlaying);
-        Toast.makeText(this, "Subtitle loaded", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Subtitles loaded", Toast.LENGTH_SHORT).show();
     }
 
     private void showSleepMenu() {
@@ -440,18 +491,12 @@ public class OfflinePlayerActivity extends BaseActivity {
         new AlertDialog.Builder(this).setTitle("File info").setMessage(msg).setPositiveButton("OK", null).show();
     }
 
-    /** Hand the current video to Fountain Play (if installed) or let the user pick any player. */
+    /** Hand the current video to the external player chosen in Settings (or the system list if none). */
     private void playElsewhere() {
-        final DownloadItem d = item;
-        final boolean fp = com.fountainhome.streaming.download.ExternalPlayers.fountainPlayInstalled(this);
-        final String[] opts = fp ? new String[]{"Fountain Play (recommended)", "Other apps\u2026"} : new String[]{"Choose an app\u2026"};
-        new AlertDialog.Builder(this).setTitle("Play in").setItems(opts, (x, i) -> {
-            long pos = player != null ? player.getCurrentPosition() : 0;
-            boolean ok = com.fountainhome.streaming.download.ExternalPlayers.openExternal(this, d,
-                fp && i == 0 ? com.fountainhome.streaming.download.ExternalPlayers.FOUNTAIN_PLAY : null);
-            if (!ok) Toast.makeText(this, "No other video player found", Toast.LENGTH_SHORT).show();
-            else { releasePlayerSaving(pos); finish(); }
-        }).show();
+        long pos = player != null ? player.getCurrentPosition() : 0;
+        boolean ok = com.fountainhome.streaming.download.ExternalPlayers.openPreferred(this, item);
+        if (!ok) Toast.makeText(this, "No other video player found", Toast.LENGTH_SHORT).show();
+        else { releasePlayerSaving(pos); finish(); }
     }
 
     private void releasePlayerSaving(long pos) { saveProgressAs(pos); releasePlayer(); }

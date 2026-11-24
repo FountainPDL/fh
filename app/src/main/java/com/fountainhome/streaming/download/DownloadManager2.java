@@ -93,6 +93,7 @@ public class DownloadManager2 {
         }
         if (d.localPath != null) {
             File f = new File(d.localPath);
+            SubtitleFetcher.deleteFor(f);
             f.delete();
             File dir = f.getParentFile();
             if (dir != null && !dir.equals(offlineRoot(app))) {
