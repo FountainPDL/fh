@@ -133,10 +133,10 @@ public final class Remuxer {
                     info.offset = 0;
                     info.size = size;
                     // Segments glued together can restart their clock; keep time moving forward.
-                    long out = Math.max(0, t - base) + shift[track];
-                    if (out < lastOut[track] - 1_000_000L) { shift[track] += lastOut[track] - out + 33_000L; out = lastOut[track] + 33_000L; }
-                    lastOut[track] = Math.max(lastOut[track], out);
-                    info.presentationTimeUs = out;
+                    long ts = Math.max(0, t - base) + shift[track];
+                    if (ts < lastOut[track] - 1_000_000L) { shift[track] += lastOut[track] - ts + 33_000L; ts = lastOut[track] + 33_000L; }
+                    lastOut[track] = Math.max(lastOut[track], ts);
+                    info.presentationTimeUs = ts;
                     info.flags = (ex.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0
                         ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0;
                     mux.writeSampleData(map[track], buf, info);
