@@ -125,9 +125,7 @@ public class OfflineFragment extends Fragment {
             x.action1.setContentDescription("Share");
             x.action1.setOnClickListener(v -> com.fountainhome.streaming.download.ShareHelper.shareVideo(v.getContext(), d));
             x.getRoot().setOnClickListener(v -> {
-                Intent i = new Intent(v.getContext(), OfflinePlayerActivity.class);
-                i.putExtra(OfflinePlayerActivity.EXTRA_DOWNLOAD_ID, d.id);
-                startActivity(i);
+                com.fountainhome.streaming.download.ExternalPlayers.play(v.getContext(), d);
             });
             x.action2.setOnClickListener(v -> confirmDelete("this download",
                 () -> DownloadManager2.delete(requireContext().getApplicationContext(), d)));

@@ -25,6 +25,12 @@ import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
+import androidx.media3.common.MimeTypes;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.VideoSize;
+import androidx.media3.ui.TrackSelectionDialogBuilder;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.exoplayer.ExoPlayer;
 
@@ -79,6 +85,10 @@ public class OfflinePlayerActivity extends BaseActivity {
     private float speedBeforeHold = 1f;
     private int tapAccum = 0;
 
+    private Runnable sleepRunnable;
+    private final ActivityResultLauncher<String[]> subtitlePicker =
+        registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> { if (uri != null) attachSubtitle(uri); });
+
     // ------------------------------------------------------------------ lifecycle
 
     @Override protected void onCreate(Bundle s) {
@@ -125,7 +135,10 @@ public class OfflinePlayerActivity extends BaseActivity {
 
     @Override protected void onStop() {
         super.onStop();
+        // The floating window was closed with its X: end playback.
+        boolean pipClosed = android.os.Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode();
         releasePlayer();
+        if (pipClosed) finishAndRemoveTask();
     }
 
     @Override protected void onDestroy() {
@@ -303,6 +316,7 @@ public class OfflinePlayerActivity extends BaseActivity {
     private void wireControls() {
         b.backBtn.setOnClickListener(v -> finish());
         b.shareBtn.setOnClickListener(v -> ShareHelper.shareVideo(this, item));
+        b.moreBtn.setOnClickListener(v -> { showControls(false); showMoreMenu(); });
         b.playBtn.setOnClickListener(v -> togglePlay());
         b.rewBtn.setOnClickListener(v -> seekBy(-seekStepMs));
         b.fwdBtn.setOnClickListener(v -> seekBy(seekStepMs));
@@ -330,6 +344,146 @@ public class OfflinePlayerActivity extends BaseActivity {
                 scheduleHide();
             }
         });
+    }
+
+    // ------------------------------------------------------------------ more menu
+
+    private void showMoreMenu() {
+        if (player == null) return;
+        final boolean loop = player.getRepeatMode() == Player.REPEAT_MODE_ONE;
+        final String[] opts = {"Subtitles", "Audio track", "Sleep timer", loop ? "Loop: on (tap to turn off)" : "Loop this video",
+            "Picture-in-picture", "Play in another app", "File info"};
+        new AlertDialog.Builder(this).setTitle("Options").setItems(opts, (d, i) -> {
+            if (player == null) return;
+            switch (i) {
+                case 0: showSubtitleMenu(); break;
+                case 1: showTrackDialog(C.TRACK_TYPE_AUDIO, "Audio track"); break;
+                case 2: showSleepMenu(); break;
+                case 3:
+                    player.setRepeatMode(loop ? Player.REPEAT_MODE_OFF : Player.REPEAT_MODE_ONE);
+                    Toast.makeText(this, loop ? "Loop off" : "Loop on", Toast.LENGTH_SHORT).show();
+                    break;
+                case 4: enterPip(); break;
+                case 5: playElsewhere(); break;
+                case 6: showFileInfo(); break;
+            }
+        }).show();
+    }
+
+    private void showSubtitleMenu() {
+        final String[] opts = {"Choose subtitle track", "Load subtitle file (.srt .vtt .ass)", "Turn subtitles off"};
+        new AlertDialog.Builder(this).setTitle("Subtitles").setItems(opts, (d, i) -> {
+            if (player == null) return;
+            if (i == 0) showTrackDialog(C.TRACK_TYPE_TEXT, "Subtitles");
+            else if (i == 1) subtitlePicker.launch(new String[]{"*/*"});
+            else {
+                player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+                    .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build());
+                Toast.makeText(this, "Subtitles off", Toast.LENGTH_SHORT).show();
+            }
+        }).show();
+    }
+
+    private void showTrackDialog(int type, String title) {
+        boolean has = false;
+        for (Tracks.Group g : player.getCurrentTracks().getGroups()) if (g.getType() == type) { has = true; break; }
+        if (!has) { Toast.makeText(this, "No " + title.toLowerCase(Locale.ROOT) + " in this video", Toast.LENGTH_SHORT).show(); return; }
+        if (type == C.TRACK_TYPE_TEXT)
+            player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).build());
+        new TrackSelectionDialogBuilder(this, title, player, type).setAllowAdaptiveSelections(false).build().show();
+    }
+
+    private void attachSubtitle(Uri sub) {
+        if (player == null) return;
+        MediaItem cur = player.getCurrentMediaItem();
+        if (cur == null) return;
+        String name = sub.getLastPathSegment() == null ? "" : sub.getLastPathSegment().toLowerCase(Locale.ROOT);
+        String mime = MimeTypes.APPLICATION_SUBRIP;
+        if (name.endsWith(".vtt")) mime = MimeTypes.TEXT_VTT;
+        else if (name.endsWith(".ass") || name.endsWith(".ssa")) mime = MimeTypes.TEXT_SSA;
+        else if (name.endsWith(".ttml") || name.endsWith(".xml") || name.endsWith(".dfxp")) mime = MimeTypes.APPLICATION_TTML;
+        MediaItem.SubtitleConfiguration cfg = new MediaItem.SubtitleConfiguration.Builder(sub)
+            .setMimeType(mime).setLanguage("und").setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build();
+        long pos = player.getCurrentPosition();
+        boolean wasPlaying = player.getPlayWhenReady();
+        player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).build());
+        player.replaceMediaItem(0, cur.buildUpon().setSubtitleConfigurations(java.util.Collections.singletonList(cfg)).build());
+        player.seekTo(0, pos);
+        player.setPlayWhenReady(wasPlaying);
+        Toast.makeText(this, "Subtitle loaded", Toast.LENGTH_SHORT).show();
+    }
+
+    private void showSleepMenu() {
+        final String[] opts = {"5 min", "10 min", "15 min", "30 min", "1 hour", "Cancel timer"};
+        final long[] ms = {5 * 60000L, 10 * 60000L, 15 * 60000L, 30 * 60000L, 60 * 60000L, 0};
+        new AlertDialog.Builder(this).setTitle("Sleep timer").setItems(opts, (d, i) -> {
+            if (sleepRunnable != null) ui.removeCallbacks(sleepRunnable);
+            sleepRunnable = null;
+            if (ms[i] > 0) {
+                sleepRunnable = () -> { if (player != null) player.pause(); sleepRunnable = null; };
+                ui.postDelayed(sleepRunnable, ms[i]);
+                Toast.makeText(this, "Pausing in " + opts[i], Toast.LENGTH_SHORT).show();
+            } else Toast.makeText(this, "Timer cancelled", Toast.LENGTH_SHORT).show();
+        }).show();
+    }
+
+    private void showFileInfo() {
+        VideoSize vs = player.getVideoSize();
+        File f = new File(item.localPath);
+        String msg = "Name: " + label(item)
+            + "\nDuration: " + fmt(player.getDuration())
+            + "\nResolution: " + (vs.width > 0 ? vs.width + " \u00d7 " + vs.height : "unknown")
+            + "\nSize: " + (f.length() / 1024 / 1024) + " MB"
+            + "\nPath: " + item.localPath;
+        new AlertDialog.Builder(this).setTitle("File info").setMessage(msg).setPositiveButton("OK", null).show();
+    }
+
+    /** Hand the current video to Fountain Play (if installed) or let the user pick any player. */
+    private void playElsewhere() {
+        final DownloadItem d = item;
+        final boolean fp = com.fountainhome.streaming.download.ExternalPlayers.fountainPlayInstalled(this);
+        final String[] opts = fp ? new String[]{"Fountain Play (recommended)", "Other apps\u2026"} : new String[]{"Choose an app\u2026"};
+        new AlertDialog.Builder(this).setTitle("Play in").setItems(opts, (x, i) -> {
+            long pos = player != null ? player.getCurrentPosition() : 0;
+            boolean ok = com.fountainhome.streaming.download.ExternalPlayers.openExternal(this, d,
+                fp && i == 0 ? com.fountainhome.streaming.download.ExternalPlayers.FOUNTAIN_PLAY : null);
+            if (!ok) Toast.makeText(this, "No other video player found", Toast.LENGTH_SHORT).show();
+            else { releasePlayerSaving(pos); finish(); }
+        }).show();
+    }
+
+    private void releasePlayerSaving(long pos) { saveProgressAs(pos); releasePlayer(); }
+
+    // ------------------------------------------------------------------ picture in picture
+
+    private void enterPip() {
+        if (android.os.Build.VERSION.SDK_INT < 26 || player == null) return;
+        if (!getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            Toast.makeText(this, "Picture-in-picture isn't supported on this phone", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        int w = 16, h = 9;
+        VideoSize vs = player.getVideoSize();
+        if (vs.width > 0 && vs.height > 0) { w = vs.width; h = vs.height; }
+        float r = (float) w / h;
+        if (r > 2.39f) { w = 239; h = 100; } else if (r < 1f / 2.39f) { w = 100; h = 239; }
+        try {
+            enterPictureInPictureMode(new android.app.PictureInPictureParams.Builder()
+                .setAspectRatio(new android.util.Rational(w, h)).build());
+        } catch (IllegalStateException ignored) { }
+    }
+
+    @Override public void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (player != null && player.isPlaying() && AppPreferences.getAutoPip(this)) enterPip();
+    }
+
+    @Override public void onPictureInPictureModeChanged(boolean inPip, Configuration cfg) {
+        super.onPictureInPictureModeChanged(inPip, cfg);
+        if (inPip) { b.controls.setVisibility(View.GONE); b.unlockBtn.setVisibility(View.GONE); }
+        else { b.controls.setVisibility(View.VISIBLE); showControls(true); }
     }
 
     private void togglePlay() {

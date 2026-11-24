@@ -73,6 +73,13 @@ public class AppPreferences {
     public static void    setHoldSpeed(Context c, float v)    { p(c).edit().putFloat("hold_speed", v).apply(); }
     public static int     getControlsTimeout(Context c)       { return p(c).getInt("controls_timeout", 4); }
     public static void    setControlsTimeout(Context c, int v){ p(c).edit().putInt("controls_timeout", v).apply(); }
+    /** Where offline videos open: "builtin", "fountainplay" or "chooser" (pick any installed player). */
+    public static String  getOfflinePlayer(Context c)          { return p(c).getString("offline_player", "builtin"); }
+    public static void    setOfflinePlayer(Context c, String v){ p(c).edit().putString("offline_player", v).apply(); }
+    public static boolean getOfflinePlayerAsked(Context c)     { return p(c).getBoolean("offline_player_asked", false); }
+    public static void    setOfflinePlayerAsked(Context c)     { p(c).edit().putBoolean("offline_player_asked", true).apply(); }
+    public static boolean getAutoPip(Context c)                { return p(c).getBoolean("auto_pip", false); }
+    public static void    setAutoPip(Context c, boolean v)     { p(c).edit().putBoolean("auto_pip", v).apply(); }
     public static boolean getResumePlayback(Context c)        { return p(c).getBoolean("resume_playback", true); }
     public static void    setResumePlayback(Context c, boolean v){ p(c).edit().putBoolean("resume_playback", v).apply(); }
     // --- Home / general ---

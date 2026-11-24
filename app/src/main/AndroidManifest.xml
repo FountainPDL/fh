@@ -7,6 +7,14 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <queries>
+        <package android:name="com.fountainpdl.fountainplay"/>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:mimeType="video/*"/>
+        </intent>
+    </queries>
+
     <application android:name=".FountainApp" android:allowBackup="true" android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name" android:theme="@style/Theme.FountainHome"
@@ -24,6 +32,7 @@
             android:launchMode="singleTop"
             android:configChanges="screenSize|screenLayout|smallestScreenSize|orientation|keyboardHidden|smallestScreenSize|uiMode"/>
         <activity android:name=".player.OfflinePlayerActivity" android:exported="false"
+            android:supportsPictureInPicture="true"
             android:configChanges="screenSize|screenLayout|smallestScreenSize|orientation|keyboardHidden"/>
         <service android:name=".service.DownloadService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <provider android:name="androidx.core.content.FileProvider"

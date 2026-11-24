@@ -111,6 +111,15 @@ public class SettingsFragment extends Fragment {
         toggle("Compatibility mode", "Load the server page directly. Turn on if a server shows a blank player.", AppPreferences.getEmbedDirect(c), v -> AppPreferences.setEmbedDirect(ctx(), v));
 
         section("OFFLINE PLAYER");
+        final boolean fp = com.fountainhome.streaming.download.ExternalPlayers.fountainPlayInstalled(c);
+        final String[] playerVals = {"builtin", "fountainplay", "chooser"};
+        final String[] playerNames = {"Built-in player",
+            fp ? "Fountain Play (recommended)" : "Fountain Play (not installed)", "Ask which app each time"};
+        choice("Play downloads in", fp ? "Fountain Play is installed on this phone. Pick where offline videos open."
+                : "Open offline videos in the built-in player or any video app on your phone",
+            playerNames, indexOf(playerVals, AppPreferences.getOfflinePlayer(c)),
+            i -> AppPreferences.setOfflinePlayer(ctx(), playerVals[i]));
+        toggle("Auto picture-in-picture", "Keep the built-in player floating when you leave the app", AppPreferences.getAutoPip(c), v -> AppPreferences.setAutoPip(ctx(), v));
         int[] skips = {5, 10, 15, 30};
         choice("Double-tap skip", "Seconds to jump when you double-tap or press skip", new String[]{"5 seconds", "10 seconds", "15 seconds", "30 seconds"},
             indexOf(skips, AppPreferences.getDoubleTapSeek(c)), i -> AppPreferences.setDoubleTapSeek(ctx(), skips[i]));
