@@ -62,8 +62,6 @@ public class AppPreferences {
     // ---- subtitles
     public static boolean getSubDownload(Context c)           { return p(c).getBoolean("sub_dl", true); }
     public static void    setSubDownload(Context c, boolean v) { p(c).edit().putBoolean("sub_dl", v).apply(); }
-    public static String  getSubLang(Context c)               { return p(c).getString("sub_lang", "en"); }
-    public static void    setSubLang(Context c, String v)     { p(c).edit().putString("sub_lang", v).apply(); }
     public static int     getSubSize(Context c)               { return p(c).getInt("sub_size", 100); }       // percent
     public static void    setSubSize(Context c, int v)        { p(c).edit().putInt("sub_size", v).apply(); }
     public static int     getSubColor(Context c)              { return p(c).getInt("sub_color", 0xFFFFFFFF); }

@@ -115,9 +115,9 @@ public class AniListClient {
                     for (JsonElement g : o.getAsJsonArray("genres")) a.genres.add(g.getAsString());
                 if (o.has("streamingEpisodes") && o.get("streamingEpisodes").isJsonArray()) {
                     java.util.regex.Pattern np = java.util.regex.Pattern.compile("(?i)episode\\s+(\\d+)");
-                    for (JsonElement el : o.getAsJsonArray("streamingEpisodes")) {
-                        if (!el.isJsonObject()) continue;
-                        JsonObject se = el.getAsJsonObject();
+                    for (JsonElement sel : o.getAsJsonArray("streamingEpisodes")) {
+                        if (!sel.isJsonObject()) continue;
+                        JsonObject se = sel.getAsJsonObject();
                         java.util.regex.Matcher nm = np.matcher(gs(se, "title"));
                         if (!nm.find()) continue;
                         int n = Integer.parseInt(nm.group(1));
