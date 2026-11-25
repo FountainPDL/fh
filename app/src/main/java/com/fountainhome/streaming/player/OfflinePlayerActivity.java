@@ -1,5 +1,6 @@
 package com.fountainhome.streaming.player;
 
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.media.AudioManager;
@@ -58,6 +59,16 @@ import java.util.Locale;
  */
 public class OfflinePlayerActivity extends BaseActivity {
     public static final String EXTRA_DOWNLOAD_ID = "download_id";
+    /** Stream mode (anime): the player finds a direct stream itself and plays it with the same controls. */
+    public static final String EXTRA_STREAM_ANIME_ID = "stream_anime_id";
+    public static final String EXTRA_STREAM_EPISODE = "stream_episode";
+    public static final String EXTRA_STREAM_TOTAL = "stream_total";
+    public static final String EXTRA_STREAM_TITLE = "stream_title";
+    public static final String EXTRA_STREAM_ROMAJI = "stream_romaji";
+    public static final String EXTRA_STREAM_POSTER = "stream_poster";
+    public static final String EXTRA_STREAM_BACKDROP = "stream_backdrop";
+    public static final String EXTRA_STREAM_RATING = "stream_rating";
+    public static final String EXTRA_WEB_FALLBACK = "web_fallback";
 
     private static final int MODE_NONE = 0, MODE_BRIGHTNESS = 1, MODE_VOLUME = 2, MODE_SEEK = 3, MODE_IGNORE = 4;
     private static final float[] SPEEDS = {0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f};
@@ -86,6 +97,13 @@ public class OfflinePlayerActivity extends BaseActivity {
     private int tapAccum = 0;
 
     private Runnable sleepRunnable;
+
+    // stream mode
+    private boolean streamMode = false;
+    private int streamTotal = 0;
+    private com.fountainhome.streaming.anime.source.AnimeLookup.Ref streamRef;
+    private com.fountainhome.streaming.anime.source.AnimeSource.Stream streamData;
+    private int streamDataEp = -1, streamToken = 0;
     private final ActivityResultLauncher<String[]> subtitlePicker =
         registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> { if (uri != null) attachSubtitle(uri); });
 
@@ -107,7 +125,9 @@ public class OfflinePlayerActivity extends BaseActivity {
         applyResize();
         updateSpeedLabel();
 
+        streamMode = getIntent().hasExtra(EXTRA_STREAM_ANIME_ID);
         wireControls();
+        if (streamMode) b.shareBtn.setVisibility(View.GONE);
         wireGestures();
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
@@ -117,6 +137,24 @@ public class OfflinePlayerActivity extends BaseActivity {
             }
         });
 
+        if (streamMode) {
+            Intent in = getIntent();
+            DownloadItem si = new DownloadItem();
+            si.type = "anime";
+            si.tmdbId = in.getIntExtra(EXTRA_STREAM_ANIME_ID, 0);
+            si.season = 1;
+            si.episode = Math.max(1, in.getIntExtra(EXTRA_STREAM_EPISODE, 1));
+            si.title = in.getStringExtra(EXTRA_STREAM_TITLE) != null ? in.getStringExtra(EXTRA_STREAM_TITLE) : "Anime";
+            si.posterPath = in.getStringExtra(EXTRA_STREAM_POSTER);
+            si.backdropPath = in.getStringExtra(EXTRA_STREAM_BACKDROP);
+            si.rating = in.getDoubleExtra(EXTRA_STREAM_RATING, 0);
+            streamTotal = in.getIntExtra(EXTRA_STREAM_TOTAL, 0);
+            streamRef = com.fountainhome.streaming.anime.source.AnimeLookup.recall(this, si.tmdbId, si.title);
+            if (streamRef.romaji == null && in.getStringExtra(EXTRA_STREAM_ROMAJI) != null)
+                streamRef.romaji = in.getStringExtra(EXTRA_STREAM_ROMAJI);
+            item = si;
+            return;
+        }
         int id = getIntent().getIntExtra(EXTRA_DOWNLOAD_ID, -1);
         DownloadItem d = AppDatabase.get(this).downloadDao().byId(id);
         if (!isPlayable(d)) {
@@ -130,7 +168,11 @@ public class OfflinePlayerActivity extends BaseActivity {
     @Override protected void onStart() {
         super.onStart();
         hideSystemBars();
-        if (item != null && player == null && !remuxing) openItem(item);
+        if (item != null && player == null && !remuxing) {
+            if (streamMode) {
+                if (streamData != null && streamDataEp == item.episode) play(); else openStream(item.episode);
+            } else openItem(item);
+        }
     }
 
     @Override protected void onStop() {
@@ -195,6 +237,81 @@ public class OfflinePlayerActivity extends BaseActivity {
         }
     }
 
+    // ------------------------------------------------------------------ stream mode (anime)
+
+    private void openStream(final int ep) {
+        item.episode = ep;
+        streamData = null;
+        final int token = ++streamToken;
+        releasePlayer();
+        b.titleText.setText(label(item));
+        b.prevEpBtn.setVisibility(ep > 1 ? View.VISIBLE : View.GONE);
+        b.nextEpBtn.setVisibility(streamTotal <= 0 || ep < streamTotal ? View.VISIBLE : View.GONE);
+        b.preparePanel.setVisibility(View.VISIBLE);
+        b.prepareBar.setIndeterminate(true);
+        b.prepareText.setText("Finding a stream for episode " + ep + "\u2026");
+        final boolean dub = "dub".equals(AppPreferences.getAnimeDubSub(this));
+        final android.content.Context app = getApplicationContext();
+        new Thread(() -> {
+            com.fountainhome.streaming.anime.source.AnimeLookup.Result r = null;
+            String err = null;
+            try { r = com.fountainhome.streaming.anime.source.AnimeLookup.stream(app, streamRef, ep, dub); }
+            catch (Throwable t) { err = t.getMessage() != null ? t.getMessage() : "No stream found"; }
+            final com.fountainhome.streaming.anime.source.AnimeLookup.Result res = r;
+            final String fail = err;
+            ui.post(() -> {
+                if (isDestroyed() || isFinishing() || token != streamToken) return;
+                b.preparePanel.setVisibility(View.GONE);
+                if (res == null) { streamFailed(fail); return; }
+                streamData = res.stream;
+                streamDataEp = ep;
+                play();
+            });
+        }, "fh-stream").start();
+    }
+
+    private void streamFailed(String why) {
+        if (isFinishing() || isDestroyed()) return;
+        AlertDialog.Builder d = new AlertDialog.Builder(this).setTitle("Couldn't get a stream")
+            .setMessage((why != null ? why + "\n\n" : "") + "You can try again or use the web player instead.")
+            .setPositiveButton("Try again", (x, w) -> openStream(item.episode))
+            .setNegativeButton("Close", (x, w) -> finish());
+        if (getIntent().getParcelableExtra(EXTRA_WEB_FALLBACK) != null)
+            d.setNeutralButton("Web player", (x, w) -> openWebPlayer());
+        d.show();
+    }
+
+    private void openWebPlayer() {
+        Intent web = getIntent().getParcelableExtra(EXTRA_WEB_FALLBACK);
+        if (web == null) return;
+        web = new Intent(web);
+        web.putExtra("episode", item.episode);
+        startActivity(web);
+        finish();
+    }
+
+    private androidx.media3.datasource.DataSource.Factory streamFactory() {
+        androidx.media3.datasource.DefaultHttpDataSource.Factory http = new androidx.media3.datasource.DefaultHttpDataSource.Factory()
+            .setUserAgent(com.fountainhome.streaming.anime.source.AnimeNet.UA)
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15000).setReadTimeoutMs(20000);
+        java.util.Map<String, String> h = new java.util.HashMap<>();
+        if (streamData != null) for (java.util.Map.Entry<String, String> e : streamData.headers.entrySet()) {
+            if ("user-agent".equalsIgnoreCase(e.getKey())) http.setUserAgent(e.getValue()); else h.put(e.getKey(), e.getValue());
+        }
+        http.setDefaultRequestProperties(h);
+        return new androidx.media3.datasource.DefaultDataSource.Factory(this, http);
+    }
+
+    /** A stand-in file used only to name subtitle files that belong to a streamed episode. */
+    private File streamStub() {
+        return new File(getCacheDir(), "stream_" + item.tmdbId + "_e" + item.episode + ".vid");
+    }
+
+    private Uri baseUri() {
+        return streamMode && streamData != null ? Uri.parse(streamData.url) : Uri.fromFile(new File(item.localPath));
+    }
+
     private void findNeighbours() {
         prevItem = nextItem = null;
         if (!"movie".equals(item.type)) {
@@ -224,8 +341,10 @@ public class OfflinePlayerActivity extends BaseActivity {
             androidx.media3.exoplayer.DefaultRenderersFactory renderers = new androidx.media3.exoplayer.DefaultRenderersFactory(this)
                 .setEnableDecoderFallback(true)
                 .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
-            player = new ExoPlayer.Builder(this, renderers,
-                    new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this, extractors))
+            androidx.media3.exoplayer.source.DefaultMediaSourceFactory msf = streamMode
+                ? new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(streamFactory(), extractors)
+                : new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this, extractors);
+            player = new ExoPlayer.Builder(this, renderers, msf)
                 .setSeekBackIncrementMs(seekStepMs)
                 .setSeekForwardIncrementMs(seekStepMs)
                 .setHandleAudioBecomingNoisy(true)
@@ -252,8 +371,9 @@ public class OfflinePlayerActivity extends BaseActivity {
             });
         }
         player.setPlaybackParameters(new androidx.media3.common.PlaybackParameters(speed));
-        MediaItem.Builder mi = new MediaItem.Builder().setUri(Uri.fromFile(new File(item.localPath)));
-        File sub = com.fountainhome.streaming.download.SubtitleFetcher.find(new File(item.localPath));
+        MediaItem.Builder mi = new MediaItem.Builder().setUri(baseUri());
+        if (streamMode && streamData != null && streamData.url.toLowerCase().contains(".m3u8")) mi.setMimeType(MimeTypes.APPLICATION_M3U8);
+        File sub = com.fountainhome.streaming.download.SubtitleFetcher.find(streamMode ? streamStub() : new File(item.localPath));
         if (sub != null) {
             mi.setSubtitleConfigurations(java.util.Collections.singletonList(subtitleConfig(Uri.fromFile(sub), sub.getName(), true)));
         }
@@ -277,6 +397,7 @@ public class OfflinePlayerActivity extends BaseActivity {
 
     private void onError(PlaybackException e) {
         if (isFinishing() || isDestroyed()) return;
+        if (streamMode) { streamData = null; streamFailed("The stream stopped working (" + e.getErrorCodeName() + ")."); return; }
         new AlertDialog.Builder(this)
             .setTitle("Can't play this video")
             .setMessage("The file could not be played (" + e.getErrorCodeName() + "). "
@@ -290,6 +411,11 @@ public class OfflinePlayerActivity extends BaseActivity {
     private void onEnded() {
         ended = true;
         saveProgressAs(0);
+        if (streamMode) {
+            if (AppPreferences.getAutoPlayNext(this) && (streamTotal <= 0 || item.episode < streamTotal)) openStream(item.episode + 1);
+            else showControls(false);
+            return;
+        }
         if (nextItem != null && AppPreferences.getAutoPlayNext(this)) {
             DownloadItem n = nextItem;
             releasePlayer();
@@ -332,8 +458,8 @@ public class OfflinePlayerActivity extends BaseActivity {
         b.playBtn.setOnClickListener(v -> togglePlay());
         b.rewBtn.setOnClickListener(v -> seekBy(-seekStepMs));
         b.fwdBtn.setOnClickListener(v -> seekBy(seekStepMs));
-        b.prevEpBtn.setOnClickListener(v -> { if (prevItem != null) { DownloadItem p = prevItem; releasePlayer(); openItem(p); } });
-        b.nextEpBtn.setOnClickListener(v -> { if (nextItem != null) { DownloadItem n = nextItem; releasePlayer(); openItem(n); } });
+        b.prevEpBtn.setOnClickListener(v -> { if (streamMode) { if (item.episode > 1) openStream(item.episode - 1); } else if (prevItem != null) { DownloadItem p = prevItem; releasePlayer(); openItem(p); } });
+        b.nextEpBtn.setOnClickListener(v -> { if (streamMode) { if (streamTotal <= 0 || item.episode < streamTotal) openStream(item.episode + 1); } else if (nextItem != null) { DownloadItem n = nextItem; releasePlayer(); openItem(n); } });
         b.speedBtn.setOnClickListener(v -> showSpeedMenu());
         b.aspectBtn.setOnClickListener(v -> { resizeIdx = (resizeIdx + 1) % RESIZE.length; applyResize();
             AppPreferences.setResizeMode(this, RESIZE[resizeIdx]); scheduleHide(); });
@@ -363,22 +489,26 @@ public class OfflinePlayerActivity extends BaseActivity {
     private void showMoreMenu() {
         if (player == null) return;
         final boolean loop = player.getRepeatMode() == Player.REPEAT_MODE_ONE;
-        final String[] opts = {"Subtitles", "Audio track", "Sleep timer", loop ? "Loop: on (tap to turn off)" : "Loop this video",
-            "Picture-in-picture", "Play in another app", "File info"};
-        new AlertDialog.Builder(this).setTitle("Options").setItems(opts, (d, i) -> {
-            if (player == null) return;
-            switch (i) {
-                case 0: showSubtitleMenu(); break;
-                case 1: showTrackDialog(C.TRACK_TYPE_AUDIO, "Audio track"); break;
-                case 2: showSleepMenu(); break;
-                case 3:
-                    player.setRepeatMode(loop ? Player.REPEAT_MODE_OFF : Player.REPEAT_MODE_ONE);
-                    Toast.makeText(this, loop ? "Loop off" : "Loop on", Toast.LENGTH_SHORT).show();
-                    break;
-                case 4: enterPip(); break;
-                case 5: playElsewhere(); break;
-                case 6: showFileInfo(); break;
-            }
+        final java.util.List<String> names = new java.util.ArrayList<>();
+        final java.util.List<Runnable> acts = new java.util.ArrayList<>();
+        names.add("Subtitles"); acts.add(this::showSubtitleMenu);
+        names.add("Audio track"); acts.add(() -> showTrackDialog(C.TRACK_TYPE_AUDIO, "Audio track"));
+        if (streamMode) { names.add("Video quality"); acts.add(() -> showTrackDialog(C.TRACK_TYPE_VIDEO, "Video quality")); }
+        names.add("Sleep timer"); acts.add(this::showSleepMenu);
+        names.add(loop ? "Loop: on (tap to turn off)" : "Loop this video");
+        acts.add(() -> {
+            player.setRepeatMode(loop ? Player.REPEAT_MODE_OFF : Player.REPEAT_MODE_ONE);
+            Toast.makeText(this, loop ? "Loop off" : "Loop on", Toast.LENGTH_SHORT).show();
+        });
+        names.add("Picture-in-picture"); acts.add(this::enterPip);
+        if (streamMode) {
+            if (getIntent().getParcelableExtra(EXTRA_WEB_FALLBACK) != null) { names.add("Use web player"); acts.add(this::openWebPlayer); }
+        } else {
+            names.add("Play in another app"); acts.add(this::playElsewhere);
+            names.add("File info"); acts.add(this::showFileInfo);
+        }
+        new AlertDialog.Builder(this).setTitle("Options").setItems(names.toArray(new String[0]), (d, i) -> {
+            if (player != null) acts.get(i).run();
         }).show();
     }
 
@@ -432,7 +562,7 @@ public class OfflinePlayerActivity extends BaseActivity {
     /** Copies the chosen file next to the video (so it is remembered), then plays it with the video. */
     private void attachSubtitle(Uri picked) {
         if (player == null || item == null) return;
-        File video = new File(item.localPath);
+        File video = streamMode ? streamStub() : new File(item.localPath);
         String stem = video.getName().contains(".") ? video.getName().substring(0, video.getName().lastIndexOf('.')) : video.getName();
         File tmp = new File(video.getParentFile(), stem + ".user.tmp");
         try (java.io.InputStream in = getContentResolver().openInputStream(picked);
@@ -458,7 +588,7 @@ public class OfflinePlayerActivity extends BaseActivity {
         boolean wasPlaying = player.getPlayWhenReady();
         player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
             .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setPreferredTextLanguage("en").build());
-        MediaItem next = new MediaItem.Builder().setUri(Uri.fromFile(video))
+        MediaItem next = new MediaItem.Builder().setUri(baseUri())
             .setSubtitleConfigurations(java.util.Collections.singletonList(subtitleConfig(Uri.fromFile(dest), dest.getName(), true))).build();
         player.setMediaItem(next, pos);
         player.prepare();

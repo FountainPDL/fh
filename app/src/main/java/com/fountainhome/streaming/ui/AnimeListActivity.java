@@ -33,6 +33,7 @@ public class AnimeListActivity extends BaseActivity {
             i.putExtra("description", item.description); i.putExtra("episodes", item.episodes);
             i.putExtra("rating", item.averageScore); i.putExtra("status", item.status);
             i.putExtra("format", item.format);
+            i.putExtra("romaji", item.titleRomaji); i.putExtra("english", item.titleEnglish);
             startActivity(i);
         });
         GridLayoutManager lm = new GridLayoutManager(this, 3);

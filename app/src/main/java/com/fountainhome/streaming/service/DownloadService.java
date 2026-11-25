@@ -125,10 +125,30 @@ public class DownloadService extends Service {
         dao.setState(id, DownloadItem.RESOLVING, 0, null);
         notifyProgress(label, "Finding a download link…", -1, true);
 
-        List<String> embeds = embedUrls(it);
-        if (embeds.isEmpty()) { fail(dao, it, "No servers available for this title"); return; }
-
         String lastError = "No downloadable link was found on any server";
+        // Anime: ask the anime sites for a direct stream first (no embed page, no ads, real quality choice).
+        if ("anime".equals(it.type)) {
+            try {
+                notifyProgress(label, "Finding this episode\u2026", -1, true);
+                com.fountainhome.streaming.anime.source.AnimeLookup.Ref ref =
+                    com.fountainhome.streaming.anime.source.AnimeLookup.recall(this, it.tmdbId, it.title);
+                com.fountainhome.streaming.anime.source.AnimeLookup.Result r =
+                    com.fountainhome.streaming.anime.source.AnimeLookup.stream(this, ref, Math.max(1, it.episode),
+                        "dub".equals(AppPreferences.getAnimeDubSub(this)));
+                StreamResolver.Found direct = new StreamResolver.Found();
+                direct.url = r.stream.url;
+                direct.headers.putAll(r.stream.headers);
+                if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+                if (attempt(dao, it, id, label, direct)) return;
+            } catch (IOException e) {
+                if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+                lastError = e.getMessage() != null ? e.getMessage() : lastError;
+            }
+        }
+
+        List<String> embeds = embedUrls(it);
+        if (embeds.isEmpty()) { fail(dao, it, lastError.startsWith("No downloadable") ? "No servers available for this title" : lastError); return; }
+
         int tried = 0;
         for (String embed : embeds) {
             if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
@@ -139,12 +159,25 @@ public class DownloadService extends Service {
             if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
             if (found == null) continue;
 
-            dao.setState(id, DownloadItem.DOWNLOADING, 0, null);
+            try {
+                if (attempt(dao, it, id, label, found)) return;
+            } catch (IOException e) {
+                if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+                lastError = e.getMessage() != null ? e.getMessage() : "Download failed";
+                // try the next server
+            }
+        }
+        fail(dao, it, lastError);
+    }
+
+    /** Downloads one resolved stream, converts it, fetches subtitles and records the result. Returns true when done. */
+    private boolean attempt(final DownloadDao dao, final DownloadItem it, final int id, final String label,
+                            final StreamResolver.Found found) throws IOException {
+        dao.setState(id, DownloadItem.DOWNLOADING, 0, null);
             File dir = new File(DownloadManager2.offlineRoot(this), DownloadManager2.safeName(it.title));
             String base = "movie".equals(it.type)
                 ? DownloadManager2.safeName(it.title)
                 : String.format("S%02dE%02d", it.season, it.episode);
-            try {
                 File out = HlsDownloader.download(http, found.url, found.headers,
                     AppPreferences.getDlQuality(this), dir, base, new HlsDownloader.Progress() {
                         int last = -1;
@@ -173,14 +206,7 @@ public class DownloadService extends Service {
                 dao.update(it);
                 cacheArtwork(it);
                 notifyDone(it, label, true, null);
-                return;
-            } catch (IOException e) {
-                if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
-                lastError = e.getMessage() != null ? e.getMessage() : "Download failed";
-                // try the next server
-            }
-        }
-        fail(dao, it, lastError);
+                return true;
     }
 
     /** Old downloads that are still raw .ts get converted to .mp4 and their records updated. */

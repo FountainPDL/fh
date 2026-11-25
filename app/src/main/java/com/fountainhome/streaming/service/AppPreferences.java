@@ -15,6 +15,12 @@ public class AppPreferences {
     public static void    setSource(Context c, String v)      { p(c).edit().putString("source", v).apply(); }
     public static String  getAnimeSource(Context c)           { return p(c).getString("anime_source", "VidLink"); }
     public static void    setAnimeSource(Context c, String v) { p(c).edit().putString("anime_source", v).apply(); }
+    /** Which anime website supplies episodes and streams: "auto" or a site name. */
+    public static String  getAnimeSite(Context c)             { return p(c).getString("anime_site", "auto"); }
+    public static void    setAnimeSite(Context c, String v)   { p(c).edit().putString("anime_site", v).apply(); }
+    /** Play anime in the built-in player from a direct stream (falls back to the web player). */
+    public static boolean getAnimeDirect(Context c)           { return p(c).getBoolean("anime_direct", true); }
+    public static void    setAnimeDirect(Context c, boolean v){ p(c).edit().putBoolean("anime_direct", v).apply(); }
     public static String  getAnimeDubSub(Context c)           { return p(c).getString("dub_sub", "sub"); }
     public static void    setAnimeDubSub(Context c, String v) { p(c).edit().putString("dub_sub", v).apply(); }
     public static boolean getAutoplay(Context c)              { return p(c).getBoolean("autoplay", true); }
@@ -93,7 +99,7 @@ public class AppPreferences {
     public static boolean getResumePlayback(Context c)        { return p(c).getBoolean("resume_playback", true); }
     public static void    setResumePlayback(Context c, boolean v){ p(c).edit().putBoolean("resume_playback", v).apply(); }
     // --- Home / general ---
-    public static int     getStartTab(Context c)              { return p(c).getInt("start_tab", 0); }
+    public static int     getStartTab(Context c)              { return p(c).getInt("start_tab", 3); }
     public static void    setStartTab(Context c, int v)       { p(c).edit().putInt("start_tab", v).apply(); }
     public static boolean getShowTop10(Context c)             { return p(c).getBoolean("show_top10", true); }
     public static void    setShowTop10(Context c, boolean v)  { p(c).edit().putBoolean("show_top10", v).apply(); }

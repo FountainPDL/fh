@@ -104,6 +104,10 @@ public class SettingsFragment extends Fragment {
             indexOf(animeServers, AppPreferences.getAnimeSource(c)), i -> AppPreferences.setAnimeSource(ctx(), animeServers[i]));
         choice("Anime language", "Subtitled or dubbed, where the server offers both", new String[]{"Subbed", "Dubbed"},
             "dub".equals(AppPreferences.getAnimeDubSub(c)) ? 1 : 0, i -> AppPreferences.setAnimeDubSub(ctx(), i == 1 ? "dub" : "sub"));
+        toggle("Stream anime directly", "Play anime in the built-in player with real episodes. Off uses the web servers above.", AppPreferences.getAnimeDirect(c), v -> AppPreferences.setAnimeDirect(ctx(), v));
+        final String[] sites = com.fountainhome.streaming.anime.source.AnimeLookup.SITE_NAMES;
+        choice("Anime site", "Which site to try first for direct streams and downloads", sites,
+            indexOf(sites, AppPreferences.getAnimeSite(c)), i -> AppPreferences.setAnimeSite(ctx(), sites[i]));
         toggle("Autoplay", "Start playing as soon as a server loads", AppPreferences.getAutoplay(c), v -> AppPreferences.setAutoplay(ctx(), v));
         toggle("Picture-in-picture", "Keep watching in a small window when you leave the app", AppPreferences.getPiP(c), v -> AppPreferences.setPiP(ctx(), v));
         toggle("Keep screen on while watching", null, AppPreferences.getKeepScreenOn(c), v -> AppPreferences.setKeepScreenOn(ctx(), v));

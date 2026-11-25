@@ -137,15 +137,33 @@ public class OfflineFragment extends Fragment {
             for (com.fountainhome.streaming.api.Models.SeasonDetail sd : s.seasons.values())
                 if (sd != null && sd.episodes != null) eps += sd.episodes.size();
             String y = s.item.year();
-            x.subtitle.setText(("tv".equals(s.item.mediaType) ? "TV Show" : "Movie")
+            final boolean anime = "anime".equals(s.item.mediaType);
+            if (anime && eps == 0) eps = s.item.episodeCount;
+            x.subtitle.setText((anime ? "Anime" : "tv".equals(s.item.mediaType) ? "TV Show" : "Movie")
                 + (y.isEmpty() ? "" : "  ·  " + y)
                 + (eps > 0 ? "  ·  " + eps + " episodes" : ""));
             Glide.with(x.thumb).load(OfflineStore.image(x.thumb.getContext(),
                 s.item.backdropPath != null ? s.item.backdropPath : s.item.posterPath, "w300")).into(x.thumb);
             x.getRoot().setOnClickListener(v -> {
-                Intent i = new Intent(v.getContext(), WatchActivity.class);
-                i.putExtra("type", s.item.mediaType);
-                i.putExtra("id", s.item.id);
+                Intent i;
+                if (anime) {
+                    i = new Intent(v.getContext(), com.fountainhome.streaming.ui.AnimeDetailActivity.class);
+                    i.putExtra("anime_id", s.item.id);
+                    i.putExtra("title", s.item.displayTitle());
+                    i.putExtra("cover", s.item.posterPath);
+                    i.putExtra("banner", s.item.backdropPath);
+                    i.putExtra("description", s.item.overview);
+                    i.putExtra("episodes", s.item.episodeCount);
+                    i.putExtra("rating", s.item.rating);
+                    i.putExtra("status", s.item.animeStatus);
+                    i.putExtra("format", s.item.animeFormat);
+                    i.putExtra("romaji", s.item.romajiTitle);
+                    i.putExtra("offline", true);
+                } else {
+                    i = new Intent(v.getContext(), WatchActivity.class);
+                    i.putExtra("type", s.item.mediaType);
+                    i.putExtra("id", s.item.id);
+                }
                 startActivity(i);
             });
             x.action2.setOnClickListener(v -> confirmDelete("this saved page", () -> {
