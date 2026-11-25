@@ -39,6 +39,8 @@ public final class HlsDownloader {
     public interface Progress {
         void onProgress(int percent);
         boolean isCancelled();
+        /** Which quality was really chosen (e.g. "720p (480p is not offered by this server)"). */
+        default void onInfo(String info) { }
     }
 
     private static final int PARALLEL = 4;
@@ -48,7 +50,8 @@ public final class HlsDownloader {
                                 String quality, File dir, String baseName, Progress cb) throws IOException {
         if (!dir.exists() && !dir.mkdirs()) throw new IOException("Cannot create folder " + dir);
         String lower = url.toLowerCase();
-        if (lower.contains(".m3u8")) return downloadHls(http, url, headers, quality, dir, baseName, cb);
+        if (lower.contains("m3u8")) return downloadHls(http, url, headers, quality, dir, baseName, cb);
+        if (cb != null) cb.onInfo("direct file, one quality only");
         String ext = lower.contains(".webm") ? "webm" : (lower.contains(".mkv") ? "mkv" : "mp4");
         return downloadFile(http, url, headers, new File(dir, baseName + "." + ext), cb);
     }
@@ -101,11 +104,16 @@ public final class HlsDownloader {
         String text = new String(getBytes(http, url, headers), "UTF-8");
 
         // Master playlist -> choose one variant, then fetch its media playlist.
+        boolean master = false;
         for (int hop = 0; hop < 3 && text.contains("#EXT-X-STREAM-INF"); hop++) {
-            url = pickVariant(url, text, quality);
+            master = true;
+            String[] info = new String[1];
+            url = pickVariant(url, text, quality, info);
+            if (info[0] != null && cb != null) cb.onInfo(info[0]);
             text = new String(getBytes(http, url, headers), "UTF-8");
         }
         if (!text.contains("#EXTM3U")) throw new IOException("Not a valid playlist");
+        if (cb != null && !text.contains("#EXT-X-STREAM-INF") && !master) cb.onInfo("this server offers one quality only");
         if (!text.contains("#EXT-X-ENDLIST")) throw new IOException("Live streams cannot be downloaded");
 
         List<Segment> segments = new ArrayList<>();
@@ -239,12 +247,16 @@ public final class HlsDownloader {
      * 16:9-equivalent of the width (so 1920x800 counts as 1080p). Variants without a RESOLUTION are
      * ranked by BANDWIDTH against typical bitrates for each tier.
      */
-    private static String pickVariant(String base, String master, String quality) throws IOException {
+    private static String pickVariant(String base, String master, String quality, String[] info) throws IOException {
         int want = 720;
-        try { want = Integer.parseInt(quality.replaceAll("[^0-9]", "")); } catch (Exception ignored) {}
-        long wantBw = want <= 360 ? 1_000_000L : want <= 480 ? 1_800_000L : want <= 720 ? 3_500_000L : Long.MAX_VALUE;
+        boolean best = quality == null || quality.toLowerCase().startsWith("best");
+        if (best) want = 100000;
+        else try { want = Integer.parseInt(quality.replaceAll("[^0-9]", "")); } catch (Exception ignored) {}
+        long wantBw = want >= 100000 ? Long.MAX_VALUE : want <= 360 ? 1_000_000L : want <= 480 ? 1_800_000L : want <= 720 ? 3_500_000L : Long.MAX_VALUE;
         String[] lines = master.split("\n");
         String bestUrl = null, lowestUrl = null;
+        int bestH = 0, lowestH = 0, maxH = 0;
+        java.util.TreeSet<Integer> offered = new java.util.TreeSet<>();
         long bestKey = -1, lowestKey = Long.MAX_VALUE;
         Pattern res = Pattern.compile("RESOLUTION=(\\d+)x(\\d+)");
         for (int i = 0; i < lines.length; i++) {
@@ -269,16 +281,25 @@ public final class HlsDownloader {
                 int eff = Math.max(h, Math.round(w * 9f / 16f));
                 key = eff * 100_000_000L + bw / 1000;
                 fits = eff <= want + 8;
+                offered.add(eff);
             } else {
                 key = bw;
                 fits = bw <= wantBw;
             }
             String abs = resolve(base, uri);
-            if (fits && key > bestKey) { bestKey = key; bestUrl = abs; }
-            if (key < lowestKey) { lowestKey = key; lowestUrl = abs; }
+            int effH = hasRes ? Math.max(Integer.parseInt(m.group(2)), Math.round(Integer.parseInt(m.group(1)) * 9f / 16f)) : 0;
+            if (fits && key > bestKey) { bestKey = key; bestUrl = abs; bestH = effH; }
+            if (key < lowestKey) { lowestKey = key; lowestUrl = abs; lowestH = effH; }
         }
         String pick = bestUrl != null ? bestUrl : lowestUrl;
         if (pick == null) throw new IOException("No video variants in playlist");
+        int gotH = bestUrl != null ? bestH : lowestH;
+        if (gotH > 0) {
+            StringBuilder sb = new StringBuilder().append(gotH).append("p");
+            if (!best && offered.size() > 1 && Math.abs(gotH - want) > 24) sb.append(" (closest to ").append(want).append("p)");
+            else if (best) sb.append(" (best of ").append(offered.size()).append(")");
+            info[0] = sb.toString();
+        } else info[0] = best ? "best available" : null;
         return pick;
     }
 

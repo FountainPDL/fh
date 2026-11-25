@@ -30,8 +30,15 @@ public abstract class AnimeSource {
     public static class Stream {
         public final String url;
         public final Map<String, String> headers;
+        /** Subtitle files the embed page listed (any language). */
+        public final List<com.fountainhome.streaming.download.SubtitleFetcher.Track> subs = new ArrayList<>();
         public Stream(String url, Map<String, String> headers) { this.url = url; this.headers = headers; }
     }
+
+    /** 18+ sites are never used for normal search or for matching AniList titles. */
+    public boolean adult() { return false; }
+    /** Newest titles for the 18+ browse page (adult sites only). */
+    public List<Entry> latest(int page) throws IOException { return new ArrayList<>(); }
 
     public abstract String id();
     public abstract String name();

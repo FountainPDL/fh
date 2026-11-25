@@ -24,7 +24,6 @@ import com.fountainhome.streaming.player.OfflinePlayerActivity;
 import com.fountainhome.streaming.api.Models;
 import com.fountainhome.streaming.databinding.ActivityWatchBinding;
 import com.fountainhome.streaming.download.DownloadManager2;
-import com.fountainhome.streaming.player.EmbedPlayerActivity;
 import com.fountainhome.streaming.service.AppPreferences;
 import com.fountainhome.streaming.service.LibraryManager;
 import com.fountainhome.streaming.service.OfflineStore;
@@ -38,7 +37,7 @@ import java.util.List;
 
 /** Anime details. It uses the very same layout as the movie and TV details page. */
 public class AnimeDetailActivity extends BaseActivity {
-    private static final String[] SERVERS = {"VidLink", "VIDEASY", "SuperFlix", "AutoEmbed", "2Anime", "Yugen"};
+    private static final String[] SERVERS = AnimeLookup.SITE_NAMES;
 
     private ActivityWatchBinding b;
     private int anilistId, totalEpisodes, selectedEp = 1;
@@ -78,6 +77,7 @@ public class AnimeDetailActivity extends BaseActivity {
         ref = new AnimeLookup.Ref(anilistId, getIntent().getStringExtra("english") != null ? getIntent().getStringExtra("english") : title, romaji, totalEpisodes);
         AnimeLookup.Ref old = AnimeLookup.recall(this, anilistId, title);
         if (ref.romaji == null) ref.romaji = old.romaji;
+        ref.pinSource = old.pinSource; ref.pinUrl = old.pinUrl;      // 18+ titles stay on the site they came from
         AnimeLookup.remember(this, ref);
 
         b.loadingView.setVisibility(View.GONE);
@@ -130,8 +130,10 @@ public class AnimeDetailActivity extends BaseActivity {
         setupServer();
         setupDubSub();
         setupEpisodes();
-        if ((desc == null || desc.isEmpty() || totalEpisodes <= 0) && !getIntent().getBooleanExtra("offline", false)) fillMissing();
+        if (anilistId > 0 && (desc == null || desc.isEmpty() || totalEpisodes <= 0) && !getIntent().getBooleanExtra("offline", false)) fillMissing();
         loadRealEpisodes();
+        loadEpisodeArt();
+        if (ref.pinSource != null) b.sourceSpinner.setVisibility(View.GONE);
     }
 
     /** Opened from a list that only knows the cover (home, history, search): fetch the rest from AniList. */
@@ -169,20 +171,51 @@ public class AnimeDetailActivity extends BaseActivity {
                 AnimeLookup.Series sr = AnimeLookup.series(app, r);
                 int max = 0;
                 for (com.fountainhome.streaming.anime.source.AnimeSource.Ep e : sr.episodes) max = Math.max(max, (int) e.number);
+                max = Math.max(max, sr.episodes.size());
                 final int n = max;
                 runOnUiThread(() -> {
                     if (isDestroyed() || n <= 0 || n == totalEpisodes) return;
                     totalEpisodes = n; item.episodeCount = n;
                     eps.clear(); shown.clear();
                     for (int k = 1; k <= n; k++) {
-                        Models.Episode e = new Models.Episode(); e.episode_number = k; e.name = "Episode " + k; eps.add(e);
+                        eps.add(newEpisode(k));
                     }
                     shown.addAll(eps);
-                    if (adapter == null) setupEpisodes(); else adapter.notifyDataSetChanged();
+                    if (adapter == null) { eps.clear(); shown.clear(); setupEpisodes(); } else adapter.notifyDataSetChanged();
                     bindInfo();
                 });
             } catch (Throwable ignored) {}
         }, "fh-eps").start();
+    }
+
+    private final java.util.Map<Integer, String> epArt = new java.util.HashMap<>();
+    private final java.util.Map<Integer, String> epNames = new java.util.HashMap<>();
+
+    /** Every episode gets a picture: its own thumbnail when AniList has one, otherwise the show's banner/cover. */
+    private Models.Episode newEpisode(int n) {
+        Models.Episode e = new Models.Episode();
+        e.episode_number = n;
+        e.name = epNames.containsKey(n) ? epNames.get(n) : "Episode " + n;
+        String art = epArt.get(n);
+        if (art == null) art = banner != null && !banner.isEmpty() ? banner : cover;
+        e.still_path = art;
+        return e;
+    }
+
+    private void loadEpisodeArt() {
+        if (anilistId <= 0) return;
+        AniListClient.getById(anilistId, new AniListClient.Callback<AniListClient.AnimeItem>() {
+            @Override public void onSuccess(AniListClient.AnimeItem a) {
+                if (isDestroyed() || a.episodeThumbs.isEmpty() && a.episodeTitles.isEmpty()) return;
+                epArt.putAll(a.episodeThumbs); epNames.putAll(a.episodeTitles);
+                for (Models.Episode e : eps) {
+                    if (epArt.containsKey(e.episode_number)) e.still_path = epArt.get(e.episode_number);
+                    if (epNames.containsKey(e.episode_number)) e.name = epNames.get(e.episode_number);
+                }
+                if (adapter != null) adapter.notifyDataSetChanged();
+            }
+            @Override public void onError(String e) {}
+        });
     }
 
     private void refreshSaveButton() {
@@ -235,11 +268,13 @@ public class AnimeDetailActivity extends BaseActivity {
         ArrayAdapter<String> sa = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, SERVERS);
         sa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         b.sourceSpinner.setAdapter(sa);
-        String cur = AppPreferences.getAnimeSource(this);
+        String cur = AppPreferences.getAnimeSite(this);
         for (int k = 0; k < SERVERS.length; k++) if (SERVERS[k].equals(cur)) { b.sourceSpinner.setSelection(k); break; }
         b.sourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                AppPreferences.setAnimeSource(AnimeDetailActivity.this, SERVERS[pos]);
+                if (SERVERS[pos].equalsIgnoreCase(AppPreferences.getAnimeSite(AnimeDetailActivity.this))) return;
+                AppPreferences.setAnimeSite(AnimeDetailActivity.this, SERVERS[pos]);
+                if (ref != null && ref.pinSource == null) { AnimeLookup.forget(AnimeDetailActivity.this, anilistId); loadRealEpisodes(); }
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
@@ -269,10 +304,7 @@ public class AnimeDetailActivity extends BaseActivity {
     private void setupEpisodes() {
         if (totalEpisodes <= 0) return;
         for (int n = 1; n <= totalEpisodes; n++) {
-            Models.Episode e = new Models.Episode();
-            e.episode_number = n;
-            e.name = "Episode " + n;
-            eps.add(e);
+            eps.add(newEpisode(n));
         }
         shown.addAll(eps);
         b.tvSection.setVisibility(View.VISIBLE);
@@ -300,39 +332,22 @@ public class AnimeDetailActivity extends BaseActivity {
     }
 
     private void startDownload(int ep) {
-        DownloadManager2.enqueue(this, item, 1, ep);
-        Toast.makeText(this, "Download queued — see More > Offline", Toast.LENGTH_LONG).show();
-    }
-
-    private Intent webPlayerIntent(int ep) {
-        Intent i = new Intent(this, EmbedPlayerActivity.class);
-        i.putExtra("type", "anime");
-        i.putExtra("id", anilistId);
-        i.putExtra("imdbId", "");
-        i.putExtra("title", title != null ? title : "");
-        i.putExtra("posterPath", cover != null ? cover : "");
-        i.putExtra("backdropPath", banner != null ? banner : "");
-        i.putExtra("total_episodes", totalEpisodes);
-        i.putExtra("rating", rating);
-        i.putExtra("season", 1);
-        i.putExtra("episode", ep);
-        return i;
+        com.fountainhome.streaming.download.QualityPicker.choose(this, q -> {
+            DownloadManager2.enqueue(this, item, 1, ep, q);
+            Toast.makeText(this, "Download queued — see More > Offline", Toast.LENGTH_LONG).show();
+        });
     }
 
     private void openPlayer(int ep) {
-        Intent i;
-        if (AppPreferences.getAnimeDirect(this)) {
-            i = new Intent(this, OfflinePlayerActivity.class);
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_ANIME_ID, anilistId);
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_EPISODE, ep);
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_TOTAL, totalEpisodes);
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_TITLE, title != null ? title : "");
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_ROMAJI, romaji);
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_POSTER, cover != null ? cover : "");
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_BACKDROP, banner != null ? banner : "");
-            i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_RATING, rating);
-            i.putExtra(OfflinePlayerActivity.EXTRA_WEB_FALLBACK, webPlayerIntent(ep));
-        } else i = webPlayerIntent(ep);
+        Intent i = new Intent(this, OfflinePlayerActivity.class);
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_ANIME_ID, anilistId);
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_EPISODE, ep);
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_TOTAL, totalEpisodes);
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_TITLE, title != null ? title : "");
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_ROMAJI, romaji);
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_POSTER, cover != null ? cover : "");
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_BACKDROP, banner != null ? banner : "");
+        i.putExtra(OfflinePlayerActivity.EXTRA_STREAM_RATING, rating);
         startActivity(i);
         AppPreferences.setItemStatus(this, anilistId, "anime", AppPreferences.STATUS_WATCH);
         updateStatusBadge();

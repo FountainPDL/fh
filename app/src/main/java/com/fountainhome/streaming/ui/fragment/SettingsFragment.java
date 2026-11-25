@@ -99,14 +99,10 @@ public class SettingsFragment extends Fragment {
         section("STREAMING");
         choice("Default server (movies and TV)", "The server that is tried first", SourceGenerator.SERVER_NAMES,
             indexOf(SourceGenerator.SERVER_NAMES, AppPreferences.getSource(c)), i -> AppPreferences.setSource(ctx(), SourceGenerator.SERVER_NAMES[i]));
-        String[] animeServers = {"VidLink", "VIDEASY", "SuperFlix", "AutoEmbed", "2Anime", "Yugen"};
-        choice("Default server (anime)", "The server that is tried first for anime", animeServers,
-            indexOf(animeServers, AppPreferences.getAnimeSource(c)), i -> AppPreferences.setAnimeSource(ctx(), animeServers[i]));
         choice("Anime language", "Subtitled or dubbed, where the server offers both", new String[]{"Subbed", "Dubbed"},
             "dub".equals(AppPreferences.getAnimeDubSub(c)) ? 1 : 0, i -> AppPreferences.setAnimeDubSub(ctx(), i == 1 ? "dub" : "sub"));
-        toggle("Stream anime directly", "Play anime in the built-in player with real episodes. Off uses the web servers above.", AppPreferences.getAnimeDirect(c), v -> AppPreferences.setAnimeDirect(ctx(), v));
         final String[] sites = com.fountainhome.streaming.anime.source.AnimeLookup.SITE_NAMES;
-        choice("Anime site", "Which site to try first for direct streams and downloads", sites,
+        choice("Anime site", "Which site is tried first for streaming and downloads", sites,
             indexOf(sites, AppPreferences.getAnimeSite(c)), i -> AppPreferences.setAnimeSite(ctx(), sites[i]));
         toggle("Autoplay", "Start playing as soon as a server loads", AppPreferences.getAutoplay(c), v -> AppPreferences.setAutoplay(ctx(), v));
         toggle("Picture-in-picture", "Keep watching in a small window when you leave the app", AppPreferences.getPiP(c), v -> AppPreferences.setPiP(ctx(), v));
@@ -146,15 +142,59 @@ public class SettingsFragment extends Fragment {
 
         section("DOWNLOADS");
         toggle("Wi-Fi only", "Do not download over mobile data", AppPreferences.getWifiOnly(c), v -> AppPreferences.setWifiOnly(ctx(), v));
-        String[] quals = {"360p", "480p", "720p", "1080p"};
-        choice("Download quality", "Higher quality uses more storage", quals,
-            indexOf(quals, AppPreferences.getDlQuality(c)), i -> AppPreferences.setDlQuality(ctx(), quals[i]));
+        final String[] qLabels = {"Ask every time", "Best available", "1080p", "720p", "480p", "360p"};
+        final String[] qValues = {"ask", "best", "1080p", "720p", "480p", "360p"};
+        choice("Download quality", "Picks the closest quality the server offers (some servers offer only one)", qLabels,
+            indexOf(qValues, AppPreferences.getDlQuality(c)), i -> AppPreferences.setDlQuality(ctx(), qValues[i]));
         folderInfo = action("Download folder", DownloadFolder.describe(c), false, this::pickFolder);
         refreshFolderInfo();
         downloadsInfo = action("Downloaded videos", "Computing…", false, null);
         action("Delete all downloads", "Removes every downloaded video from this phone", true, this::confirmDeleteDownloads);
         action("Delete all saved pages", "Removes pages saved for offline viewing", true, this::confirmDeleteSavedPages);
         refreshStorage();
+
+        section("SUBTITLES");
+        toggle("Download subtitles", "Save them next to the video with the same name so any player finds them",
+            AppPreferences.getSubDownload(c), v -> AppPreferences.setSubDownload(ctx(), v));
+        final String[][] langs = com.fountainhome.streaming.download.SubtitleFetcher.LANGS;
+        final String[] langNames = new String[langs.length];
+        int langSel = 0;
+        for (int i = 0; i < langs.length; i++) { langNames[i] = langs[i][1]; if (langs[i][0].equals(AppPreferences.getSubLang(c))) langSel = i; }
+        choice("Subtitle language", "Used for downloads and as the language the player turns on", langNames, langSel,
+            i -> AppPreferences.setSubLang(ctx(), langs[i][0]));
+        final int[] sizes = {75, 100, 130, 170};
+        choice("Text size", null, new String[]{"Small", "Normal", "Large", "Extra large"},
+            indexOf(sizes, AppPreferences.getSubSize(c)), i -> AppPreferences.setSubSize(ctx(), sizes[i]));
+        final int[] colors = {0xFFFFFFFF, 0xFFFFEB3B, 0xFF80DEEA, 0xFFA5D6A7};
+        int colSel = 0;
+        for (int i = 0; i < colors.length; i++) if (colors[i] == AppPreferences.getSubColor(c)) colSel = i;
+        choice("Text color", null, new String[]{"White", "Yellow", "Cyan", "Green"}, colSel,
+            i -> AppPreferences.setSubColor(ctx(), colors[i]));
+        final int[] bgs = {0, 25, 50, 75, 100};
+        choice("Background", "Box behind the text", new String[]{"None", "Light", "Medium", "Dark", "Solid"},
+            indexOf(bgs, AppPreferences.getSubBg(c)), i -> AppPreferences.setSubBg(ctx(), bgs[i]));
+        choice("Text edge", null, new String[]{"None", "Outline", "Shadow"},
+            AppPreferences.getSubEdge(c), i -> AppPreferences.setSubEdge(ctx(), i));
+        final int[] pos = {3, 8, 16, 26};
+        choice("Position", "How high the subtitles sit", new String[]{"Lowest", "Low", "Higher", "High"},
+            indexOf(pos, AppPreferences.getSubBottom(c)), i -> AppPreferences.setSubBottom(ctx(), pos[i]));
+
+        section("ANIME 18+");
+        toggle("Enable 18+ content", "Adds an 18+ filter button on the Anime page. Off by default. Adults only.",
+            AppPreferences.getAdultEnabled(c), v -> {
+                if (v) {
+                    new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setTitle("Adults only")
+                        .setMessage("This unlocks adult anime from 18+ sites. Only turn it on if you are 18 or older.")
+                        .setPositiveButton("I am 18 or older", (d, w) -> AppPreferences.setAdultEnabled(ctx(), true))
+                        .setNegativeButton("Cancel", (d, w) -> requireActivity().recreate())
+                        .setOnCancelListener(d -> requireActivity().recreate())
+                        .show();
+                } else {
+                    AppPreferences.setAdultEnabled(ctx(), false);
+                    AppPreferences.setAdultMode(ctx(), false);
+                }
+            });
 
         section("DATA");
         int[] imgMb = {100, 250, 500, 1000};

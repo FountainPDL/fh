@@ -68,7 +68,6 @@ public class OfflinePlayerActivity extends BaseActivity {
     public static final String EXTRA_STREAM_POSTER = "stream_poster";
     public static final String EXTRA_STREAM_BACKDROP = "stream_backdrop";
     public static final String EXTRA_STREAM_RATING = "stream_rating";
-    public static final String EXTRA_WEB_FALLBACK = "web_fallback";
 
     private static final int MODE_NONE = 0, MODE_BRIGHTNESS = 1, MODE_VOLUME = 2, MODE_SEEK = 3, MODE_IGNORE = 4;
     private static final float[] SPEEDS = {0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f};
@@ -272,22 +271,11 @@ public class OfflinePlayerActivity extends BaseActivity {
 
     private void streamFailed(String why) {
         if (isFinishing() || isDestroyed()) return;
-        AlertDialog.Builder d = new AlertDialog.Builder(this).setTitle("Couldn't get a stream")
-            .setMessage((why != null ? why + "\n\n" : "") + "You can try again or use the web player instead.")
+        new AlertDialog.Builder(this).setTitle("Couldn't get a stream")
+            .setMessage((why != null ? why + "\n\n" : "") + "You can try again, or pick another site in the anime's page.")
             .setPositiveButton("Try again", (x, w) -> openStream(item.episode))
-            .setNegativeButton("Close", (x, w) -> finish());
-        if (getIntent().getParcelableExtra(EXTRA_WEB_FALLBACK) != null)
-            d.setNeutralButton("Web player", (x, w) -> openWebPlayer());
-        d.show();
-    }
-
-    private void openWebPlayer() {
-        Intent web = getIntent().getParcelableExtra(EXTRA_WEB_FALLBACK);
-        if (web == null) return;
-        web = new Intent(web);
-        web.putExtra("episode", item.episode);
-        startActivity(web);
-        finish();
+            .setNegativeButton("Close", (x, w) -> finish())
+            .show();
     }
 
     private androidx.media3.datasource.DataSource.Factory streamFactory() {
@@ -352,6 +340,7 @@ public class OfflinePlayerActivity extends BaseActivity {
             player.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), true);
             b.playerView.setPlayer(player);
+            applySubtitleStyle();
             player.addListener(new Player.Listener() {
                 @Override public void onPlaybackStateChanged(int state) {
                     b.buffering.setVisibility(state == Player.STATE_BUFFERING ? View.VISIBLE : View.GONE);
@@ -374,9 +363,24 @@ public class OfflinePlayerActivity extends BaseActivity {
         MediaItem.Builder mi = new MediaItem.Builder().setUri(baseUri());
         if (streamMode && streamData != null && streamData.url.toLowerCase().contains(".m3u8")) mi.setMimeType(MimeTypes.APPLICATION_M3U8);
         File sub = com.fountainhome.streaming.download.SubtitleFetcher.find(streamMode ? streamStub() : new File(item.localPath));
-        if (sub != null) {
-            mi.setSubtitleConfigurations(java.util.Collections.singletonList(subtitleConfig(Uri.fromFile(sub), sub.getName(), true)));
+        java.util.List<MediaItem.SubtitleConfiguration> subs = new java.util.ArrayList<>();
+        if (sub != null) subs.add(subtitleConfig(Uri.fromFile(sub), sub.getName(), true));
+        if (streamMode && streamData != null) {
+            String lang = AppPreferences.getSubLang(this);
+            int k = 0;
+            for (com.fountainhome.streaming.download.SubtitleFetcher.Track t : streamData.subs) {
+                if (k >= 8) break;
+                String low = t.url.toLowerCase(Locale.ROOT);
+                String mime = low.contains(".vtt") ? MimeTypes.TEXT_VTT : low.contains(".ass") ? MimeTypes.TEXT_SSA : MimeTypes.APPLICATION_SUBRIP;
+                boolean want = sub == null && com.fountainhome.streaming.download.SubtitleFetcher.matchesLang(t.label + " " + t.url, lang);
+                subs.add(new MediaItem.SubtitleConfiguration.Builder(Uri.parse(t.url)).setMimeType(mime)
+                    .setLabel(t.label.isEmpty() ? "Subtitle " + (k + 1) : t.label)
+                    .setLanguage(want ? lang : null)
+                    .setSelectionFlags(want ? C.SELECTION_FLAG_DEFAULT : 0).build());
+                k++;
+            }
         }
+        if (!subs.isEmpty()) mi.setSubtitleConfigurations(subs);
         player.setMediaItem(mi.build());
         player.prepare();
         long resume = AppPreferences.getResumePlayback(this)
@@ -501,9 +505,7 @@ public class OfflinePlayerActivity extends BaseActivity {
             Toast.makeText(this, loop ? "Loop off" : "Loop on", Toast.LENGTH_SHORT).show();
         });
         names.add("Picture-in-picture"); acts.add(this::enterPip);
-        if (streamMode) {
-            if (getIntent().getParcelableExtra(EXTRA_WEB_FALLBACK) != null) { names.add("Use web player"); acts.add(this::openWebPlayer); }
-        } else {
+        if (!streamMode) {
             names.add("Play in another app"); acts.add(this::playElsewhere);
             names.add("File info"); acts.add(this::showFileInfo);
         }
@@ -552,10 +554,34 @@ public class OfflinePlayerActivity extends BaseActivity {
         return MimeTypes.APPLICATION_SUBRIP;
     }
 
+    private static String langName(String code) {
+        for (String[] l : com.fountainhome.streaming.download.SubtitleFetcher.LANGS) if (l[0].equals(code)) return l[1];
+        return code;
+    }
+
+    /** Size, colour, background, edge and position from Settings > Subtitles. */
+    private void applySubtitleStyle() {
+        androidx.media3.ui.SubtitleView sv = b.playerView.getSubtitleView();
+        if (sv == null) return;
+        int bg = AppPreferences.getSubBg(this);
+        int edge = AppPreferences.getSubEdge(this);
+        int edgeType = edge == 1 ? androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_OUTLINE
+            : edge == 2 ? androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
+            : androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_NONE;
+        sv.setStyle(new androidx.media3.ui.CaptionStyleCompat(
+            AppPreferences.getSubColor(this),
+            bg <= 0 ? android.graphics.Color.TRANSPARENT : android.graphics.Color.argb(Math.round(bg * 2.55f), 0, 0, 0),
+            android.graphics.Color.TRANSPARENT, edgeType, android.graphics.Color.BLACK, null));
+        sv.setApplyEmbeddedStyles(false);
+        sv.setApplyEmbeddedFontSizes(false);
+        sv.setFractionalTextSize(androidx.media3.ui.SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * AppPreferences.getSubSize(this) / 100f);
+        sv.setBottomPaddingFraction(AppPreferences.getSubBottom(this) / 100f);
+    }
+
     private MediaItem.SubtitleConfiguration subtitleConfig(Uri uri, String name, boolean makeDefault) {
         String mime = sniffMime(new File(uri.getPath()), name);
         return new MediaItem.SubtitleConfiguration.Builder(uri)
-            .setMimeType(mime).setLanguage("en").setLabel("English")
+            .setMimeType(mime).setLanguage(AppPreferences.getSubLang(this)).setLabel(langName(AppPreferences.getSubLang(this)))
             .setSelectionFlags(makeDefault ? C.SELECTION_FLAG_DEFAULT : 0).build();
     }
 
@@ -587,7 +613,7 @@ public class OfflinePlayerActivity extends BaseActivity {
         long pos = player.getCurrentPosition();
         boolean wasPlaying = player.getPlayWhenReady();
         player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
-            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setPreferredTextLanguage("en").build());
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setPreferredTextLanguage(AppPreferences.getSubLang(this)).build());
         MediaItem next = new MediaItem.Builder().setUri(baseUri())
             .setSubtitleConfigurations(java.util.Collections.singletonList(subtitleConfig(Uri.fromFile(dest), dest.getName(), true))).build();
         player.setMediaItem(next, pos);

@@ -33,6 +33,8 @@ public final class AnimeLookup {
     public static class Ref {
         public int id, episodes;
         public String english, romaji;
+        /** Set for 18+ titles that come straight from a site (they have no AniList entry). */
+        public String pinSource, pinUrl;
         public Ref(int id, String english, String romaji, int episodes) {
             this.id = id; this.english = english; this.romaji = romaji; this.episodes = episodes;
         }
@@ -48,16 +50,26 @@ public final class AnimeLookup {
         }
     }
 
-    public static final String[] SITE_NAMES = {"Auto", "Anikoto", "AnimeFlixer", "AnimePahe"};
+    public static final String[] SITE_NAMES = {"Auto", "Anikoto", "AnimeFlixer", "AnimePahe", "AnimeParadise", "Gogoanime", "AnimeStream"};
 
-    private static final List<AnimeSource> ALL = Arrays.asList(new AnikotoSource(), new AnimeFlixerSource(), new AnimePaheSource());
+    private static final List<AnimeSource> ALL = Arrays.asList(
+        new AnikotoSource(), new AnimeFlixerSource(), new AnimePaheSource(),
+        new AnimeParadiseSource(), new GogoanimeSource(), new UniqueStreamSource(),
+        new HentaiMamaSource(), new HentaiPlaySource(), new XAnimePornSource());
+
+    /** The 18+ sites (used only by the 18+ browse and search). */
+    public static List<AnimeSource> adultSources() {
+        List<AnimeSource> out = new ArrayList<>();
+        for (AnimeSource s : ALL) if (s.adult()) out.add(s);
+        return out;
+    }
     private static final Gson GSON = new Gson();
 
     private static List<AnimeSource> ordered(Context c) {
         String pref = AppPreferences.getAnimeSite(c);
         List<AnimeSource> out = new ArrayList<>();
-        for (AnimeSource s : ALL) if (s.name().equalsIgnoreCase(pref)) out.add(s);
-        for (AnimeSource s : ALL) if (!out.contains(s)) out.add(s);
+        for (AnimeSource s : ALL) if (!s.adult() && s.name().equalsIgnoreCase(pref)) out.add(s);
+        for (AnimeSource s : ALL) if (!s.adult() && !out.contains(s)) out.add(s);
         return out;
     }
 
@@ -156,12 +168,16 @@ public final class AnimeLookup {
         } catch (Exception ignored) { }
     }
 
+    /** Drops the remembered site/episode list so the next lookup starts fresh (after the user changes the site). */
+    public static void forget(Context c, int id) { cacheFile(c, id).delete(); }
+
     /** The show's episodes from the best site (cached for 3 hours, stale copy used if the site is down). */
     public static Series series(Context c, Ref ref) throws IOException {
         return series(c, ref, null);
     }
 
     private static Series series(Context c, Ref ref, Set<String> skipSources) throws IOException {
+        if (ref.pinSource != null && ref.pinUrl != null) return pinned(c, ref, skipSources);
         Series cached = readCache(c, ref.id);
         boolean usable = cached != null && cached.url != null && (skipSources == null || !skipSources.contains(cached.sourceId));
         if (usable && System.currentTimeMillis() - cached.fetchedAt < 3L * 3600 * 1000 && !cached.episodes.isEmpty()) return cached;
@@ -187,6 +203,22 @@ public final class AnimeLookup {
         }
         if (usable && !cached.episodes.isEmpty()) return cached;
         throw last != null ? last : new IOException("This anime was not found on any site");
+    }
+
+    /** 18+ titles: always the site they were found on. */
+    private static Series pinned(Context c, Ref ref, Set<String> skip) throws IOException {
+        AnimeSource s = byId(ref.pinSource);
+        if (s == null || (skip != null && skip.contains(s.id()))) throw new IOException("This title is no longer available");
+        Series cached = readCache(c, ref.id);
+        if (cached != null && !cached.episodes.isEmpty() && System.currentTimeMillis() - cached.fetchedAt < 3L * 3600 * 1000) return cached;
+        try {
+            Series fresh = build(s, new AnimeSource.Entry(ref.english, ref.pinUrl, null));
+            writeCache(c, ref.id, fresh);
+            return fresh;
+        } catch (IOException e) {
+            if (cached != null && !cached.episodes.isEmpty()) return cached;
+            throw e;
+        }
     }
 
     private static Series build(AnimeSource src, AnimeSource.Entry e) throws IOException {

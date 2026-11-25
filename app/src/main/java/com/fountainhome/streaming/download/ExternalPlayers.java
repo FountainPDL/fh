@@ -99,6 +99,16 @@ public final class ExternalPlayers {
             view.putExtra(Intent.EXTRA_TITLE, d.title);
             view.putExtra("media_title", d.title);
             view.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            File sub = SubtitleFetcher.find(new File(d.localPath));
+            if (sub != null) {
+                // Most players find "<video>.srt" by themselves; these extras make MX Player and VLC use it explicitly.
+                Uri su = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".fileprovider", sub);
+                view.putExtra("subs", new Uri[]{su});
+                view.putExtra("subs.enable", new Uri[]{su});
+                view.putExtra("subs.name", new String[]{"Subtitles"});
+                view.putExtra("subtitles_location", su.toString());
+                view.setClipData(android.content.ClipData.newRawUri("subs", su));
+            }
             if (!(ctx instanceof Activity)) view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             if (pkg != null) {
                 view.setPackage(pkg);

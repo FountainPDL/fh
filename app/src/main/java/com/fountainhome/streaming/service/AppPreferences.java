@@ -41,8 +41,39 @@ public class AppPreferences {
     public static void    setSubEnabled(Context c, boolean v) { p(c).edit().putBoolean("sub_on", v).apply(); }
     public static boolean getWifiOnly(Context c)              { return p(c).getBoolean("wifi_only", false); }
     public static void    setWifiOnly(Context c, boolean v)   { p(c).edit().putBoolean("wifi_only", v).apply(); }
-    public static String  getDlQuality(Context c)             { return p(c).getString("dl_quality", "720p"); }
+    public static String  getDlQuality(Context c)             { return p(c).getString("dl_quality", "ask"); }
     public static void    setDlQuality(Context c, String v)   { p(c).edit().putString("dl_quality", v).apply(); }
+    /** Quality picked in the download dialog for one queued item (falls back to the setting). */
+    public static void    setDlOverride(Context c, int id, String q) { p(c).edit().putString("dlq_" + id, q).apply(); }
+    public static String  getDlOverride(Context c, int id)    { return p(c).getString("dlq_" + id, null); }
+    public static String  effectiveQuality(Context c, int id) {
+        String o = getDlOverride(c, id);
+        if (o != null && !o.isEmpty()) return o;
+        String g = getDlQuality(c);
+        return "ask".equals(g) ? "best" : g;
+    }
+
+    // ---- 18+ (anime)
+    public static boolean getAdultEnabled(Context c)          { return p(c).getBoolean("adult_enabled", false); }
+    public static void    setAdultEnabled(Context c, boolean v) { p(c).edit().putBoolean("adult_enabled", v).apply(); }
+    public static boolean getAdultMode(Context c)             { return getAdultEnabled(c) && p(c).getBoolean("adult_mode", false); }
+    public static void    setAdultMode(Context c, boolean v)  { p(c).edit().putBoolean("adult_mode", v).apply(); }
+
+    // ---- subtitles
+    public static boolean getSubDownload(Context c)           { return p(c).getBoolean("sub_dl", true); }
+    public static void    setSubDownload(Context c, boolean v) { p(c).edit().putBoolean("sub_dl", v).apply(); }
+    public static String  getSubLang(Context c)               { return p(c).getString("sub_lang", "en"); }
+    public static void    setSubLang(Context c, String v)     { p(c).edit().putString("sub_lang", v).apply(); }
+    public static int     getSubSize(Context c)               { return p(c).getInt("sub_size", 100); }       // percent
+    public static void    setSubSize(Context c, int v)        { p(c).edit().putInt("sub_size", v).apply(); }
+    public static int     getSubColor(Context c)              { return p(c).getInt("sub_color", 0xFFFFFFFF); }
+    public static void    setSubColor(Context c, int v)       { p(c).edit().putInt("sub_color", v).apply(); }
+    public static int     getSubBg(Context c)                 { return p(c).getInt("sub_bg", 0); }          // 0 none, else 0-100 % black
+    public static void    setSubBg(Context c, int v)          { p(c).edit().putInt("sub_bg", v).apply(); }
+    public static int     getSubEdge(Context c)               { return p(c).getInt("sub_edge", 1); }        // 0 none 1 outline 2 shadow
+    public static void    setSubEdge(Context c, int v)        { p(c).edit().putInt("sub_edge", v).apply(); }
+    public static int     getSubBottom(Context c)             { return p(c).getInt("sub_bottom", 8); }      // % from bottom
+    public static void    setSubBottom(Context c, int v)      { p(c).edit().putInt("sub_bottom", v).apply(); }
     /** Absolute path of the folder downloads are saved in; empty = the app's own folder. */
     public static String  getDownloadDir(Context c)           { return p(c).getString("dl_dir", ""); }
     public static void    setDownloadDir(Context c, String v) { p(c).edit().putString("dl_dir", v == null ? "" : v).apply(); }

@@ -36,6 +36,11 @@ public class DownloadManager2 {
 
     /** Queue a movie (season/episode ignored) or one episode for download. */
     public static void enqueue(Context ctx, ContentItem item, int season, int episode) {
+        enqueue(ctx, item, season, episode, null);
+    }
+
+    /** quality: "best", "1080p"... or null to use the setting. */
+    public static void enqueue(Context ctx, ContentItem item, int season, int episode, String quality) {
         Context app = ctx.getApplicationContext();
         DownloadDao dao = AppDatabase.get(app).downloadDao();
         int s = norm(item.mediaType, season), e = norm(item.mediaType, episode);
@@ -70,6 +75,7 @@ public class DownloadManager2 {
         d.totalBytes = 0;
         d.addedAt = System.currentTimeMillis();
         if (fresh) d.id = (int) dao.insert(d); else dao.update(d);
+        com.fountainhome.streaming.service.AppPreferences.setDlOverride(app, d.id, quality != null ? quality : "");
 
         start(app, d.id);
         Toast.makeText(app, "Download started — progress is in the notification and under More › Downloads",

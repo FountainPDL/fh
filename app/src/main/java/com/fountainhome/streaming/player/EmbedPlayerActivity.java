@@ -450,7 +450,7 @@ public class EmbedPlayerActivity extends BaseActivity implements EmbedWebPlayer.
     }
 
     private void startDownload() {
-        DownloadManager2.enqueue(this, cur, season, episode);
+        com.fountainhome.streaming.download.QualityPicker.choose(this, q -> DownloadManager2.enqueue(this, cur, season, episode, q));
     }
 
     // ------------------------------------------------------------------ layout / immersive / PiP

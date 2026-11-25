@@ -34,12 +34,17 @@ public class StreamResolver {
     public static final class Found {
         public String url;
         public Map<String, String> headers = new HashMap<>();
+        /** Subtitle files the page loaded while we were looking (any language). */
+        public java.util.List<SubtitleFetcher.Track> subs = new java.util.ArrayList<>();
     }
 
     public interface Callback {
         void onResult(Found found);   // null when nothing was found
     }
 
+    private static final Pattern SUBFILE = Pattern.compile("\\.(vtt|srt|ass|ssa)(\\?|$)");
+    private final java.util.List<SubtitleFetcher.Track> subs = new java.util.ArrayList<>();
+    private Found pending;
     private static final Pattern SEGMENT = Pattern.compile("\\.(ts|m4s|aac)(\\?|$)");
     private static final String CLICK_JS =
         "(function(){try{"
@@ -99,13 +104,16 @@ public class StreamResolver {
                 String low = url.toLowerCase();
                 boolean m3u8 = low.contains(".m3u8");
                 boolean mp4 = low.contains(".mp4") && !SEGMENT.matcher(low).find();
-                if ((m3u8 || mp4) && !done) {
+                if (SUBFILE.matcher(low).find() && subs.size() < 12) subs.add(new SubtitleFetcher.Track(url, u.getLastPathSegment()));
+                if ((m3u8 || mp4) && !done && pending == null) {
                     Found f = new Found();
                     f.url = url;
                     Map<String, String> rh = r.getRequestHeaders();
                     if (rh != null) f.headers.putAll(rh);
                     if (!f.headers.containsKey("Referer")) f.headers.put("Referer", embedHostUrl(embedUrl));
-                    main.post(() -> finish(f));
+                    f.subs = subs;
+                    // Players ask for their subtitle files around the same time: wait a moment so we see them.
+                    main.post(() -> { pending = f; main.postDelayed(() -> finish(f), 2500); });
                     return empty();   // do not let the page load the stream itself
                 }
                 // Never load media data: no video, no audio, nothing to leak.

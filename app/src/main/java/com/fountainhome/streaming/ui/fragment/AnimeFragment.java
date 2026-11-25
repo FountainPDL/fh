@@ -17,6 +17,7 @@ import com.fountainhome.streaming.R;
 import com.fountainhome.streaming.anime.AniListClient;
 import com.fountainhome.streaming.anime.AnimeAdapter;
 import com.fountainhome.streaming.databinding.FragmentAnimeBinding;
+import com.fountainhome.streaming.service.AppPreferences;
 import com.fountainhome.streaming.service.OfflineStore;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ConcatAdapter;
@@ -48,6 +49,7 @@ public class AnimeFragment extends Fragment {
     private int gen = 0;                    // bumps on every reset so late responses are ignored
     private String query = "";
     private boolean searching = false;
+    private boolean adult = false;       // 18+ mode: only the 18+ sites are browsed and searched
     private final Handler ui = new Handler(Looper.getMainLooper());
     private Runnable pendingSearch;
 
@@ -72,7 +74,9 @@ public class AnimeFragment extends Fragment {
         super.onViewCreated(v, s);
         b.pageTitle.setText("Anime");
         b.backBtn.setVisibility(View.GONE);
-        b.filterBtn.setVisibility(View.GONE);
+        adult = AppPreferences.getAdultMode(requireContext());
+        b.filterBtn.setOnClickListener(x -> toggleAdult());
+        syncAdultUi();
         b.tabLatest.setText("Trending");
         b.tabTrending.setText("Popular");
         b.tabPopular.setText("This Season");
@@ -117,7 +121,7 @@ public class AnimeFragment extends Fragment {
             return false;
         });
         setTab(0);
-        reset("trending");
+        reset(adult ? "adult" : "trending");
     }
 
     // ------------------------------------------------------------------ search (inline)
@@ -137,7 +141,7 @@ public class AnimeFragment extends Fragment {
         if (!searching) return;
         leaveSearch();
         b.searchInput.setText("");
-        String t = "search".equals(tab) ? "trending" : tab;
+        String t = adult ? "adult" : "search".equals(tab) || "adult".equals(tab) ? "trending" : tab;
         setTab(tabIndex(t));
         reset(t);
     }
@@ -149,7 +153,7 @@ public class AnimeFragment extends Fragment {
         hideKeyboard();
         b.searchRow.setVisibility(View.GONE);
         b.tabRow.setVisibility(View.VISIBLE);
-        header.setShown(!heroes.isEmpty());
+        header.setShown(!adult && !heroes.isEmpty());
     }
 
     private int tabIndex(String t) { return "popular".equals(t) ? 1 : "season".equals(t) ? 2 : 0; }
@@ -157,7 +161,7 @@ public class AnimeFragment extends Fragment {
     private void runSearch(String q) {
         if (b == null || !searching || q.length() < 2) return;
         query = q;
-        reset("search");
+        reset(adult ? "adultsearch" : "search");
     }
 
     private void hideKeyboard() {
@@ -181,7 +185,7 @@ public class AnimeFragment extends Fragment {
                     if (heroes.size() >= 5) break;
                     if (!heroes.contains(a) && a.coverImage != null) heroes.add(a);
                 }
-                header.setShown(!searching && !heroes.isEmpty());
+                header.setShown(!adult && !searching && !heroes.isEmpty());
                 if (heroPager != null) bindHeroes();
             }
             @Override public void onError(String e) {}
@@ -262,7 +266,12 @@ public class AnimeFragment extends Fragment {
         if (heroes.size() > 1 && isResumed() && !isHidden() && !searching) ui.postDelayed(advance, 6000);
     }
 
-    @Override public void onResume() { super.onResume(); scheduleAdvance(); }
+    @Override public void onResume() {
+        super.onResume();
+        scheduleAdvance();
+        boolean enabled = AppPreferences.getAdultEnabled(requireContext());
+        if (!enabled && adult) { adult = false; syncAdultUi(); setTab(0); reset("trending"); } else syncAdultUi();
+    }
     @Override public void onPause() { super.onPause(); ui.removeCallbacks(advance); }
     @Override public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
@@ -287,6 +296,30 @@ public class AnimeFragment extends Fragment {
             return new RecyclerView.ViewHolder(v) { };
         }
         @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int pos) { bindHeroes(); }
+    }
+
+    /** Shows/hides the 18+ button and the matching page chrome. */
+    private void syncAdultUi() {
+        if (b == null) return;
+        boolean enabled = AppPreferences.getAdultEnabled(requireContext());
+        if (!enabled) adult = false;
+        b.filterBtn.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        b.filterBtn.setColorFilter(adult ? ThemeManager.accent(requireContext()) : ThemeManager.color(requireContext(), R.attr.fhTextDim));
+        b.pageTitle.setText(adult ? "Anime 18+" : "Anime");
+        int tabs = adult ? View.GONE : View.VISIBLE;
+        b.tabLatest.setVisibility(tabs); b.tabTrending.setVisibility(tabs); b.tabPopular.setVisibility(tabs);
+        b.searchInput.setHint(adult ? "Search 18+ anime" : "Search anime");
+        if (header != null) header.setShown(!adult && !searching && !heroes.isEmpty());
+    }
+
+    private void toggleAdult() {
+        adult = !adult;
+        AppPreferences.setAdultMode(requireContext(), adult);
+        if (searching) { searching = false; if (pendingSearch != null) ui.removeCallbacks(pendingSearch); hideKeyboard();
+            b.searchRow.setVisibility(View.GONE); b.tabRow.setVisibility(View.VISIBLE); b.searchInput.setText(""); }
+        syncAdultUi();
+        setTab(0);
+        reset(adult ? "adult" : "trending");
     }
 
     private void reset(String t) {
@@ -319,6 +352,24 @@ public class AnimeFragment extends Fragment {
                 if (getContext() != null && p == 1) Toast.makeText(getContext(), "Could not load anime", Toast.LENGTH_SHORT).show();
             }
         };
+        if (adult) {
+            final boolean isSearch = "adultsearch".equals(tab);
+            final android.content.Context app = requireContext().getApplicationContext();
+            final String q = query;
+            new Thread(() -> {
+                List<AniListClient.AnimeItem> r = null; String err = null;
+                try { r = isSearch ? com.fountainhome.streaming.anime.source.AdultCatalog.search(app, q)
+                                   : com.fountainhome.streaming.anime.source.AdultCatalog.latest(app, p); }
+                catch (Throwable t) { err = t.getMessage(); }
+                final List<AniListClient.AnimeItem> rr = r; final String ee = err;
+                ui.post(() -> {
+                    if (b == null || myGen != gen) return;
+                    if (rr != null) { cb.onSuccess(rr); hasMore = !isSearch && !rr.isEmpty(); }
+                    else { cb.onError(ee); if (getContext() != null && ee != null) Toast.makeText(getContext(), ee, Toast.LENGTH_LONG).show(); }
+                });
+            }, "fh-adult").start();
+            return;
+        }
         switch (tab) {
             case "search": AniListClient.search(query, p, cb); break;
             case "popular": AniListClient.getPopular(p, cb); break;

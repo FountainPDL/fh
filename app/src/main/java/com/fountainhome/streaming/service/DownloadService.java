@@ -138,6 +138,7 @@ public class DownloadService extends Service {
                 StreamResolver.Found direct = new StreamResolver.Found();
                 direct.url = r.stream.url;
                 direct.headers.putAll(r.stream.headers);
+                direct.subs.addAll(r.stream.subs);
                 if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
                 if (attempt(dao, it, id, label, direct)) return;
             } catch (IOException e) {
@@ -145,6 +146,8 @@ public class DownloadService extends Service {
                 lastError = e.getMessage() != null ? e.getMessage() : lastError;
             }
         }
+
+        if ("anime".equals(it.type)) { fail(dao, it, lastError); return; }
 
         List<String> embeds = embedUrls(it);
         if (embeds.isEmpty()) { fail(dao, it, lastError.startsWith("No downloadable") ? "No servers available for this title" : lastError); return; }
@@ -174,13 +177,15 @@ public class DownloadService extends Service {
     private boolean attempt(final DownloadDao dao, final DownloadItem it, final int id, final String label,
                             final StreamResolver.Found found) throws IOException {
         dao.setState(id, DownloadItem.DOWNLOADING, 0, null);
+            final String[] qualityNote = new String[1];
             File dir = new File(DownloadManager2.offlineRoot(this), DownloadManager2.safeName(it.title));
             String base = "movie".equals(it.type)
                 ? DownloadManager2.safeName(it.title)
                 : String.format("S%02dE%02d", it.season, it.episode);
                 File out = HlsDownloader.download(http, found.url, found.headers,
-                    AppPreferences.getDlQuality(this), dir, base, new HlsDownloader.Progress() {
+                    AppPreferences.effectiveQuality(this, id), dir, base, new HlsDownloader.Progress() {
                         int last = -1;
+                        @Override public void onInfo(String info) { qualityNote[0] = info; notifyProgress(label, "Quality: " + info, -1, true); }
                         @Override public void onProgress(int pct) {
                             if (pct == last) return;
                             last = pct;
@@ -193,11 +198,13 @@ public class DownloadService extends Service {
                 dao.setProgress(id, 100);
                 notifyProgress(label, "Converting to MP4\u2026", 0, false);
                 out = Remuxer.makeSeekable(out, pct -> notifyProgress(label, "Converting to MP4 " + pct + "%", pct, false));
-                notifyProgress(label, "Getting English subtitles\u2026", -1, true);
-                try {
-                    com.fountainhome.streaming.download.SubtitleFetcher.fetch(http, found.url, found.headers,
-                        it.type, it.tmdbId, it.season, it.episode, out);
-                } catch (Throwable ignored) { }
+                if (AppPreferences.getSubDownload(this)) {
+                    notifyProgress(label, "Getting subtitles\u2026", -1, true);
+                    try {
+                        com.fountainhome.streaming.download.SubtitleFetcher.fetch(http, found.url, found.headers,
+                            it.type, it.tmdbId, it.season, it.episode, out, found.subs, AppPreferences.getSubLang(this));
+                    } catch (Throwable ignored) { }
+                }
                 it.localPath = out.getAbsolutePath();
                 it.totalBytes = out.length();
                 it.status = DownloadItem.COMPLETED;
@@ -205,7 +212,7 @@ public class DownloadService extends Service {
                 it.error = null;
                 dao.update(it);
                 cacheArtwork(it);
-                notifyDone(it, label, true, null);
+                notifyDone(it, label, true, qualityNote[0]);
                 return true;
     }
 
@@ -369,7 +376,7 @@ public class DownloadService extends Service {
             NotificationCompat.Builder b = new NotificationCompat.Builder(this, CHANNEL)
                 .setSmallIcon(ok ? android.R.drawable.stat_sys_download_done : android.R.drawable.stat_notify_error)
                 .setContentTitle(title)
-                .setContentText(ok ? "Download complete — watch it under More › Offline" : "Download failed: " + why)
+                .setContentText(ok ? "Download complete" + (why != null ? " (" + why + ")" : "") + " — watch it under More › Offline" : "Download failed: " + why)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(ok ? "Download complete" : "Download failed: " + why))
                 .setAutoCancel(true).setContentIntent(openOfflineIntent());
             ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(10000 + it.id, b.build());

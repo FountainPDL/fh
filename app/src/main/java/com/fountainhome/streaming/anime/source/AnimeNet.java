@@ -47,6 +47,48 @@ public final class AnimeNet {
         }
     }
 
+    public static String post(String url, Map<String, String> form, Map<String, String> headers) throws IOException {
+        okhttp3.FormBody.Builder fb = new okhttp3.FormBody.Builder();
+        if (form != null) for (Map.Entry<String, String> e : form.entrySet()) fb.add(e.getKey(), e.getValue());
+        Request.Builder rb = new Request.Builder().url(url).header("User-Agent", UA).post(fb.build());
+        if (headers != null) for (Map.Entry<String, String> e : headers.entrySet()) rb.header(e.getKey(), e.getValue());
+        try (Response r = HTTP.newCall(rb.build()).execute()) {
+            String body = r.body() != null ? r.body().string() : "";
+            if (!r.isSuccessful()) throw new IOException("HTTP " + r.code() + " for " + url);
+            return body;
+        }
+    }
+
+    /** host + https check used by the stricter scrapers. */
+    public static boolean sameSite(String url, String host) {
+        try { URI u = new URI(url); return "https".equals(u.getScheme()) && host.equals(u.getHost()) && u.getUserInfo() == null; }
+        catch (Exception e) { return false; }
+    }
+
+    public interface Check<T> { boolean keep(T t) throws IOException; }
+
+    /** Keeps the items a check approves, running up to 4 checks at a time. Keeps the original order. */
+    public static <T> List<T> filterParallel(List<T> items, final Check<T> check) throws IOException {
+        java.util.concurrent.ExecutorService ex = java.util.concurrent.Executors.newFixedThreadPool(4);
+        try {
+            List<java.util.concurrent.Future<Boolean>> fs = new ArrayList<>();
+            for (final T t : items) fs.add(ex.submit(() -> check.keep(t)));
+            List<T> out = new ArrayList<>();
+            for (int i = 0; i < items.size(); i++) {
+                try { if (Boolean.TRUE.equals(fs.get(i).get())) out.add(items.get(i)); }
+                catch (java.util.concurrent.ExecutionException e) { /* an unreachable page is dropped, never shown unchecked */ }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException("Interrupted"); }
+            }
+            return out;
+        } finally { ex.shutdownNow(); }
+    }
+
+    public static float number(Pattern p, String text) {
+        Matcher m = p.matcher(text == null ? "" : text);
+        if (m.find()) { try { return Float.parseFloat(m.group(1)); } catch (Exception ignored) { } }
+        return -1f;
+    }
+
     public static Map<String, String> map(String... kv) {
         Map<String, String> m = new HashMap<>();
         for (int i = 0; i + 1 < kv.length; i += 2) m.put(kv[i], kv[i + 1]);
@@ -122,6 +164,26 @@ public final class AnimeNet {
         return first;
     }
 
+    private static final Pattern SUB_OBJ = Pattern.compile("\\{[^{}]*\\}");
+    private static final Pattern SUB_URL = Pattern.compile("\"(?:file|src|url)\"\\s*:\\s*\"([^\"]+?\\.(?:vtt|srt|ass)(?:\\?[^\"]*)?)\"", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SUB_LABEL = Pattern.compile("\"(?:label|lang|language|name)\"\\s*:\\s*\"([^\"]*)\"", Pattern.CASE_INSENSITIVE);
+
+    /** Subtitle tracks listed in a player's JSON (jwplayer / plyr style "tracks": [{file, label}]). */
+    public static List<com.fountainhome.streaming.download.SubtitleFetcher.Track> findSubtitles(String text, String base) {
+        List<com.fountainhome.streaming.download.SubtitleFetcher.Track> out = new ArrayList<>();
+        String t = text.replace("\\/", "/").replace("&amp;", "&");
+        Matcher o = SUB_OBJ.matcher(t);
+        while (o.find() && out.size() < 12) {
+            Matcher u = SUB_URL.matcher(o.group());
+            if (!u.find()) continue;
+            String url = u.group(1);
+            try { url = new URI(base).resolve(url).toString(); } catch (Exception ignored) { }
+            Matcher l = SUB_LABEL.matcher(o.group());
+            out.add(new com.fountainhome.streaming.download.SubtitleFetcher.Track(url, l.find() ? l.group(1) : ""));
+        }
+        return out;
+    }
+
     /** Opens an embed page and looks for a direct stream: HTML, unpacked scripts, then nested iframes (2 levels). */
     public static AnimeSource.Stream resolveEmbed(String pageUrl, String referer, int depth) throws IOException {
         String html = get(pageUrl, map("Referer", referer));
@@ -132,7 +194,9 @@ public final class AnimeNet {
             String s = findStreamUrl(t);
             if (s == null) continue;
             String o = origin(pageUrl);
-            return new AnimeSource.Stream(s, map("Referer", o + "/", "Origin", o));
+            AnimeSource.Stream st = new AnimeSource.Stream(s, map("Referer", o + "/", "Origin", o));
+            for (String tx : texts) st.subs.addAll(findSubtitles(tx, pageUrl));
+            return st;
         }
         if (depth < 2) {
             org.jsoup.nodes.Document doc = org.jsoup.Jsoup.parse(html, pageUrl);
@@ -171,7 +235,9 @@ public final class AnimeNet {
         try { latch.await(40, TimeUnit.SECONDS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         MAIN.post(r::cancel);
         if (holder[0] == null || holder[0].url == null) throw new IOException("The player did not reveal a stream");
-        return new AnimeSource.Stream(holder[0].url, new HashMap<>(holder[0].headers));
+        AnimeSource.Stream st = new AnimeSource.Stream(holder[0].url, new HashMap<>(holder[0].headers));
+        st.subs.addAll(holder[0].subs);
+        return st;
     }
 
     /** Embed page or direct file to a playable stream: direct, then HTML scraping, then the hidden WebView. */

@@ -20,6 +20,9 @@ public class AniListClient {
         public String titleEnglish, titleRomaji, coverImage, bannerImage, description, status, season, format;
         public double averageScore;
         public List<String> genres = new ArrayList<>();
+        /** From AniList "streamingEpisodes": real per-episode pictures and titles, by episode number. */
+        public java.util.Map<Integer, String> episodeThumbs = new java.util.HashMap<>();
+        public java.util.Map<Integer, String> episodeTitles = new java.util.HashMap<>();
         public String displayTitle() {
             return titleEnglish != null && !titleEnglish.isEmpty() ? titleEnglish : (titleRomaji != null ? titleRomaji : "");
         }
@@ -110,6 +113,19 @@ public class AniListClient {
                 a.format = gs(o, "format");
                 if (o.has("genres") && o.get("genres").isJsonArray())
                     for (JsonElement g : o.getAsJsonArray("genres")) a.genres.add(g.getAsString());
+                if (o.has("streamingEpisodes") && o.get("streamingEpisodes").isJsonArray()) {
+                    java.util.regex.Pattern np = java.util.regex.Pattern.compile("(?i)episode\\s+(\\d+)");
+                    for (JsonElement el : o.getAsJsonArray("streamingEpisodes")) {
+                        if (!el.isJsonObject()) continue;
+                        JsonObject se = el.getAsJsonObject();
+                        java.util.regex.Matcher nm = np.matcher(gs(se, "title"));
+                        if (!nm.find()) continue;
+                        int n = Integer.parseInt(nm.group(1));
+                        String th = gs(se, "thumbnail");
+                        if (!th.isEmpty()) a.episodeThumbs.put(n, th);
+                        a.episodeTitles.put(n, gs(se, "title"));
+                    }
+                }
                 items.add(a);
             } catch (Exception ignored) {}
         }
@@ -130,7 +146,7 @@ public class AniListClient {
     }
     /** One title by AniList id (used when a page is opened from a list that only knows the cover). */
     public static void getById(int id, Callback<AnimeItem> cb) {
-        run("query{Page(page:1,perPage:1){media(id:" + id + ",type:ANIME){id title{english romaji}coverImage{large}bannerImage description episodes nextAiringEpisode{episode} averageScore status season seasonYear format genres}}}", "{}",
+        run("query{Page(page:1,perPage:1){media(id:" + id + ",type:ANIME){id title{english romaji}coverImage{large}bannerImage description episodes nextAiringEpisode{episode} averageScore status season seasonYear format genres streamingEpisodes{title thumbnail}}}}", "{}",
             new Callback<List<AnimeItem>>() {
                 @Override public void onSuccess(List<AnimeItem> r) { if (r.isEmpty()) cb.onError("Not found"); else cb.onSuccess(r.get(0)); }
                 @Override public void onError(String e) { cb.onError(e); }
