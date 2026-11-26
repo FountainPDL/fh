@@ -68,6 +68,9 @@ public final class Remuxer {
         boolean ok = copy(in, tmp, p, cancel) && tmp.length() > 0;
         if (cancel != null && cancel.get()) { //noinspection ResultOfMethodCallIgnored
             tmp.delete(); return in; }
+        // Check the result before trusting it: if sound and picture no longer start together, or the
+        // length is off, the converted file would play badly, so the original (which plays right) is kept.
+        if (ok && !sameTiming(in, tmp)) ok = false;
         if (ok) {
             if (mp4) {
                 if (in.delete() && tmp.renameTo(out)) return out;
@@ -81,6 +84,41 @@ public final class Remuxer {
         tmp.delete();
         try { failMarker(in).createNewFile(); } catch (Throwable ignored) { }
         return in;
+    }
+
+    /** {videoStartUs, audioStartUs, durationUs}; -1 where unknown. */
+    private static long[] starts(File f) {
+        long[] r = {-1, -1, -1};
+        MediaExtractor ex = new MediaExtractor();
+        try {
+            ex.setDataSource(f.getAbsolutePath());
+            for (int i = 0; i < ex.getTrackCount(); i++) {
+                MediaFormat fm = ex.getTrackFormat(i);
+                String mime = fm.getString(MediaFormat.KEY_MIME);
+                if (mime == null) continue;
+                int slot = mime.startsWith("video/") ? 0 : mime.startsWith("audio/") ? 1 : -1;
+                if (slot < 0 || r[slot] >= 0) continue;
+                if (fm.containsKey(MediaFormat.KEY_DURATION)) r[2] = Math.max(r[2], fm.getLong(MediaFormat.KEY_DURATION));
+                MediaExtractor one = new MediaExtractor();
+                try { one.setDataSource(f.getAbsolutePath()); one.selectTrack(i); r[slot] = one.getSampleTime(); }
+                catch (Throwable ignored) { } finally { one.release(); }
+            }
+        } catch (Throwable ignored) { } finally { try { ex.release(); } catch (Throwable ignored) {} }
+        return r;
+    }
+
+    private static boolean sameTiming(File in, File out) {
+        try {
+            long[] a = starts(in), b = starts(out);
+            if (b[0] < 0) return false;                                   // output has no readable picture
+            if (a[1] >= 0 && b[1] < 0) return false;                      // sound got lost
+            if (a[0] >= 0 && a[1] >= 0 && b[1] >= 0) {
+                long inGap = a[1] - a[0], outGap = b[1] - b[0];
+                if (Math.abs(inGap - outGap) > 60_000L) return false;     // lip-sync drifted
+            }
+            if (a[2] > 0 && b[2] > 0 && (b[2] < a[2] * 9 / 10 || b[2] > a[2] * 11 / 10)) return false;
+            return true;
+        } catch (Throwable t) { return false; }
     }
 
     /** Converts every leftover .ts under a folder. Returns the number converted. */

@@ -357,6 +357,8 @@ public class OfflinePlayerActivity extends BaseActivity {
             player.addListener(new Player.Listener() {
                 @Override public void onPlaybackStateChanged(int state) {
                     b.buffering.setVisibility(state == Player.STATE_BUFFERING ? View.VISIBLE : View.GONE);
+                    ui.removeCallbacks(stallCheck);
+                    if (state == Player.STATE_BUFFERING && !streamMode) ui.postDelayed(stallCheck, 12000);
                     if (state == Player.STATE_READY) {
                         long dur = player.getDuration();
                         if (dur > 0 && dur < Integer.MAX_VALUE) b.seek.setMax((int) dur);
@@ -403,7 +405,22 @@ public class OfflinePlayerActivity extends BaseActivity {
         showControls(true);
     }
 
+    /** A local file that sits on "loading" is not going to start by itself: offer a way out. */
+    private final Runnable stallCheck = new Runnable() {
+        @Override public void run() {
+            if (isFinishing() || isDestroyed() || player == null || player.getPlaybackState() != Player.STATE_BUFFERING) return;
+            new AlertDialog.Builder(OfflinePlayerActivity.this)
+                .setTitle("This video won't start")
+                .setMessage("The file seems damaged or in a format this player can't handle. Open it in another app, or delete it and download it again.")
+                .setPositiveButton("Open in another app", (d, w) -> playElsewhere())
+                .setNeutralButton("Keep waiting", null)
+                .setNegativeButton("Close", (d, w) -> finish())
+                .show();
+        }
+    };
+
     private void releasePlayer() {
+        ui.removeCallbacks(stallCheck);
         if (player == null) return;
         saveProgress();
         ui.removeCallbacks(tick);
