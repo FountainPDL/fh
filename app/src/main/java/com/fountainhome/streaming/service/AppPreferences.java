@@ -62,6 +62,8 @@ public class AppPreferences {
     public static void    setAdultMode(Context c, boolean v)  { p(c).edit().putBoolean("adult_mode", v).apply(); }
 
     // ---- subtitles
+    public static boolean getConvertTs(Context c)             { return p(c).getBoolean("convert_ts", false); }
+    public static void    setConvertTs(Context c, boolean v)  { p(c).edit().putBoolean("convert_ts", v).apply(); }
     public static boolean getSubDownload(Context c)           { return p(c).getBoolean("sub_dl", true); }
     public static void    setSubDownload(Context c, boolean v) { p(c).edit().putBoolean("sub_dl", v).apply(); }
     public static int     getSubSize(Context c)               { return p(c).getInt("sub_size", 100); }       // percent

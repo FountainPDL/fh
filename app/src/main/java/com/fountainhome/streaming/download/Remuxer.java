@@ -15,6 +15,12 @@ import java.nio.ByteBuffer;
 public final class Remuxer {
     private Remuxer() {}
 
+    /** Raw .ts downloads play fine as they are (and stay in sync); converting them is opt-in. */
+    public static volatile boolean tsEnabled = false;
+    public static void configure(android.content.Context c) {
+        tsEnabled = com.fountainhome.streaming.service.AppPreferences.getConvertTs(c);
+    }
+
     public interface Progress { void onProgress(int percent); }
 
     /** A file that failed to convert once is not tried again on every open (that made playback "load" for ages). */
@@ -29,7 +35,7 @@ public final class Remuxer {
     public static boolean needsRemux(File f) {
         if (f == null || !f.isFile() || f.length() == 0 || failedBefore(f)) return false;
         String n = f.getName().toLowerCase();
-        if (n.endsWith(".ts") || n.endsWith(".m2ts") || n.endsWith(".mts")) return true;
+        if (n.endsWith(".ts") || n.endsWith(".m2ts") || n.endsWith(".mts")) return tsEnabled;
         if (n.endsWith(".mp4") || n.endsWith(".m4v") || n.endsWith(".mov")) return isFragmented(f);
         return false;
     }

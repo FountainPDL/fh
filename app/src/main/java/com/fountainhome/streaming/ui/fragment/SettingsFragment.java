@@ -156,6 +156,9 @@ public class SettingsFragment extends Fragment {
         action("Delete all saved pages", "Removes pages saved for offline viewing", true, this::confirmDeleteSavedPages);
         refreshStorage();
 
+        toggle("Convert downloads to MP4", "Makes seeking smoother but can shift sound or stall some videos. Off = play files exactly as downloaded",
+            AppPreferences.getConvertTs(c), v -> { AppPreferences.setConvertTs(ctx(), v); com.fountainhome.streaming.download.Remuxer.configure(ctx()); });
+
         section("SUBTITLES");
         toggle("Download subtitles", "Save them next to the video with the same name so any player finds them",
             AppPreferences.getSubDownload(c), v -> AppPreferences.setSubDownload(ctx(), v));

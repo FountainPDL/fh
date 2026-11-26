@@ -73,6 +73,7 @@ public class DownloadService extends Service {
 
     @Override public void onCreate() {
         super.onCreate();
+        Remuxer.configure(this);
         http = new OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS).readTimeout(40, TimeUnit.SECONDS)
             .followRedirects(true).followSslRedirects(true).build();

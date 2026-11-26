@@ -110,6 +110,7 @@ public class OfflinePlayerActivity extends BaseActivity {
 
     @Override protected void onCreate(Bundle s) {
         super.onCreate(s);
+        Remuxer.configure(this);
         b = ActivityOfflinePlayerBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
         audio = (AudioManager) getSystemService(AUDIO_SERVICE);
