@@ -215,10 +215,23 @@ public class OfflinePlayerActivity extends BaseActivity {
         if (Remuxer.needsRemux(f)) {
             remuxing = true;
             b.preparePanel.setVisibility(View.VISIBLE);
+            b.prepareBar.setIndeterminate(false);
             b.prepareBar.setProgress(0);
+            b.prepareText.setText("Preparing this video for smooth seeking (first time only). Tap to play now.");
+            final java.util.concurrent.atomic.AtomicBoolean cancel = new java.util.concurrent.atomic.AtomicBoolean(false);
+            b.preparePanel.setOnClickListener(v -> cancel.set(true));
+            // If the conversion makes no progress at all, stop waiting and just play the file as it is.
+            final int[] seen = {0};
+            ui.postDelayed(new Runnable() {
+                @Override public void run() {
+                    if (!remuxing || cancel.get() || isDestroyed()) return;
+                    if (b.prepareBar.getProgress() <= seen[0]) { Remuxer.markFailed(f); cancel.set(true); }
+                    else { seen[0] = b.prepareBar.getProgress(); ui.postDelayed(this, 25000); }
+                }
+            }, 25000);
             final DownloadItem target = d;
             new Thread(() -> {
-                File out = Remuxer.makeSeekable(f, pct -> ui.post(() -> { if (b != null) b.prepareBar.setProgress(pct); }));
+                File out = Remuxer.makeSeekable(f, pct -> ui.post(() -> { if (b != null) b.prepareBar.setProgress(pct); }), cancel);
                 if (!out.equals(f)) {
                     target.localPath = out.getAbsolutePath();
                     target.totalBytes = out.length();

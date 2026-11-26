@@ -39,6 +39,8 @@ public class AppPreferences {
     public static void    setSubLang(Context c, String v)     { p(c).edit().putString("sub_lang", v).apply(); }
     public static boolean getSubEnabled(Context c)            { return p(c).getBoolean("sub_on", true); }
     public static void    setSubEnabled(Context c, boolean v) { p(c).edit().putBoolean("sub_on", v).apply(); }
+    public static int     getParallelDownloads(Context c)     { return p(c).getInt("parallel_dl", 3); }
+    public static void    setParallelDownloads(Context c, int v) { p(c).edit().putInt("parallel_dl", v).apply(); }
     public static boolean getWifiOnly(Context c)              { return p(c).getBoolean("wifi_only", false); }
     public static void    setWifiOnly(Context c, boolean v)   { p(c).edit().putBoolean("wifi_only", v).apply(); }
     public static String  getDlQuality(Context c)             { return p(c).getString("dl_quality", "ask"); }

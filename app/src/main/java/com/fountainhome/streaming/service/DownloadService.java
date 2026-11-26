@@ -59,13 +59,17 @@ public class DownloadService extends Service {
     private static final int MAX_SERVERS = 8;
 
     private final Handler main = new Handler(Looper.getMainLooper());
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    /** Up to MAX_THREADS downloads can exist; how many actually run at once is the "Simultaneous downloads" setting. */
+    private static final int MAX_THREADS = 6;
+    private final ExecutorService worker = Executors.newFixedThreadPool(MAX_THREADS);
+    private final Object gate = new Object();
+    private int running = 0;
+    private final java.util.Map<Integer, StreamResolver> resolvers = new ConcurrentHashMap<>();
+    private final java.util.Map<Integer, Long> lastNotif = new ConcurrentHashMap<>();
+    private final java.util.concurrent.atomic.AtomicBoolean repaired = new java.util.concurrent.atomic.AtomicBoolean(false);
     private final Set<Integer> cancelled = ConcurrentHashMap.newKeySet();
     private OkHttpClient http;
-    private int pending = 0;                       // main thread only
-    private volatile int currentId = -1;
-    private volatile StreamResolver activeResolver;
-    private long lastNotifAt = 0;
+    private volatile int pending = 0;                       // main thread only
 
     @Override public void onCreate() {
         super.onCreate();
@@ -81,9 +85,8 @@ public class DownloadService extends Service {
         final int id = intent.getIntExtra(EXTRA_ID, -1);
         if (ACTION_CANCEL.equals(intent.getAction())) {
             cancelled.add(id);
-            if (id == currentId) {
-                main.post(() -> { StreamResolver r = activeResolver; if (r != null) r.cancel(); });
-            }
+            main.post(() -> { StreamResolver r = resolvers.get(id); if (r != null) r.cancel(); });
+            synchronized (gate) { gate.notifyAll(); }
             maybeStop();
             return START_NOT_STICKY;
         }
@@ -91,9 +94,17 @@ public class DownloadService extends Service {
             cancelled.remove(id);
             pending++;
             worker.execute(() -> {
-                try { process(id); }
+                boolean got = false;
+                try {
+                    got = acquireSlot(id);
+                    if (got) process(id);
+                    else dropQueued(id);
+                }
                 catch (Throwable t) { safeFail(id, "Unexpected error: " + t.getMessage()); }
-                finally { main.post(() -> { pending--; maybeStop(); }); }
+                finally {
+                    if (got) releaseSlot();
+                    main.post(() -> { pending--; maybeStop(); });
+                }
             });
         }
         return START_NOT_STICKY;
@@ -101,7 +112,7 @@ public class DownloadService extends Service {
 
     @Override public void onDestroy() {
         worker.shutdownNow();
-        main.post(() -> { StreamResolver r = activeResolver; if (r != null) r.cancel(); });
+        main.post(() -> { for (StreamResolver r : resolvers.values()) r.cancel(); });
         super.onDestroy();
     }
 
@@ -109,27 +120,63 @@ public class DownloadService extends Service {
 
     // ------------------------------------------------------------------ the job
 
+    /** Waits (state stays "queued") until fewer than the allowed number of downloads are running. */
+    private boolean acquireSlot(int id) throws InterruptedException {
+        synchronized (gate) {
+            while (true) {
+                if (cancelled.contains(id)) return false;
+                int limit = Math.max(1, Math.min(MAX_THREADS, AppPreferences.getParallelDownloads(this)));
+                if (running < limit) { running++; updateSummary(); return true; }
+                gate.wait(2000);
+            }
+        }
+    }
+
+    private void releaseSlot() {
+        synchronized (gate) { running--; gate.notifyAll(); }
+        updateSummary();
+    }
+
+    private void dropQueued(int id) {
+        try {
+            DownloadDao dao = AppDatabase.get(this).downloadDao();
+            DownloadItem it = dao.byId(id);
+            if (it != null) dropCancelled(dao, it);
+        } catch (Throwable ignored) { }
+    }
+
+    /** The one foreground notification just says how many are going. */
+    private void updateSummary() {
+        final int n, waiting;
+        synchronized (gate) { n = running; }
+        waiting = Math.max(0, pending - n);
+        try {
+            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(FG_ID,
+                progressNotif("Fountain Home downloads",
+                    n + (n == 1 ? " download" : " downloads") + " running" + (waiting > 0 ? ", " + waiting + " waiting" : ""), -1));
+        } catch (Throwable ignored) { }
+    }
+
     private void process(int id) {
         final DownloadDao dao = AppDatabase.get(this).downloadDao();
         final DownloadItem it = dao.byId(id);
         if (it == null) return;
-        repairOldTs(dao);
+        if (repaired.compareAndSet(false, true)) repairOldTs(dao);
         if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
 
         if (AppPreferences.getWifiOnly(this) && !onUnmeteredNetwork()) {
             fail(dao, it, "Waiting for Wi-Fi (\"Wi-Fi only\" is on in Settings)");
             return;
         }
-        currentId = id;
         final String label = label(it);
         dao.setState(id, DownloadItem.RESOLVING, 0, null);
-        notifyProgress(label, "Finding a download link…", -1, true);
+        notifyProgress(id, label, "Finding a download link…", -1, true);
 
         String lastError = "No downloadable link was found on any server";
         // Anime: ask the anime sites for a direct stream first (no embed page, no ads, real quality choice).
         if ("anime".equals(it.type)) {
             try {
-                notifyProgress(label, "Finding this episode\u2026", -1, true);
+                notifyProgress(id, label, "Finding this episode\u2026", -1, true);
                 com.fountainhome.streaming.anime.source.AnimeLookup.Ref ref =
                     com.fountainhome.streaming.anime.source.AnimeLookup.recall(this, it.tmdbId, it.title);
                 com.fountainhome.streaming.anime.source.AnimeLookup.Result r =
@@ -156,9 +203,9 @@ public class DownloadService extends Service {
         for (String embed : embeds) {
             if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
             if (++tried > MAX_SERVERS) break;
-            notifyProgress(label, "Checking server " + tried + " of " + Math.min(embeds.size(), MAX_SERVERS) + "…", -1, true);
+            notifyProgress(id, label, "Checking server " + tried + " of " + Math.min(embeds.size(), MAX_SERVERS) + "…", -1, true);
 
-            StreamResolver.Found found = resolveBlocking(embed);
+            StreamResolver.Found found = resolveBlocking(id, embed);
             if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
             if (found == null) continue;
 
@@ -185,21 +232,21 @@ public class DownloadService extends Service {
                 File out = HlsDownloader.download(http, found.url, found.headers,
                     AppPreferences.effectiveQuality(this, id), dir, base, new HlsDownloader.Progress() {
                         int last = -1;
-                        @Override public void onInfo(String info) { qualityNote[0] = info; notifyProgress(label, "Quality: " + info, -1, true); }
+                        @Override public void onInfo(String info) { qualityNote[0] = info; notifyProgress(id, label, "Quality: " + info, -1, true); }
                         @Override public void onProgress(int pct) {
                             if (pct == last) return;
                             last = pct;
                             dao.setProgress(id, pct);
-                            notifyProgress(label, pct + "%", pct, false);
+                            notifyProgress(id, label, pct + "%", pct, false);
                         }
                         @Override public boolean isCancelled() { return cancelled.contains(id); }
                     });
                 // Raw .ts has no seek index: convert to .mp4 (no re-encode) so seeking works.
                 dao.setProgress(id, 100);
-                notifyProgress(label, "Converting to MP4\u2026", 0, false);
-                out = Remuxer.makeSeekable(out, pct -> notifyProgress(label, "Converting to MP4 " + pct + "%", pct, false));
+                notifyProgress(id, label, "Converting to MP4\u2026", 0, false);
+                out = Remuxer.makeSeekable(out, pct -> notifyProgress(id, label, "Converting to MP4 " + pct + "%", pct, false));
                 if (AppPreferences.getSubDownload(this)) {
-                    notifyProgress(label, "Getting subtitles\u2026", -1, true);
+                    notifyProgress(id, label, "Getting subtitles\u2026", -1, true);
                     try {
                         com.fountainhome.streaming.download.SubtitleFetcher.fetch(http, found.url, found.headers,
                             it.type, it.tmdbId, it.season, it.episode, out, found.subs, AppPreferences.getSubLang(this));
@@ -230,12 +277,12 @@ public class DownloadService extends Service {
     }
 
     /** Runs the resolver on the main thread and waits for its answer on this worker thread. */
-    private StreamResolver.Found resolveBlocking(String embed) {
+    private StreamResolver.Found resolveBlocking(final int id, String embed) {
         final StreamResolver.Found[] holder = new StreamResolver.Found[1];
         final CountDownLatch latch = new CountDownLatch(1);
         final StreamResolver r = new StreamResolver();
         main.post(() -> {
-            activeResolver = r;
+            resolvers.put(id, r);
             try {
                 r.resolve(DownloadService.this, embed, RESOLVE_TIMEOUT_MS, found -> {
                     holder[0] = found;
@@ -253,7 +300,7 @@ public class DownloadService extends Service {
             Thread.currentThread().interrupt();
             main.post(r::cancel);
         }
-        activeResolver = null;
+        resolvers.remove(id);
         return holder[0];
     }
 
@@ -300,7 +347,10 @@ public class DownloadService extends Service {
         DownloadItem fresh = dao.byId(it.id);
         if (fresh != null) dao.delete(fresh);
         File dir = new File(DownloadManager2.offlineRoot(this), DownloadManager2.safeName(it.title));
-        File[] parts = dir.listFiles((d, n) -> n.endsWith(".part"));
+        try { ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(30000 + it.id); } catch (Throwable ignored) { }
+        final String base = "movie".equals(it.type) ? DownloadManager2.safeName(it.title)
+            : String.format("S%02dE%02d", it.season, it.episode);
+        File[] parts = dir.listFiles((d, n) -> n.endsWith(".part") && n.startsWith(base + "."));
         if (parts != null) for (File f : parts) f.delete();
         String[] left = dir.list();
         if (left != null && left.length == 0) dir.delete();
@@ -362,12 +412,13 @@ public class DownloadService extends Service {
         else startForeground(FG_ID, n);
     }
 
-    private void notifyProgress(String title, String text, int pct, boolean force) {
+    private void notifyProgress(int id, String title, String text, int pct, boolean force) {
         long now = System.currentTimeMillis();
-        if (!force && now - lastNotifAt < 800) return;
-        lastNotifAt = now;
+        Long last = lastNotif.get(id);
+        if (!force && last != null && now - last < 800) return;
+        lastNotif.put(id, now);
         try {
-            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(FG_ID, progressNotif(title, text, pct));
+            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(30000 + id, progressNotif(title, text, pct));
         } catch (Throwable ignored) {}
     }
 
@@ -379,7 +430,10 @@ public class DownloadService extends Service {
                 .setContentText(ok ? "Download complete" + (why != null ? " (" + why + ")" : "") + " — watch it under More › Offline" : "Download failed: " + why)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(ok ? "Download complete" : "Download failed: " + why))
                 .setAutoCancel(true).setContentIntent(openOfflineIntent());
-            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(10000 + it.id, b.build());
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.cancel(30000 + it.id);
+            lastNotif.remove(it.id);
+            nm.notify(10000 + it.id, b.build());
         } catch (Throwable ignored) {}
     }
 }

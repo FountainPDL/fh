@@ -17,12 +17,17 @@ public final class Remuxer {
 
     public interface Progress { void onProgress(int percent); }
 
+    /** A file that failed to convert once is not tried again on every open (that made playback "load" for ages). */
+    private static File failMarker(File f) { return new File(f.getParentFile(), f.getName() + ".noremux"); }
+    public static void markFailed(File f) { try { failMarker(f).createNewFile(); } catch (Throwable ignored) { } }
+    public static boolean failedBefore(File f) { return failMarker(f).exists(); }
+
     /**
      * True for files a player can't seek reliably: raw MPEG-TS, and "fragmented" MP4 (what HLS fMP4
      * streams produce: no sample index, just a chain of moof boxes).
      */
     public static boolean needsRemux(File f) {
-        if (f == null || !f.isFile() || f.length() == 0) return false;
+        if (f == null || !f.isFile() || f.length() == 0 || failedBefore(f)) return false;
         String n = f.getName().toLowerCase();
         if (n.endsWith(".ts") || n.endsWith(".m2ts") || n.endsWith(".mts")) return true;
         if (n.endsWith(".mp4") || n.endsWith(".m4v") || n.endsWith(".mov")) return isFragmented(f);
@@ -51,13 +56,19 @@ public final class Remuxer {
     }
 
     /** Returns the seekable .mp4 if conversion worked (the original is replaced), otherwise the original untouched. */
-    public static File makeSeekable(File in, Progress p) {
+    public static File makeSeekable(File in, Progress p) { return makeSeekable(in, p, null); }
+
+    /** cancel: set to true from anywhere to stop and keep the original file. */
+    public static File makeSeekable(File in, Progress p, java.util.concurrent.atomic.AtomicBoolean cancel) {
         if (!needsRemux(in)) return in;
         String name = in.getName();
         boolean mp4 = name.toLowerCase().endsWith(".mp4") || name.toLowerCase().endsWith(".m4v") || name.toLowerCase().endsWith(".mov");
         File out = mp4 ? in : new File(in.getParentFile(), name.substring(0, name.lastIndexOf('.')) + ".mp4");
         File tmp = new File(in.getParentFile(), name + ".remux.part");
-        if (copy(in, tmp, p) && tmp.length() > 0) {
+        boolean ok = copy(in, tmp, p, cancel) && tmp.length() > 0;
+        if (cancel != null && cancel.get()) { //noinspection ResultOfMethodCallIgnored
+            tmp.delete(); return in; }
+        if (ok) {
             if (mp4) {
                 if (in.delete() && tmp.renameTo(out)) return out;
             } else if (tmp.renameTo(out)) {
@@ -68,6 +79,7 @@ public final class Remuxer {
         }
         //noinspection ResultOfMethodCallIgnored
         tmp.delete();
+        try { failMarker(in).createNewFile(); } catch (Throwable ignored) { }
         return in;
     }
 
@@ -86,7 +98,7 @@ public final class Remuxer {
         return n;
     }
 
-    private static boolean copy(File in, File out, Progress progress) {
+    private static boolean copy(File in, File out, Progress progress, java.util.concurrent.atomic.AtomicBoolean cancel) {
         MediaExtractor ex = new MediaExtractor();
         MediaMuxer mux = null;
         boolean started = false;
@@ -118,24 +130,55 @@ public final class Remuxer {
             mux.start();
             started = true;
 
+            // Where each track really starts: audio and video rarely begin at the same instant, and
+            // that difference has to survive the copy or the sound ends up early/late.
+            long base = Long.MAX_VALUE;
+            for (int i = 0; i < n; i++) {
+                if (map[i] < 0) continue;
+                MediaExtractor probe = new MediaExtractor();
+                try {
+                    probe.setDataSource(in.getAbsolutePath());
+                    probe.selectTrack(i);
+                    long t0 = probe.getSampleTime();
+                    if (t0 >= 0) base = Math.min(base, t0);
+                } catch (Throwable ignored) { } finally { probe.release(); }
+            }
+            if (base == Long.MAX_VALUE) base = 0;
+
             ByteBuffer buf = ByteBuffer.allocate(8 * 1024 * 1024);
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-            long base = -1;
             int lastPct = -1;
-            long[] shift = new long[n], lastOut = new long[n];
+            // Clock restarts (glued HLS segments, ad breaks) start a new "epoch" with one shift shared by
+            // audio and video, so the two stay aligned across the jump.
+            java.util.ArrayList<Long> shifts = new java.util.ArrayList<>();
+            java.util.ArrayList<Long> anchors = new java.util.ArrayList<>();
+            shifts.add(0L); anchors.add(base);
+            int[] epoch = new int[n];
+            long[] lastRaw = new long[n];
+            java.util.Arrays.fill(lastRaw, Long.MIN_VALUE);
+            long maxOut = 0;
             while (true) {
+                if (cancel != null && cancel.get()) return false;
                 int size = ex.readSampleData(buf, 0);
                 if (size < 0) break;
                 int track = ex.getSampleTrackIndex();
                 long t = ex.getSampleTime();
-                if (base < 0) base = Math.max(0, t);
-                if (map[track] >= 0) {
+                if (map[track] >= 0 && t >= 0) {
+                    if (lastRaw[track] != Long.MIN_VALUE && (t < lastRaw[track] - 1_000_000L || t > lastRaw[track] + 30_000_000L)) {
+                        int latest = shifts.size() - 1;
+                        if (epoch[track] != latest && Math.abs(t - anchors.get(latest)) < 2_000_000L) {
+                            epoch[track] = latest;                     // the other track already started this epoch
+                        } else {
+                            shifts.add(maxOut + 33_000L - (t - base));
+                            anchors.add(t);
+                            epoch[track] = shifts.size() - 1;
+                        }
+                    }
+                    lastRaw[track] = t;
+                    long ts = Math.max(0, t - base + shifts.get(epoch[track]));
+                    maxOut = Math.max(maxOut, ts);
                     info.offset = 0;
                     info.size = size;
-                    // Segments glued together can restart their clock; keep time moving forward.
-                    long ts = Math.max(0, t - base) + shift[track];
-                    if (ts < lastOut[track] - 1_000_000L) { shift[track] += lastOut[track] - ts + 33_000L; ts = lastOut[track] + 33_000L; }
-                    lastOut[track] = Math.max(lastOut[track], ts);
                     info.presentationTimeUs = ts;
                     info.flags = (ex.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0
                         ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0;
@@ -143,7 +186,7 @@ public final class Remuxer {
                 }
                 ex.advance();
                 if (progress != null && duration > 0) {
-                    int pct = (int) Math.min(99, (t - base) * 100 / duration);
+                    int pct = (int) Math.max(0, Math.min(99, (maxOut) * 100 / duration));
                     if (pct != lastPct) { lastPct = pct; progress.onProgress(pct); }
                 }
             }

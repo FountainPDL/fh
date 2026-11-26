@@ -141,6 +141,9 @@ public class SettingsFragment extends Fragment {
         toggle("Play next downloaded episode", "Continue automatically when an episode ends", AppPreferences.getAutoPlayNext(c), v -> AppPreferences.setAutoPlayNext(ctx(), v));
 
         section("DOWNLOADS");
+        final int[] par = {1, 2, 3, 4, 5};
+        choice("Simultaneous downloads", "How many videos download at the same time", new String[]{"1", "2", "3", "4", "5"},
+            indexOf(par, AppPreferences.getParallelDownloads(c)), i -> AppPreferences.setParallelDownloads(ctx(), par[i]));
         toggle("Wi-Fi only", "Do not download over mobile data", AppPreferences.getWifiOnly(c), v -> AppPreferences.setWifiOnly(ctx(), v));
         final String[] qLabels = {"Ask every time", "Best available", "1080p", "720p", "480p", "360p"};
         final String[] qValues = {"ask", "best", "1080p", "720p", "480p", "360p"};
