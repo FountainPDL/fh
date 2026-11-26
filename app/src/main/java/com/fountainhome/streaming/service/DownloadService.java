@@ -51,6 +51,7 @@ import okhttp3.OkHttpClient;
 public class DownloadService extends Service {
     public static final String ACTION_START = "com.fountainhome.streaming.DL_START";
     public static final String ACTION_CANCEL = "com.fountainhome.streaming.DL_CANCEL";
+    public static final String ACTION_PAUSE = "com.fountainhome.streaming.DL_PAUSE";
     public static final String EXTRA_ID = "id";
 
     private static final String CHANNEL = "fh_downloads";
@@ -68,6 +69,14 @@ public class DownloadService extends Service {
     private final java.util.Map<Integer, Long> lastNotif = new ConcurrentHashMap<>();
     private final java.util.concurrent.atomic.AtomicBoolean repaired = new java.util.concurrent.atomic.AtomicBoolean(false);
     private final Set<Integer> cancelled = ConcurrentHashMap.newKeySet();
+    /** Downloads the user paused by hand (they stay paused until resumed). */
+    private final Set<Integer> paused = ConcurrentHashMap.newKeySet();
+    /** Downloads that have a worker thread right now (running, queued, or waiting for the network). */
+    private final Set<Integer> live = ConcurrentHashMap.newKeySet();
+    private static final int R_DONE = 0, R_PAUSED = 1, R_WAIT = 2;
+
+    private static final class StopException extends IOException { StopException() { super("Stopped"); } }
+    private static final class NetException extends IOException { NetException(String m) { super(m); } }
     private OkHttpClient http;
     private volatile int pending = 0;                       // main thread only
 
@@ -91,19 +100,23 @@ public class DownloadService extends Service {
             maybeStop();
             return START_NOT_STICKY;
         }
+        if (ACTION_PAUSE.equals(intent.getAction())) {
+            paused.add(id);
+            main.post(() -> { StreamResolver r = resolvers.get(id); if (r != null) r.cancel(); });
+            synchronized (gate) { gate.notifyAll(); }
+            maybeStop();
+            return START_NOT_STICKY;
+        }
         if (ACTION_START.equals(intent.getAction()) && id >= 0) {
             cancelled.remove(id);
+            paused.remove(id);
+            if (!live.add(id)) return START_NOT_STICKY;   // already has a worker: it simply carries on
             pending++;
             worker.execute(() -> {
-                boolean got = false;
-                try {
-                    got = acquireSlot(id);
-                    if (got) process(id);
-                    else dropQueued(id);
-                }
+                try { runJob(id); }
                 catch (Throwable t) { safeFail(id, "Unexpected error: " + t.getMessage()); }
                 finally {
-                    if (got) releaseSlot();
+                    live.remove(id);
                     main.post(() -> { pending--; maybeStop(); });
                 }
             });
@@ -125,7 +138,7 @@ public class DownloadService extends Service {
     private boolean acquireSlot(int id) throws InterruptedException {
         synchronized (gate) {
             while (true) {
-                if (cancelled.contains(id)) return false;
+                if (cancelled.contains(id) || paused.contains(id)) return false;
                 int limit = Math.max(1, Math.min(MAX_THREADS, AppPreferences.getParallelDownloads(this)));
                 if (running < limit) { running++; updateSummary(); return true; }
                 gate.wait(2000);
@@ -158,20 +171,100 @@ public class DownloadService extends Service {
         } catch (Throwable ignored) { }
     }
 
-    private void process(int id) {
+    /** Runs one download to the end, pausing (and later resuming by itself) whenever the network drops. */
+    private void runJob(int id) throws InterruptedException {
+        final DownloadDao dao = AppDatabase.get(this).downloadDao();
+        int attempts = 0;
+        while (true) {
+            boolean got = false;
+            int res;
+            try {
+                got = acquireSlot(id);
+                if (!got) {
+                    if (cancelled.contains(id)) dropQueued(id);
+                    else dao.setStatus(id, DownloadItem.PAUSED, null);
+                    return;
+                }
+                res = process(id);
+            } finally {
+                if (got) releaseSlot();
+            }
+            if (res == R_DONE) return;
+            if (res == R_PAUSED && paused.contains(id)) return;           // paused by hand: stays paused
+            // Waiting for the network (or a short hiccup): continue by itself when it is back.
+            if (networkOk()) attempts++;
+            if (attempts > 40) { safeFail(id, "The connection kept failing. Tap resume to try again."); return; }
+            final long delay = networkOk() ? Math.min(30000L, 4000L * attempts) : 1500L;
+            long until = System.currentTimeMillis() + delay;
+            while (true) {
+                if (cancelled.contains(id)) { dropQueued(id); return; }
+                if (paused.contains(id)) { dao.setStatus(id, DownloadItem.PAUSED, null); cancelNotif(id); return; }
+                if (networkOk() && System.currentTimeMillis() >= until) break;
+                synchronized (gate) { gate.wait(1000); }
+            }
+            dao.setStatus(id, DownloadItem.QUEUED, null);
+        }
+    }
+
+    private boolean online() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            Network n = cm.getActiveNetwork();
+            if (n == null) return false;
+            NetworkCapabilities c = cm.getNetworkCapabilities(n);
+            return c != null && c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        } catch (Throwable t) { return true; }
+    }
+
+    private boolean networkOk() {
+        return online() && (!AppPreferences.getWifiOnly(this) || onUnmeteredNetwork());
+    }
+
+    private void cancelNotif(int id) {
+        try { ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(30000 + id); } catch (Throwable ignored) { }
+        lastNotif.remove(id);
+    }
+
+    /** -1 = carry on; otherwise the result to return because the user cancelled or paused. */
+    private int stop(DownloadDao dao, DownloadItem it) {
+        if (cancelled.contains(it.id)) { dropCancelled(dao, it); return R_DONE; }
+        if (paused.contains(it.id)) { dao.setStatus(it.id, DownloadItem.PAUSED, null); cancelNotif(it.id); return R_PAUSED; }
+        return -1;
+    }
+
+    private int autoPause(DownloadDao dao, DownloadItem it, String why) {
+        dao.setStatus(it.id, DownloadItem.PAUSED, why);
+        notifyProgress(it.id, label(it), "Paused \u2014 " + why.toLowerCase(java.util.Locale.ROOT), -1, true);
+        return R_WAIT;
+    }
+
+    private int failOrWait(DownloadDao dao, DownloadItem it, String why) {
+        if (!networkOk()) return autoPause(dao, it, online() ? "Waiting for Wi-Fi" : "Waiting for network");
+        fail(dao, it, why);
+        return R_DONE;
+    }
+
+    private static boolean looksLikeNetwork(IOException e) {
+        if (e instanceof java.net.UnknownHostException || e instanceof java.net.SocketException
+            || e instanceof java.net.SocketTimeoutException || e instanceof javax.net.ssl.SSLException
+            || e instanceof java.io.EOFException) return true;
+        String m = e.getMessage() == null ? "" : e.getMessage().toLowerCase(java.util.Locale.ROOT);
+        return m.contains("timeout") || m.contains("timed out") || m.contains("unexpected end") || m.contains("connection")
+            || m.contains("http 5") || m.contains("http 429") || m.contains("unable to resolve") || m.contains("stream was reset");
+    }
+
+    private int process(int id) {
         final DownloadDao dao = AppDatabase.get(this).downloadDao();
         final DownloadItem it = dao.byId(id);
-        if (it == null) return;
+        if (it == null) return R_DONE;
         if (repaired.compareAndSet(false, true)) repairOldTs(dao);
-        if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+        int sc = stop(dao, it);
+        if (sc >= 0) return sc;
 
-        if (AppPreferences.getWifiOnly(this) && !onUnmeteredNetwork()) {
-            fail(dao, it, "Waiting for Wi-Fi (\"Wi-Fi only\" is on in Settings)");
-            return;
-        }
+        if (!networkOk()) return autoPause(dao, it, AppPreferences.getWifiOnly(this) && online() ? "Waiting for Wi-Fi" : "Waiting for network");
         final String label = label(it);
-        dao.setState(id, DownloadItem.RESOLVING, 0, null);
-        notifyProgress(id, label, "Finding a download link…", -1, true);
+        dao.setState(id, DownloadItem.RESOLVING, it.progress, null);
+        notifyProgress(id, label, "Finding a download link\u2026", -1, true);
 
         String lastError = "No downloadable link was found on any server";
         // Anime: ask the anime sites for a direct stream first (no embed page, no ads, real quality choice).
@@ -187,81 +280,98 @@ public class DownloadService extends Service {
                 direct.url = r.stream.url;
                 direct.headers.putAll(r.stream.headers);
                 direct.subs.addAll(r.stream.subs);
-                if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
-                if (attempt(dao, it, id, label, direct)) return;
+                sc = stop(dao, it);
+                if (sc >= 0) return sc;
+                if (attempt(dao, it, id, label, direct)) return R_DONE;
             } catch (IOException e) {
-                if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+                sc = stop(dao, it);
+                if (sc >= 0) return sc;
+                if (e instanceof StopException) return R_PAUSED;
+                if (e instanceof NetException) return autoPause(dao, it, "Waiting for network");
                 lastError = e.getMessage() != null ? e.getMessage() : lastError;
             }
         }
 
-        if ("anime".equals(it.type)) { fail(dao, it, lastError); return; }
+        if ("anime".equals(it.type)) return failOrWait(dao, it, lastError);
 
         List<String> embeds = embedUrls(it);
-        if (embeds.isEmpty()) { fail(dao, it, lastError.startsWith("No downloadable") ? "No servers available for this title" : lastError); return; }
+        if (embeds.isEmpty()) return failOrWait(dao, it, lastError.startsWith("No downloadable") ? "No servers available for this title" : lastError);
 
         int tried = 0;
         for (String embed : embeds) {
-            if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+            sc = stop(dao, it);
+            if (sc >= 0) return sc;
+            if (!networkOk()) return autoPause(dao, it, "Waiting for network");
             if (++tried > MAX_SERVERS) break;
-            notifyProgress(id, label, "Checking server " + tried + " of " + Math.min(embeds.size(), MAX_SERVERS) + "…", -1, true);
+            notifyProgress(id, label, "Checking server " + tried + " of " + Math.min(embeds.size(), MAX_SERVERS) + "\u2026", -1, true);
 
             StreamResolver.Found found = resolveBlocking(id, embed);
-            if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+            sc = stop(dao, it);
+            if (sc >= 0) return sc;
             if (found == null) continue;
 
             try {
-                if (attempt(dao, it, id, label, found)) return;
+                if (attempt(dao, it, id, label, found)) return R_DONE;
             } catch (IOException e) {
-                if (cancelled.contains(id)) { dropCancelled(dao, it); return; }
+                sc = stop(dao, it);
+                if (sc >= 0) return sc;
+                if (e instanceof StopException) return R_PAUSED;
+                if (e instanceof NetException) return autoPause(dao, it, "Waiting for network");
                 lastError = e.getMessage() != null ? e.getMessage() : "Download failed";
                 // try the next server
             }
         }
-        fail(dao, it, lastError);
+        return failOrWait(dao, it, lastError);
     }
 
     /** Downloads one resolved stream, converts it, fetches subtitles and records the result. Returns true when done. */
     private boolean attempt(final DownloadDao dao, final DownloadItem it, final int id, final String label,
                             final StreamResolver.Found found) throws IOException {
-        dao.setState(id, DownloadItem.DOWNLOADING, 0, null);
-            final String[] qualityNote = new String[1];
-            File dir = new File(DownloadManager2.offlineRoot(this), DownloadManager2.safeName(it.title));
-            String base = "movie".equals(it.type)
-                ? DownloadManager2.safeName(it.title)
-                : String.format("S%02dE%02d", it.season, it.episode);
-                File out = HlsDownloader.download(http, found.url, found.headers,
-                    AppPreferences.effectiveQuality(this, id), dir, base, new HlsDownloader.Progress() {
-                        int last = -1;
-                        @Override public void onInfo(String info) { qualityNote[0] = info; notifyProgress(id, label, "Quality: " + info, -1, true); }
-                        @Override public void onProgress(int pct) {
-                            if (pct == last) return;
-                            last = pct;
-                            dao.setProgress(id, pct);
-                            notifyProgress(id, label, pct + "%", pct, false);
-                        }
-                        @Override public boolean isCancelled() { return cancelled.contains(id); }
-                    });
-                // Raw .ts has no seek index: convert to .mp4 (no re-encode) so seeking works.
-                dao.setProgress(id, 100);
-                notifyProgress(id, label, "Converting to MP4\u2026", 0, false);
-                out = Remuxer.makeSeekable(out, pct -> notifyProgress(id, label, "Converting to MP4 " + pct + "%", pct, false));
-                if (AppPreferences.getSubDownload(this)) {
-                    notifyProgress(id, label, "Getting subtitles\u2026", -1, true);
-                    try {
-                        com.fountainhome.streaming.download.SubtitleFetcher.fetch(http, found.url, found.headers,
-                            it.type, it.tmdbId, it.season, it.episode, out, found.subs, AppPreferences.getSubLang(this));
-                    } catch (Throwable ignored) { }
-                }
-                it.localPath = out.getAbsolutePath();
-                it.totalBytes = out.length();
-                it.status = DownloadItem.COMPLETED;
-                it.progress = 100;
-                it.error = null;
-                dao.update(it);
-                cacheArtwork(it);
-                notifyDone(it, label, true, qualityNote[0]);
-                return true;
+        dao.setState(id, DownloadItem.DOWNLOADING, it.progress, null);
+        final String[] qualityNote = new String[1];
+        File dir = new File(DownloadManager2.offlineRoot(this), DownloadManager2.safeName(it.title));
+        String base = "movie".equals(it.type)
+            ? DownloadManager2.safeName(it.title)
+            : String.format("S%02dE%02d", it.season, it.episode);
+        File out;
+        try {
+            out = HlsDownloader.download(http, found.url, found.headers,
+                AppPreferences.effectiveQuality(this, id), dir, base, new HlsDownloader.Progress() {
+                    int last = -1;
+                    @Override public void onInfo(String info) { qualityNote[0] = info; notifyProgress(id, label, "Quality: " + info, -1, true); }
+                    @Override public void onProgress(int pct) {
+                        if (pct == last) return;
+                        last = pct;
+                        dao.setProgress(id, pct);
+                        notifyProgress(id, label, pct + "%", pct, false);
+                    }
+                    @Override public boolean isCancelled() { return cancelled.contains(id) || paused.contains(id); }
+                });
+        } catch (IOException e) {
+            if (cancelled.contains(id) || paused.contains(id)) throw new StopException();
+            if (!networkOk() || looksLikeNetwork(e)) throw new NetException(e.getMessage());
+            throw e;
+        }
+        // Raw .ts has no seek index: convert to .mp4 (no re-encode) so seeking works.
+        dao.setProgress(id, 100);
+        notifyProgress(id, label, "Converting to MP4\u2026", 0, false);
+        out = Remuxer.makeSeekable(out, pct -> notifyProgress(id, label, "Converting to MP4 " + pct + "%", pct, false));
+        if (AppPreferences.getSubDownload(this)) {
+            notifyProgress(id, label, "Getting subtitles\u2026", -1, true);
+            try {
+                com.fountainhome.streaming.download.SubtitleFetcher.fetch(http, found.url, found.headers,
+                    it.type, it.tmdbId, it.season, it.episode, out, found.subs, AppPreferences.getSubLang(this));
+            } catch (Throwable ignored) { }
+        }
+        it.localPath = out.getAbsolutePath();
+        it.totalBytes = out.length();
+        it.status = DownloadItem.COMPLETED;
+        it.progress = 100;
+        it.error = null;
+        dao.update(it);
+        cacheArtwork(it);
+        notifyDone(it, label, true, qualityNote[0]);
+        return true;
     }
 
     /** Old downloads that are still raw .ts get converted to .mp4 and their records updated. */
@@ -347,14 +457,8 @@ public class DownloadService extends Service {
     private void dropCancelled(DownloadDao dao, DownloadItem it) {
         DownloadItem fresh = dao.byId(it.id);
         if (fresh != null) dao.delete(fresh);
-        File dir = new File(DownloadManager2.offlineRoot(this), DownloadManager2.safeName(it.title));
-        try { ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(30000 + it.id); } catch (Throwable ignored) { }
-        final String base = "movie".equals(it.type) ? DownloadManager2.safeName(it.title)
-            : String.format("S%02dE%02d", it.season, it.episode);
-        File[] parts = dir.listFiles((d, n) -> n.endsWith(".part") && n.startsWith(base + "."));
-        if (parts != null) for (File f : parts) f.delete();
-        String[] left = dir.list();
-        if (left != null && left.length == 0) dir.delete();
+        cancelNotif(it.id);
+        DownloadManager2.cleanPartials(this, it);
     }
 
     private void maybeStop() {

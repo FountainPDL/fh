@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "downloads")
 public class DownloadItem {
     public static final String QUEUED = "queued", RESOLVING = "resolving", DOWNLOADING = "downloading",
-        COMPLETED = "completed", FAILED = "failed";
+        COMPLETED = "completed", FAILED = "failed", PAUSED = "paused";
 
     @PrimaryKey(autoGenerate = true) public int id;
     public int tmdbId, season, episode;
@@ -24,6 +24,6 @@ public class DownloadItem {
     public double rating;
 
     public boolean isActive() {
-        return QUEUED.equals(status) || RESOLVING.equals(status) || DOWNLOADING.equals(status);
+        return QUEUED.equals(status) || RESOLVING.equals(status) || DOWNLOADING.equals(status) || PAUSED.equals(status);
     }
 }

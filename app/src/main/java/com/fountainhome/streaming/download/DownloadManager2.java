@@ -89,6 +89,34 @@ public class DownloadManager2 {
         start(app, d.id);
     }
 
+    /** Stop a running download but keep what is already downloaded. */
+    public static void pause(Context ctx, DownloadItem d) {
+        Context app = ctx.getApplicationContext();
+        AppDatabase.get(app).downloadDao().setStatus(d.id, DownloadItem.PAUSED, null);
+        Intent i = new Intent(app, DownloadService.class)
+            .setAction(DownloadService.ACTION_PAUSE).putExtra(DownloadService.EXTRA_ID, d.id);
+        try { app.startService(i); } catch (Exception ignored) {}
+    }
+
+    /** Continue a paused download from where it stopped. */
+    public static void resume(Context ctx, DownloadItem d) {
+        Context app = ctx.getApplicationContext();
+        AppDatabase.get(app).downloadDao().setStatus(d.id, DownloadItem.QUEUED, null);
+        start(app, d.id);
+    }
+
+    /** Removes the half-finished files of a download that never completed. */
+    public static void cleanPartials(Context ctx, DownloadItem d) {
+        try {
+            File dir = new File(offlineRoot(ctx), safeName(d.title));
+            final String base = "movie".equals(d.type) ? safeName(d.title) : String.format("S%02dE%02d", d.season, d.episode);
+            File[] parts = dir.listFiles((x, n) -> n.startsWith(base + ".") && (n.endsWith(".part") || n.endsWith(".part.state")));
+            if (parts != null) for (File f : parts) f.delete();
+            String[] left = dir.list();
+            if (left != null && left.length == 0) dir.delete();
+        } catch (Throwable ignored) { }
+    }
+
     /** Stop (if running) and remove the download together with its file. */
     public static void delete(Context ctx, DownloadItem d) {
         Context app = ctx.getApplicationContext();
@@ -107,6 +135,7 @@ public class DownloadManager2 {
                 if (left != null && left.length == 0) dir.delete();   // tidy empty show folders
             }
         }
+        if (!DownloadItem.COMPLETED.equals(d.status)) cleanPartials(app, d);
         AppDatabase.get(app).downloadDao().delete(d);
     }
 

@@ -61,27 +61,33 @@ public final class HlsDownloader {
     private static File downloadFile(OkHttpClient http, String url, Map<String, String> headers,
                                      File out, Progress cb) throws IOException {
         File part = new File(out.getPath() + ".part");
-        try (Response r = http.newCall(request(url, headers)).execute()) {
-            if (!r.isSuccessful() || r.body() == null) throw new IOException("Server answered HTTP " + r.code());
-            long total = r.body().contentLength();
-            long done = 0;
-            int lastPct = -1;
-            try (InputStream in = r.body().byteStream(); OutputStream os = new FileOutputStream(part)) {
-                byte[] buf = new byte[64 * 1024];
-                int n;
-                while ((n = in.read(buf)) > 0) {
-                    if (cb.isCancelled()) throw new IOException("Cancelled");
-                    os.write(buf, 0, n);
-                    done += n;
-                    if (total > 0) {
-                        int pct = (int) (done * 100 / total);
-                        if (pct != lastPct) { lastPct = pct; cb.onProgress(pct); }
+        long have = part.isFile() ? part.length() : 0;
+        Request.Builder rb = request(url, headers).newBuilder();
+        if (have > 0) rb.header("Range", "bytes=" + have + "-");
+        try (Response r = http.newCall(rb.build()).execute()) {
+            boolean complete = have > 0 && r.code() == 416;   // everything was already there
+            if (!complete) {
+                if (!r.isSuccessful() || r.body() == null) throw new IOException("Server answered HTTP " + r.code());
+                boolean resumed = have > 0 && r.code() == 206;
+                if (!resumed) have = 0;                           // server ignored Range: start over
+                long total = r.body().contentLength();
+                if (total > 0) total += have;
+                long done = have;
+                int lastPct = -1;
+                try (InputStream in = r.body().byteStream(); OutputStream os = new FileOutputStream(part, resumed)) {
+                    byte[] buf = new byte[64 * 1024];
+                    int n;
+                    while ((n = in.read(buf)) > 0) {
+                        if (cb.isCancelled()) throw new IOException("Cancelled");
+                        os.write(buf, 0, n);
+                        done += n;
+                        if (total > 0) {
+                            int pct = (int) (done * 100 / total);
+                            if (pct != lastPct) { lastPct = pct; cb.onProgress(pct); }
+                        }
                     }
                 }
             }
-        } catch (IOException e) {
-            part.delete();
-            throw e;
         }
         if (part.length() < 100 * 1024) { part.delete(); throw new IOException("Downloaded file is too small to be a video"); }
         if (out.exists()) out.delete();
@@ -160,14 +166,34 @@ public final class HlsDownloader {
         String ext = initUrl != null ? "mp4" : "ts";
         File out = new File(dir, baseName + "." + ext);
         File part = new File(out.getPath() + ".part");
+        File stateFile = new File(out.getPath() + ".part.state");
         Map<String, byte[]> keys = new HashMap<>();
         ExecutorService pool = Executors.newFixedThreadPool(PARALLEL);
-        try (OutputStream os = new FileOutputStream(part)) {
-            if (initUrl != null) os.write(getBytes(http, initUrl, headers));
-
-            int total = segments.size();
+        final int total = segments.size();
+        // Resume: the partial file holds the first N segments in order; the state file says how many and how long.
+        int resumeAt = 0;
+        long bytes = 0;
+        if (part.isFile() && stateFile.isFile()) {
+            try {
+                String[] st = readSmall(stateFile).trim().split("\\n");
+                if (st.length >= 3 && Integer.parseInt(st[0]) == total) {
+                    int w = Integer.parseInt(st[1]);
+                    long len = Long.parseLong(st[2]);
+                    if (w > 0 && w <= total && part.length() >= len) {
+                        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(part, "rw")) { raf.setLength(len); }
+                        resumeAt = w; bytes = len;
+                    }
+                }
+            } catch (Exception ignored) { resumeAt = 0; bytes = 0; }
+        }
+        boolean fresh = resumeAt == 0;
+        try (OutputStream os = new FileOutputStream(part, !fresh)) {
+            if (fresh) {
+                if (initUrl != null) { byte[] init = getBytes(http, initUrl, headers); os.write(init); bytes += init.length; }
+            }
             List<Future<byte[]>> window = new ArrayList<>();
-            int next = 0, written = 0, lastPct = -1;
+            int next = resumeAt, written = resumeAt, lastPct = -1;
+            if (resumeAt > 0) { lastPct = resumeAt * 100 / total; cb.onProgress(lastPct); }
             while (written < total) {
                 if (cb.isCancelled()) throw new IOException("Cancelled");
                 // keep PARALLEL*2 segments in flight, but write strictly in order
@@ -186,19 +212,36 @@ public final class HlsDownloader {
                     throw c instanceof IOException ? (IOException) c : new IOException(String.valueOf(c));
                 }
                 os.write(data);
+                bytes += data.length;
                 written++;
+                writeState(stateFile, total, written, bytes);
                 int pct = written * 100 / total;
                 if (pct != lastPct) { lastPct = pct; cb.onProgress(pct); }
             }
         } catch (IOException | RuntimeException e) {
-            pool.shutdownNow();
-            part.delete();
+            pool.shutdownNow();              // the partial file and its state stay so the download can continue later
             throw e instanceof IOException ? (IOException) e : new IOException(e);
         }
         pool.shutdownNow();
         if (out.exists()) out.delete();
         if (!part.renameTo(out)) throw new IOException("Could not finish file");
+        stateFile.delete();
         return out;
+    }
+
+    private static String readSmall(File f) throws IOException {
+        try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            byte[] b = new byte[512]; int n;
+            while ((n = in.read(b)) > 0 && bo.size() < 4096) bo.write(b, 0, n);
+            return bo.toString("UTF-8");
+        }
+    }
+
+    private static void writeState(File f, int total, int written, long bytes) {
+        try (FileOutputStream o = new FileOutputStream(f)) {
+            o.write((total + "\n" + written + "\n" + bytes + "\n").getBytes("UTF-8"));
+        } catch (Exception ignored) { }
     }
 
     private static byte[] fetchSegment(OkHttpClient http, Segment s, Map<String, String> headers,

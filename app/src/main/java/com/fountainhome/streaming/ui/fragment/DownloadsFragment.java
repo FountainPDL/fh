@@ -84,13 +84,15 @@ public class DownloadsFragment extends Fragment {
             boolean failed = DownloadItem.FAILED.equals(d.status);
             String sub;
             if (failed) sub = "Failed" + (d.error != null && !d.error.isEmpty() ? ": " + d.error : "");
+            else if (DownloadItem.PAUSED.equals(d.status)) sub = "Paused" + (d.progress > 0 ? " at " + d.progress + "%" : "")
+                + (d.error != null && !d.error.isEmpty() ? " \u2014 " + d.error : "");
             else if (DownloadItem.QUEUED.equals(d.status)) sub = "Waiting…";
             else if (DownloadItem.RESOLVING.equals(d.status)) sub = "Finding a source…";
             else sub = "Downloading  " + d.progress + "%";
             x.subtitle.setText(sub);
             x.subtitle.setTextColor(failed ? ThemeManager.color(x.subtitle.getContext(), R.attr.fhDanger) : ThemeManager.color(x.subtitle.getContext(), R.attr.fhTextDim));
 
-            boolean showBar = DownloadItem.DOWNLOADING.equals(d.status);
+            boolean showBar = DownloadItem.DOWNLOADING.equals(d.status) || DownloadItem.PAUSED.equals(d.status);
             x.progress.setVisibility(showBar ? View.VISIBLE : View.GONE);
             x.progress.setProgress(d.progress);
 
@@ -101,8 +103,16 @@ public class DownloadsFragment extends Fragment {
                     DownloadManager2.retry(v.getContext().getApplicationContext(), d);
                     Toast.makeText(v.getContext(), "Retrying…", Toast.LENGTH_SHORT).show();
                 });
+            } else if (DownloadItem.PAUSED.equals(d.status)) {
+                x.action1.setVisibility(View.VISIBLE);
+                x.action1.setImageResource(R.drawable.ic_play);
+                x.action1.setContentDescription("Resume");
+                x.action1.setOnClickListener(v -> DownloadManager2.resume(v.getContext().getApplicationContext(), d));
             } else {
-                x.action1.setVisibility(View.GONE);
+                x.action1.setVisibility(View.VISIBLE);
+                x.action1.setImageResource(R.drawable.ic_pause);
+                x.action1.setContentDescription("Pause");
+                x.action1.setOnClickListener(v -> DownloadManager2.pause(v.getContext().getApplicationContext(), d));
             }
             x.action2.setOnClickListener(v -> cancelAndDelete(d));
         }

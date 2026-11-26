@@ -34,11 +34,14 @@ public interface DownloadDao {
     DownloadItem find(int t, String tp, int s, int e);
 
     /** Anything left "in progress" by a killed process is not really running any more. */
-    @Query("UPDATE downloads SET status='failed', error='Interrupted' WHERE status IN ('queued','resolving','downloading')")
+    @Query("UPDATE downloads SET status='paused', error='Interrupted - tap resume to continue' WHERE status IN ('queued','resolving','downloading')")
     void failInterrupted();
 
     @Query("UPDATE downloads SET status=:status, progress=:progress, error=:error WHERE id=:id")
     void setState(int id, String status, int progress, String error);
+
+    @Query("UPDATE downloads SET status=:status, error=:error WHERE id=:id")
+    void setStatus(int id, String status, String error);
 
     @Query("UPDATE downloads SET progress=:progress WHERE id=:id")
     void setProgress(int id, int progress);
